@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import logoUrl from '../../../../../static/img/app_logo/logo.png';
-import videoUrl from '../../../../../static/img/app_logo/Logo_Animasyonu_trans.webm';
+import darkVideoUrl from '../../../../../static/img/app_logo/logo-animasyon-koyu.mp4';
+import lightVideoUrl from '../../../../../static/img/app_logo/logo-animasyon-beyaz.mp4';
 
-/** Play the logo animation during loading unless reduced motion is requested. */
+/** Play the logo animation for the current theme unless reduced motion is requested. */
 export function LoadingLogo() {
   const [animate, setAnimate] = useState(false);
   useEffect(() => {
@@ -13,13 +14,16 @@ export function LoadingLogo() {
     return () => preference.removeEventListener('change', update);
   }, []);
 
+  // Pick one source so only one video downloads; a loader rarely outlives a theme switch.
+  const dark = document.documentElement.classList.contains('dark');
+  // Each video has a solid background, so it sits in a rounded tile.
   return animate ? (
     <video
-      src={videoUrl}
+      src={dark ? darkVideoUrl : lightVideoUrl}
       poster={logoUrl}
       width={64}
       height={64}
-      className="h-16 w-16 object-contain"
+      className="h-16 w-16 rounded-xl object-cover"
       autoPlay
       muted
       loop

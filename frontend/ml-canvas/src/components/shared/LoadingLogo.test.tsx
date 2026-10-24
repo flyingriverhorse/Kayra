@@ -21,7 +21,7 @@ it('plays the logo video only while reduced motion is off', () => {
     preference.dispatchEvent(new Event('change'));
   });
   const video = container.querySelector('video');
-  expect(video).toHaveAttribute('src', expect.stringContaining('Logo_Animasyonu_trans.webm'));
+  expect(video).toHaveAttribute('src', expect.stringContaining('logo-animasyon-beyaz.mp4'));
   expect(video).toHaveAttribute('poster', expect.stringContaining('logo.png'));
   expect(video).toHaveProperty('muted', true);
   expect(video).toHaveAttribute('loop');
@@ -35,4 +35,16 @@ it('plays the logo video only while reduced motion is off', () => {
   expect(screen.getByAltText('')).toHaveAttribute('src', expect.stringContaining('logo.png'));
   unmount();
   expect(remove).toHaveBeenCalledWith('change', expect.any(Function));
+});
+
+it('plays the dark-background video in dark mode', () => {
+  // A white video tile on a dark page would look like a broken image.
+  vi.spyOn(window, 'matchMedia').mockReturnValue(Object.assign(new EventTarget(), { matches: false }) as MediaQueryList);
+  document.documentElement.classList.add('dark');
+  try {
+    const { container } = render(<LoadingLogo />);
+    expect(container.querySelector('video')).toHaveAttribute('src', expect.stringContaining('logo-animasyon-koyu.mp4'));
+  } finally {
+    document.documentElement.classList.remove('dark');
+  }
 });
