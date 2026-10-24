@@ -57,8 +57,7 @@ describe('Layout routes and content', () => {
     // Navigation destinations and active state must survive presentation extraction.
     await renderLayout('/jobs');
     expect(screen.getByAltText('Kayra logo')).toBeVisible();
-    expect(screen.queryByText('Kayra')).not.toBeInTheDocument();
-    expect(screen.getByText('by Skyulf')).toBeVisible();
+    expect(screen.getByText('by Skyulf').parentElement).toHaveTextContent('Kayra by Skyulf');
     const routes = [
       ['Dashboard', '/'], ['Jobs', '/jobs'], ['EDA', '/eda'], ['Data Drift', '/drift'],
       ['ML Canvas', '/canvas'], ['Data Sources', '/data'], ['Model Registry', '/registry'],
@@ -79,6 +78,7 @@ describe('Layout routes and content', () => {
     const { container } = await renderLayout(path);
     expect(container.querySelector('aside')).toHaveClass('w-16');
     expect(screen.getByAltText('Kayra logo')).toBeVisible();
+    expect(screen.queryByText('by Skyulf')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('title', 'Dashboard');
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveTextContent('');
     window.innerWidth = 390;

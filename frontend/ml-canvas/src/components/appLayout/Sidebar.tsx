@@ -50,6 +50,11 @@ function SidebarBrand({
     <div className={`h-14 shrink-0 ${isCollapsed ? 'px-4' : 'px-6'} border-b flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} ${isMobile ? 'justify-between' : ''}`}>
       <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
         <img src={logoUrl} alt="Kayra logo" width={32} height={32} className="w-8 h-8 object-contain shrink-0" />
+        {!isCollapsed && (
+          <span className="text-sm font-semibold whitespace-nowrap text-foreground">
+            Kayra <span className="text-xs font-normal text-muted-foreground">by Skyulf</span>
+          </span>
+        )}
       </div>
       {isMobile && (
         <button
@@ -121,7 +126,6 @@ function ThemeControl({
         {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         {!isCollapsed && (isDarkMode ? 'Light Mode' : 'Dark Mode')}
       </button>
-      <p className={isCollapsed ? 'sr-only' : 'text-center text-xs text-muted-foreground'}>by Skyulf</p>
     </div>
   );
 }
