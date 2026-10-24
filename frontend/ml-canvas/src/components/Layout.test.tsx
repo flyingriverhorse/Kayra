@@ -56,7 +56,8 @@ describe('Layout routes and content', () => {
   it('keeps all route links in order and marks only exact routes active', async () => {
     // Navigation destinations and active state must survive presentation extraction.
     await renderLayout('/jobs');
-    expect(screen.getByRole('heading', { name: 'Kayra' })).toBeVisible();
+    expect(screen.getByAltText('Kayra logo')).toBeVisible();
+    expect(screen.queryByText('Kayra')).not.toBeInTheDocument();
     expect(screen.getByText('by Skyulf')).toBeVisible();
     const routes = [
       ['Dashboard', '/'], ['Jobs', '/jobs'], ['EDA', '/eda'], ['Data Drift', '/drift'],
@@ -77,7 +78,7 @@ describe('Layout routes and content', () => {
     // The desktop rail retains accessible labels while mobile keeps full-width navigation.
     const { container } = await renderLayout(path);
     expect(container.querySelector('aside')).toHaveClass('w-16');
-    expect(screen.queryByText('Kayra')).not.toBeInTheDocument();
+    expect(screen.getByAltText('Kayra logo')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('title', 'Dashboard');
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveTextContent('');
     window.innerWidth = 390;
