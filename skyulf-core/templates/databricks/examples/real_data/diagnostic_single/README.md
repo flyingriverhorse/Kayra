@@ -5,7 +5,7 @@ Use [GUIDE.md](GUIDE.md) when changing settings or operating the project;
 these are the only two project guides. Run the first experiment in a development/test target.
 
 This project trains one model for one target and registers it as a candidate.
-Skyulf 0.9.6 Bundle: **classification** with **pandas** training, **batch** prediction delivery and **serverless** compute.
+Skyulf 0.9.7 Bundle: **classification** with **pandas** training, **batch** prediction delivery and **serverless** compute.
 Training runs in one bounded Python process.
 Batch scoring uses **spark** batch compute.
 Run every command beside `databricks.yml`.
@@ -139,7 +139,7 @@ model version. A monitoring failure does not undo committed predictions.
 
 ## Upgrading this project
 
-This template pins `skyulf-core[mlflow]==0.9.6` in `deployment/requirements.txt`;
+This template pins `skyulf-core[mlflow]==0.9.7` in `deployment/requirements.txt`;
 public guides describe the current revision. Before changing the pin, follow
 [Upgrade an existing project](https://www.skyulf.com/manual/user_guide/databricks_project_upgrade.html)
 and **Upgrade steps for generated Databricks projects** in the

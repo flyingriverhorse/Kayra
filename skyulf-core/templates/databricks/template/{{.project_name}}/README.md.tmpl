@@ -9,7 +9,7 @@ approved and scored together.
 {{else if eq .training_layout "model_competition"}}This project trains several candidate models for one target; cross-validation
 picks one winner, which becomes the registered candidate.
 {{else}}This project trains one model for one target and registers it as a candidate.
-{{end}}Skyulf 0.9.6 Bundle: **{{if eq .training_layout "multi_target"}}independent target models{{else}}{{.task}}{{end}}** with **{{.engine}}** training, **{{.prediction_delivery}}** prediction delivery and **{{.compute_mode}}** compute.
+{{end}}Skyulf 0.9.7 Bundle: **{{if eq .training_layout "multi_target"}}independent target models{{else}}{{.task}}{{end}}** with **{{.engine}}** training, **{{.prediction_delivery}}** prediction delivery and **{{.compute_mode}}** compute.
 Training runs in one bounded Python process.
 {{if eq .prediction_delivery "endpoint"}}Prediction delivery uses the serving endpoint; no batch score job is generated.
 {{else}}Batch scoring uses **{{.batch_compute}}** batch compute.
@@ -199,7 +199,7 @@ model{{if eq .training_layout "multi_target"}} set{{end}} version. A monitoring 
 
 ## Upgrading this project
 
-This template pins `skyulf-core[mlflow]==0.9.6` in `deployment/requirements.txt`;
+This template pins `skyulf-core[mlflow]==0.9.7` in `deployment/requirements.txt`;
 public guides describe the current revision. Before changing the pin, follow
 [Upgrade an existing project](https://www.skyulf.com/manual/user_guide/databricks_project_upgrade.html)
 and **Upgrade steps for generated Databricks projects** in the
