@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import logoUrl from '../../../../../static/img/app_logo/logo.png';
-import videoUrl from '../../../../../static/img/app_logo/Logo_Animasyonu.mp4';
+import videoUrl from '../../../../../static/img/app_logo/Logo_Animasyonu_trans.webm';
 
 /** Play the logo animation during loading unless reduced motion is requested. */
 export function LoadingLogo() {
@@ -13,14 +13,13 @@ export function LoadingLogo() {
     return () => preference.removeEventListener('change', update);
   }, []);
 
-  // The video has a light background, so it sits in a rounded tile on both themes.
   return animate ? (
     <video
       src={videoUrl}
       poster={logoUrl}
       width={64}
       height={64}
-      className="h-16 w-16 rounded-xl object-cover"
+      className="h-16 w-16 object-contain"
       autoPlay
       muted
       loop

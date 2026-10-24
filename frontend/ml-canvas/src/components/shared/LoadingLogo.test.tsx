@@ -21,7 +21,7 @@ it('plays the logo video only while reduced motion is off', () => {
     preference.dispatchEvent(new Event('change'));
   });
   const video = container.querySelector('video');
-  expect(video).toHaveAttribute('src', expect.stringContaining('Logo_Animasyonu.mp4'));
+  expect(video).toHaveAttribute('src', expect.stringContaining('Logo_Animasyonu_trans.webm'));
   expect(video).toHaveAttribute('poster', expect.stringContaining('logo.png'));
   expect(video).toHaveProperty('muted', true);
   expect(video).toHaveAttribute('loop');
