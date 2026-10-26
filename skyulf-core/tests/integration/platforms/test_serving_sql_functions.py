@@ -72,6 +72,37 @@ def test_capture_mode_has_typed_error_envelope(endpoint):
     assert "returnType => 'STRUCT<`prediction`: DOUBLE" in plan.create_sql
 
 
+def test_record_keys_are_optional_text_fields_after_the_inputs(endpoint):
+    """Single-model callers may pass record keys for the label join; others call it unchanged."""
+    keys = (("order_id", "bigint"), ("day", "date"), ("segment", "string"))
+    plain = serving.build_serving_sql_function(endpoint, "main.api.score_risk_v7")
+    plan = serving.build_serving_sql_function(endpoint, "main.api.score_risk_v7", record_keys=keys)
+    assert "  `segment` STRING,\n  `order_id` BIGINT DEFAULT NULL,\n" in plan.create_sql
+    assert "  `day` DATE DEFAULT NULL\n)" in plan.create_sql
+    # NULL stays a JSON null (an unkeyed request), never the 0 ai_query sends for a NULL BIGINT.
+    assert "    'segment', `segment`,\n    'order_id', CAST(`order_id` AS STRING),\n" in (
+        plan.create_sql
+    )
+    assert "'day', CAST(`day` AS STRING)\n  )" in plan.create_sql
+    assert plan.call_sql() == plain.call_sql()
+    assert plan.call_sql(record_keys=True).endswith(
+        "`segment` => `segment`, `order_id` => `order_id`, `day` => `day`)"
+    )
+    assert plan.schema_contract == plain.schema_contract | {
+        "record_keys": (("order_id", "BIGINT"), ("day", "DATE"))
+    }
+    assert "record_keys" not in plain.schema_contract
+
+
+@pytest.mark.parametrize(
+    "keys", [(("order_id", "timestamp"),), (("bad'id", "string"),), (("ORDER_ID", "int"),) * 2]
+)
+def test_record_keys_reject_types_that_cannot_match_label_text(endpoint, keys):
+    """A key that never equals the label table's text value would silently match nothing."""
+    with pytest.raises(ValueError, match="record key"):
+        serving.build_serving_sql_function(endpoint, "main.api.score", record_keys=keys)
+
+
 @pytest.mark.parametrize("name", ["score", "main.score", "a.b.c.d", "a.b.c;DROP TABLE x", "a..c"])
 def test_function_requires_unambiguous_uc_name(endpoint, name):
     """DDL must never interpolate caller SQL or resolve the current catalog implicitly."""

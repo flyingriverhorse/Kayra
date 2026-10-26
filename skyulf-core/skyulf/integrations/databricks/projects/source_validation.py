@@ -190,10 +190,8 @@ _TEXT_KEY_TYPES = {"string", "tinyint", "smallint", "int", "bigint", "boolean", 
 
 
 def _record_key_labels(config: dict, columns: dict[str, str]) -> bool:
-    """A model-set endpoint joins labels on record keys when the table has no request columns."""
-    return config.get("training_layout") == "multi_target" and not set(_REQUEST_KEYS) <= set(
-        columns
-    )
+    """An endpoint joins labels on record keys when the table has no request columns."""
+    return not set(_REQUEST_KEYS) <= set(columns)
 
 
 def _source_key_sets(

@@ -139,16 +139,16 @@ def test_source_monitoring_uses_request_keys_for_endpoint_labels(delivery, busin
 
 
 @pytest.mark.parametrize("delivery", ["endpoint", "both"])
-def test_source_monitoring_rejects_business_only_endpoint_labels(delivery):
-    """Business-key labels cannot silently be bound to a request-keyed serving monitor."""
+def test_source_monitoring_accepts_business_key_endpoint_labels(delivery):
+    """Endpoint callers may pass the record keys, so business-key labels join on those keys."""
     query, _ = _query()
-    with pytest.raises(ValueError, match="request"):
-        validate_project_sources(
-            _config() | {"prediction_delivery": delivery},
-            query,
-            label_table="cat.data.labels",
-            label_available_at_column="known_at",
-        )
+    report = validate_project_sources(
+        _config() | {"prediction_delivery": delivery},
+        query,
+        label_table="cat.data.labels",
+        label_available_at_column="known_at",
+    )
+    assert report["status"] == "passed"
 
 
 @pytest.mark.parametrize(

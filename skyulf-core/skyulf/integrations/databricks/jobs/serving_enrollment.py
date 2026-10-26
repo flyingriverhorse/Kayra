@@ -118,24 +118,23 @@ def validate_serving_label_sources(
     """Check label columns before endpoint mutation; a missing table only warns.
 
     Monitoring reports performance as awaiting_labels until the table exists. A label
-    table joins on request columns when it has them, else on the model-set record keys.
+    table joins on request columns when it has them, else on the record keys.
     A table in a schema that does not exist is a configuration error, not a wait.
     """
     warnings = []
     sources = {
-        (config.label_table, config.result_available_at_column, config.model_set_name is not None)
+        (config.label_table, config.result_available_at_column)
         for config in configs
         if config.label_table is not None
     }
-    for table, available, model_set in sorted(sources):
+    for table, available in sorted(sources):
         if label_table_missing(spark, table):
             warnings.append(
                 f"Label table {table} does not exist yet; performance stays awaiting_labels "
                 "until it does. Drift monitoring runs normally."
             )
             continue
-        keys = record_key_columns if model_set else ()
-        check_label_schema(table, label_types(spark, table), str(available), keys)
+        check_label_schema(table, label_types(spark, table), str(available), record_key_columns)
     return warnings
 
 

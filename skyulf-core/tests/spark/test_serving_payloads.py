@@ -791,11 +791,21 @@ class _StreamingLabels:
         raise RuntimeError("STREAMING_TABLE_OPERATION_NOT_ALLOWED")
 
 
-@pytest.mark.parametrize("target,values", [("target_a", (11.0, 19.0)), ("target_b", (1.0, 2.0))])
+@pytest.mark.parametrize(
+    "target,values,model_set",
+    [
+        ("target_a", (11.0, 19.0), True),
+        ("target_b", (1.0, 2.0), True),
+        ("target_a", (11.0, 19.0), False),
+    ],
+)
 def test_model_set_labels_join_latest_request_by_text_and_date_keys(
-    spark, monkeypatch, target, values
+    spark, monkeypatch, target, values, model_set
 ):
-    """Silver labels (int/DATE keys, DATE availability) score only the latest request per key."""
+    """Silver labels (int/DATE keys, DATE availability) score only the latest request per key.
+
+    A single-model endpoint joins the same way when its callers pass the training keys.
+    """
     from skyulf.integrations.databricks.observability.monitoring.spark import (
         spark_monitoring_sources,
     )
@@ -844,9 +854,11 @@ def test_model_set_labels_join_latest_request_by_text_and_date_keys(
         serving_endpoint="endpoint",
         label_table="a.b.silver",
         result_available_at_column="available",
-        model_set_name="a.b.group",
-        model_set_version="2",
-        model_set_branch="risk",
+        **(
+            {"model_set_name": "a.b.group", "model_set_version": "2", "model_set_branch": "risk"}
+            if model_set
+            else {}
+        ),
     )
     spec = type("Spec", (), {"record_key_columns": ("company", "month"), "target_column": target})
     scored, joined, evidence = read_serving_labels(

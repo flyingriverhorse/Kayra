@@ -88,10 +88,11 @@ Skyulf picks the join from the label table's columns; there is no setting.
 | Label table has | Join | Endpoints |
 | --- | --- | --- |
 | `databricks_request_id` and `request_row_index` | each request row | all endpoints |
-| the model set's record keys (for example silver) | latest request per key | model-set endpoints only |
+| the training record keys (for example silver) | latest request per key | model-set endpoints; single-model endpoints whose callers pass the keys |
 
 A model-set endpoint already receives its record keys in every request, so the
-payload log has them. With a record-key table:
+payload log has them. A single-model endpoint receives them when callers pass
+them (see below). With a record-key table:
 
 - When one key was requested more than once in the window (for example daily
   re-scoring of one company-month), only the latest request counts. The report's
@@ -116,9 +117,20 @@ SELECT s.company_id, s.month_end,
 FROM main.silver.companies AS s;
 ```
 
-A single-model endpoint does not receive record keys, so its label table still
-needs `databricks_request_id` and `request_row_index` (a request-outcomes table).
-That table also remains an option for a model set.
+For a single-model endpoint the SQL function takes the training record keys as
+optional arguments after the model inputs (`DEFAULT NULL`); the model ignores
+them. Pass them by name:
+
+```sql
+SELECT main.ml.risk_score(`amount` => s.`amount`, `order_id` => s.`order_id`) AS result
+FROM main.source.orders AS s;
+```
+
+REST callers add the same key names as extra fields in each `dataframe_records`
+row. Calls without keys work as before; their requests are counted as
+`unkeyed_requests`. A label table with `databricks_request_id` and
+`request_row_index` (a request-outcomes table) remains an option for every
+endpoint and needs no keys in the request.
 
 The label table may be a Streaming Table, materialized view or view. Those are
 read as they are now, without a Delta version pin; the availability column

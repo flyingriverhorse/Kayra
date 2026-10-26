@@ -22,7 +22,7 @@ from ..serving.managed_endpoint import (
     validate_serving_principals,
     validate_serving_tags,
 )
-from ..serving.sql_functions import ServingSQLFunctionPlan, build_serving_sql_function
+from ..serving.sql_functions import KEY_TYPES, ServingSQLFunctionPlan, build_serving_sql_function
 from .serving_enrollment import (
     build_serving_monitoring_configs,
     enroll_verified_serving,
@@ -246,6 +246,37 @@ def sample_serving_rows(
     return [row.asDict(recursive=True) for row in sample]
 
 
+def request_record_keys(
+    spark: Any, registry: Any, plan: PinnedEndpointPlan, source_table: str
+) -> tuple[tuple[str, str], ...]:
+    """Type the training record keys a single-model request may carry for the label join.
+
+    Names come from the registered run's saved training spec, the same document
+    monitoring reads; types come from the scoring source. A model set returns no
+    keys because its requests already carry them as inputs. Keys missing from the
+    source or of a type that cannot match label text (decimal, timestamp) return
+    none, so the deploy works as before and labels need request columns.
+    """
+    if plan.record_key_columns:
+        return ()
+    from ..observability.monitoring.monitoring_reference import (  # noqa: PLC0415
+        reference_document,
+    )
+
+    run_id = registry.get_model_version(plan.spec.model_name, plan.spec.model_version).run_id
+    saved = reference_document(registry, run_id, "candidate_training_spec.json")
+    keys = tuple(saved["record_key_columns"])
+    types = {f.name: f.dataType.simpleString() for f in spark.table(source_table).schema.fields}
+    if any(types.get(key) not in KEY_TYPES for key in keys):
+        return ()
+    return tuple((key, types[key]) for key in keys)
+
+
+def _label_keys(plan: PinnedEndpointPlan, keys: tuple[tuple[str, str], ...]) -> tuple[str, ...]:
+    """Model-set requests carry their keys as inputs; a single model uses the training keys."""
+    return plan.record_key_columns or tuple(name for name, _ in keys)
+
+
 def _smoke_frame(raw: list[dict], plan: PinnedEndpointPlan) -> pd.DataFrame:
     """Restore saved dtypes without turning missing boolean inputs into real values."""
     columns = {}
@@ -401,7 +432,7 @@ def _request_examples(
     return {
         "sql": None
         if function is None
-        else f"SELECT {function.call_sql()} AS prediction FROM {source};",
+        else f"SELECT {function.call_sql(record_keys=True)} AS prediction FROM {source};",
         "rest_path": f"/serving-endpoints/{plan.spec.endpoint_name}/invocations",
         "rest_body": {"dataframe_records": [record]},
         "python": "from databricks.sdk import WorkspaceClient\nclient = WorkspaceClient()\nrecords = "
@@ -440,8 +471,11 @@ def run_serving_endpoint(
         tracking_uri=settings.get("tracking_uri", "databricks"),
         registry_uri=settings.get("registry_uri", "databricks-uc"),
     )
+    keys = request_record_keys(spark, registry_client, plan, source_table)
     sql = settings["sql_function"]
-    function = build_serving_sql_function(plan, sql["name"]) if sql["enabled"] else None
+    function = (
+        build_serving_sql_function(plan, sql["name"], record_keys=keys) if sql["enabled"] else None
+    )
     raw = sample_serving_rows(
         spark,
         source_table,
@@ -462,7 +496,7 @@ def run_serving_endpoint(
         monitoring_values,
         {} if namespace is None else model.metadata.metadata,
     )
-    label_warnings = validate_serving_label_sources(spark, configs, plan.record_key_columns)
+    label_warnings = validate_serving_label_sources(spark, configs, _label_keys(plan, keys))
     owner = settings["ownership"]
     result = ensure_owned_endpoint(
         client, plan, ownership=owner, tags=settings["tags"], permissions=settings["permissions"]

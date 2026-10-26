@@ -424,18 +424,18 @@ def test_model_set_endpoint_accepts_record_key_labels_with_date_availability(kin
     assert any("00:00 UTC" in warning for warning in report["warnings"])
 
 
-def test_single_model_endpoint_still_needs_request_columns():
-    """A single-model request carries no record keys, so preview keeps the request contract."""
+def test_single_model_endpoint_accepts_record_key_labels():
+    """Single-model callers may pass record keys too, so preview accepts the same silver table."""
     from skyulf.integrations.databricks.projects.source_validation import validate_project_sources
 
     query, _ = _endpoint_query(SILVER)
-    with pytest.raises(ValueError, match="databricks_request_id"):
-        validate_project_sources(
-            _endpoint_config("single_model"),
-            query,
-            label_table="cat.data.labels",
-            label_available_at_column="known_at",
-        )
+    report = validate_project_sources(
+        _endpoint_config("single_model"),
+        query,
+        label_table="cat.data.labels",
+        label_available_at_column="known_at",
+    )
+    assert report["status"] == "passed"
 
 
 def test_record_key_label_types_must_match_request_text():

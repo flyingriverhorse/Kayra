@@ -62,6 +62,7 @@ def delivery(monkeypatch):
     )
     monkeypatch.setattr(job, "prepare_pinned_endpoint", prepare)
     monkeypatch.setattr(job, "_load_pyfunc", lambda *args: model)
+    monkeypatch.setattr(job, "request_record_keys", lambda *args: ())
     monkeypatch.setattr(job, "sample_serving_rows", lambda *args, **kwargs: [{"value": 2.0}])
     monkeypatch.setattr(job, "_sql_input_frame", lambda *args: (Mock(), "ordinal"))
     endpoint = Mock(side_effect=lambda *args, **kwargs: events.append("endpoint") or {})

@@ -201,7 +201,8 @@ def test_online_observation_routes_event_keys_and_operational_evidence(
 
     saved = artifact()
     spec = SimpleNamespace(record_key_columns=("company_id",), target_column="target")
-    reference, current, predictions, labels = object(), object(), object(), object()
+    # Predictions are a frame: the record-key columns are dropped before the request join.
+    reference, current, predictions, labels = object(), object(), Mock(), object()
     now = datetime(2026, 10, 6, tzinfo=UTC)
     serving = {
         "request_count": 4,
@@ -438,11 +439,11 @@ def test_missing_label_table_awaits_labels_at_monitoring_time(monkeypatch):
         performance_policy=policy() | {"baseline": {"kind": "training_holdout"}},
     )
     spec = SimpleNamespace(record_key_columns=("company",), target_column="target")
-    predictions = object()
+    predictions = Mock()
     kept, labels, evidence = read_serving_labels(
         spark, selected, spec, predictions, datetime.now(UTC)
     )
-    assert (kept, labels) == (predictions, None)
+    assert (kept, labels) == (predictions.drop.return_value, None)
     assert evidence["label_state"] == "awaiting_labels"
     now = datetime(2026, 10, 6, tzinfo=UTC)
     monkeypatch.setattr(
@@ -473,7 +474,7 @@ def test_wrong_label_schema_fails_instead_of_awaiting_labels():
     spec = SimpleNamespace(record_key_columns=("company",), target_column="target")
     spark = _LabelSpark(None, {}, schema_exists=False)
     with pytest.raises(ValueError, match="schema a.typo does not exist"):
-        read_serving_labels(spark, selected, spec, object(), datetime.now(UTC))
+        read_serving_labels(spark, selected, spec, Mock(), datetime.now(UTC))
 
 
 def test_batch_monitoring_still_fails_on_a_missing_label_table():
@@ -516,7 +517,7 @@ def test_record_key_type_is_checked_when_the_label_table_appears_later():
     ],
 )
 def test_label_join_mode_is_detected_from_label_columns(columns, record, expected):
-    """Request columns keep today's join; only model-set endpoints may join on record keys."""
+    """Request columns keep today's join; without them an endpoint joins on its record keys."""
     from skyulf.integrations.databricks.observability.monitoring.serving.serving_labels import (
         REQUEST_KEYS,
         label_join_keys,
@@ -528,6 +529,24 @@ def test_label_join_mode_is_detected_from_label_columns(columns, record, expecte
     else:
         with pytest.raises(ValueError, match=expected):
             label_join_keys("a.b.labels", columns, record)
+
+
+def test_single_model_endpoint_uses_its_training_record_keys():
+    """Single-model callers may pass the training keys, so monitoring parses and joins them."""
+    from skyulf.integrations.databricks.jobs.serving_enrollment import (
+        validate_serving_label_sources,
+    )
+    from skyulf.integrations.databricks.observability.monitoring.serving.serving_labels import (
+        serving_record_keys,
+    )
+
+    spec = SimpleNamespace(record_key_columns=("company",), target_column="target")
+    assert serving_record_keys(config(), spec) == ("company",)
+    spark = _LabelSpark("MANAGED", {"company": "string", "month": "date"})
+    selected = config(label_table="a.b.labels", result_available_at_column="month")
+    assert validate_serving_label_sources(spark, [selected], ("company",)) == []
+    with pytest.raises(ValueError, match="business record keys"):
+        validate_serving_label_sources(spark, [selected], ())
 
 
 def test_record_key_join_changes_population_digest_only_in_record_mode():
@@ -548,7 +567,7 @@ def test_record_key_join_changes_population_digest_only_in_record_mode():
         (None, {}, True, "does not exist yet"),
         ("schema", {}, True, "schema a.b does not exist"),
         ("STREAMING_TABLE", {"company": "string", "month": "date", "y": "double"}, True, None),
-        ("MANAGED", {"company": "string", "month": "timestamp"}, False, "business record keys"),
+        ("MANAGED", {"company": "string", "month": "timestamp"}, False, None),
         (
             "MANAGED",
             {"databricks_request_id": "string", "request_row_index": "integer", "month": "long"},

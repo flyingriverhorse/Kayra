@@ -1,4 +1,4 @@
-"""Join delayed labels to endpoint predictions by request rows or model-set record keys."""
+"""Join delayed labels to endpoint predictions by request rows or record keys."""
 
 import importlib
 from datetime import datetime
@@ -17,12 +17,16 @@ _TEXT_KEY_TYPES = _INTEGRAL | {"string", "boolean", "date"}
 
 
 def serving_record_keys(config: MonitorConfig, spec: Any) -> tuple[str, ...]:
-    """Model-set requests carry the record keys; single-model requests do not."""
-    return tuple(spec.record_key_columns) if config.model_set_name else ()
+    """Return the training record keys a request may carry.
+
+    Model-set requests always carry them; single-model callers pass them as optional
+    fields. A request without them is counted as unkeyed.
+    """
+    return tuple(spec.record_key_columns)
 
 
 def label_join_keys(table: str, columns: set[str], record_keys: tuple[str, ...]) -> tuple[str, ...]:
-    """Prefer request columns when the label table has them, else the model-set record keys."""
+    """Prefer request columns when the label table has them, else the record keys."""
     if set(REQUEST_KEYS) <= columns:
         return REQUEST_KEYS
     if not record_keys:
@@ -34,7 +38,7 @@ def label_join_keys(table: str, columns: set[str], record_keys: tuple[str, ...])
     missing = sorted(set(record_keys) - columns)
     if missing:
         raise ValueError(
-            f"Serving label table {table} needs the model-set record keys "
+            f"Serving label table {table} needs the record keys "
             f"({', '.join(record_keys)}) or databricks_request_id and request_row_index; "
             f"missing: {', '.join(missing)}."
         )
@@ -109,9 +113,9 @@ def read_serving_labels(
 ) -> tuple[Any, Any | None, dict]:
     """Return performance predictions and labels keyed by request rows, plus label evidence.
 
-    A label table with request columns keeps the request join. Otherwise a model-set
-    endpoint joins on its record keys: only the latest request per key counts, and rows
-    without keys are left out of performance (drift keeps every request row).
+    A label table with request columns keeps the request join. Otherwise the endpoint
+    joins on its record keys: only the latest request per key counts, and rows without
+    keys are left out of performance (drift keeps every request row).
     """
     from ..spark.spark_monitoring_sources import read_spark_labels  # noqa: PLC0415
 
@@ -122,7 +126,6 @@ def read_serving_labels(
     if table is not None and label_table_missing(spark, table):
         return request_rows, None, {"label_table": table, "label_state": AWAITING_LABELS}
     keys = REQUEST_KEYS
-    # Single-model requests carry no record keys, so only a model set can switch join.
     if record and table is not None:
         available = str(config.result_available_at_column)
         keys = check_label_schema(table, label_types(spark, table), available, record)

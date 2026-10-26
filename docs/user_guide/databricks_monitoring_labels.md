@@ -58,8 +58,7 @@ is outcome availability, not the prediction time or the job execution time.
 | Observation source | Required label identity |
 | --- | --- |
 | Batch predictions | The model's saved `record_key_columns`, including every component of a composite key. |
-| Model-set endpoint predictions | The model set's record keys (for example a silver table), or the request columns below. |
-| Single-model endpoint predictions | `databricks_request_id` plus zero-based `request_row_index`, distinguishing multiple rows in one request. |
+| Endpoint predictions | The training record keys (for example a silver table), when callers send them; or `databricks_request_id` plus zero-based `request_row_index` (a request-outcomes table). |
 
 All need the saved target column and a valid availability value: a UTC timestamp, an aware ISO
 timestamp string, or a DATE (00:00 UTC that day). Eligible label keys must be unique. Actuals must
@@ -68,11 +67,12 @@ use the saved classification classes or finite numeric regression targets.
 For endpoints, Skyulf picks the join from the label table's columns. A table with
 `databricks_request_id` (string) and `request_row_index` (integer) is a request-outcomes
 table: keep the request ID returned by serving and the position of each input row when
-recording the outcome, and two requests for the same record stay two observations. A
-model-set endpoint receives its record keys in every request, so its label table can be
-the table that already holds the keys and targets: the latest request per key is matched
-and the older rows are counted as `duplicate_key_rows`. A single-model endpoint does not
-receive record keys and still needs the request-outcomes table. See
+recording the outcome, and two requests for the same record stay two observations.
+Otherwise the label table can be the table that already holds the record keys and
+targets: the latest request per key is matched and the older rows are counted as
+`duplicate_key_rows`. A model-set endpoint receives its keys in every request; a
+single-model endpoint receives them when callers pass them (the Skyulf SQL function takes
+them as optional arguments). Requests without keys are counted as `unkeyed_requests`. See
 [how labels join an endpoint](databricks_serving_monitoring.md#how-labels-join-an-endpoint).
 
 The endpoint job checks these columns before creating or updating serving resources. For an

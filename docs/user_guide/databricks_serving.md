@@ -196,6 +196,15 @@ SELECT main.ml.risk_score(`amount` => s.`amount`) AS result
 FROM main.source.customers AS s;
 ```
 
+For a single-model endpoint the function also takes the training record keys as
+optional arguments after the inputs, typed from the scoring source and
+`DEFAULT NULL`, for example `` `customer_id` => s.`customer_id` ``. They are sent
+as text and the model ignores them; endpoint monitoring uses them to
+[join delayed labels on record keys](databricks_serving_monitoring.md#how-labels-join-an-endpoint).
+Calls without them return the same predictions. The job's printed SQL example
+includes them. The first serving run after upgrading replaces an existing
+single-model function once to add these arguments.
+
 #### REST for applications
 
 ```yaml

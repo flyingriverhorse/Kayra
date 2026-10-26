@@ -439,11 +439,12 @@ version works. See [serving and caller examples](https://www.skyulf.com/manual/u
 [serving monitoring](https://www.skyulf.com/manual/user_guide/databricks_serving_monitoring.html),
 and [traffic rollout](https://www.skyulf.com/manual/user_guide/databricks_serving_rollout.html).
 
-Endpoint labels: a model-set endpoint receives its record keys in every request,
-so `monitoring_label_table` can be the table that already holds the keys and
-targets (a Streaming Table works); the latest request per key is matched. A
-single-model endpoint needs a table with `databricks_request_id` and
-`request_row_index`. The label table may be created after the endpoint:
+Endpoint labels: `monitoring_label_table` can be the table that already holds the
+record keys and targets (a Streaming Table works); the latest request per key is
+matched. A model set receives its keys in every request; a single model receives
+them when callers pass them to the SQL function (optional key arguments). A table
+with `databricks_request_id` and `request_row_index` also works. The label table may
+be created after the endpoint:
 performance shows `awaiting_labels` until then. Call the endpoint through the SQL
 function in `config/serving.yml` (`sql_function.name`) with the record keys as
 arguments, so the endpoint can be renamed without breaking callers. Switching to
