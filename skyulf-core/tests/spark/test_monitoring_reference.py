@@ -20,3 +20,17 @@ def test_prepared_frame_preserves_all_null_source_type(spark):
     )
     assert frame.schema["optional"].dataType.typeName() == "string"
     assert frame.where("optional IS NULL").count() == 2
+
+
+def test_replayed_schema_keeps_saved_types_and_never_returns_null_type(spark):
+    """Unversioned references take types from saved rows, not a possibly redefined table."""
+    from skyulf.integrations.databricks.observability.monitoring.spark.spark_monitoring_reference import (
+        _replayed_schema,
+    )
+
+    schema = _replayed_schema(pd.DataFrame({"id": [1, 2], "x": [1.5, None], "empty": [None, None]}))
+    assert [(f.name, f.dataType.typeName()) for f in schema.fields] == [
+        ("id", "long"),
+        ("x", "double"),
+        ("empty", "string"),
+    ]

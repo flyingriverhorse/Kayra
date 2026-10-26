@@ -189,6 +189,18 @@ def _prepared_frame(spark: Any, frame: pd.DataFrame, source_schema: Any, spec: A
     return spark.createDataFrame(frame, schema=schema)
 
 
+def _replayed_schema(frame: pd.DataFrame) -> Any:
+    """Spark types of saved training rows; a column that is null in every row reads as string."""
+    arrow = importlib.import_module("pyarrow")
+    conversion = importlib.import_module("pyspark.sql.pandas.types")
+    types = importlib.import_module("pyspark.sql.types")
+    schema = conversion.from_arrow_schema(arrow.Schema.from_pandas(frame, preserve_index=False))
+    for field in schema.fields:
+        if isinstance(field.dataType, types.NullType):
+            field.dataType = types.StringType()
+    return schema
+
+
 def prepare_spark_monitoring_reference(
     spark: Any,
     config: MonitorConfig,
@@ -274,12 +286,13 @@ def _prepare_reference(
     )
     from ....data.training.training_labels import join_training_labels  # noqa: PLC0415
 
-    # Only the schema is used; an unversioned source has no version to read it at.
+    # Only the schema is used. An unversioned source may have been redefined since
+    # training, so its types come from the replayed rows, not the live table.
     if spec.source_kind is not None:
-        raw = spark.read.table(spec.table)
+        source_schema = _replayed_schema(source)
     else:
         raw = read_snapshot(spark, spec.table, spec.version)
-    source_schema = join_training_labels(spark, raw, spec).schema
+        source_schema = join_training_labels(spark, raw, spec).schema
     source_columns: list[str] = source_receipt["columns"]
     prepared_source = _prepared_frame(spark, source.loc[:, source_columns], source_schema, spec)
     source_identity = source_snapshot_identity(

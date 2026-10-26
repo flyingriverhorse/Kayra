@@ -20,6 +20,8 @@ def _query(schema_changes=None, *, cdf=True, duplicate=False, availability_type=
             return [{"col_name": name, "data_type": kind} for name, kind in values.items()]
         if sql.startswith("SELECT"):
             return [{"problem": 1}] if duplicate and "HAVING" in sql else []
+        if sql.startswith("SHOW TABLES IN"):
+            return [{"tableName": sql.split("'")[1]}]
         raise AssertionError(f"Unexpected SQL: {sql}")
 
     return execute, statements
@@ -74,7 +76,7 @@ def test_monitoring_text_availability_has_runtime_warning():
     )
 
 
-@pytest.mark.parametrize("kind", ["timestamp_ntz", "date", "bigint"])
+@pytest.mark.parametrize("kind", ["timestamp_ntz", "bigint"])
 def test_monitoring_rejects_unsupported_availability_types(kind):
     """Training parsing rules must not silently admit unsupported monitoring timestamps."""
     from skyulf.integrations.databricks.projects.source_validation import validate_project_sources
@@ -372,3 +374,105 @@ def test_training_source_of_another_type_keeps_the_delta_error():
     query, _ = _unversioned_query("MANAGED")
     with pytest.raises(ValueError, match="EXPECT_TABLE_NOT_VIEW"):
         validate_project_sources(_config(), query)
+
+
+def _endpoint_query(label_columns, *, exists=True, schema_exists=True, kind=None):
+    """Answer an endpoint label table separately; other tables reuse the Delta answers."""
+    execute, statements = _query()
+
+    def query(sql):
+        """Model SHOW TABLES, an optional unversioned label table and its own schema."""
+        if sql.startswith("SHOW TABLES IN"):
+            if not schema_exists:
+                raise ValueError("Source validation query did not complete: SCHEMA_NOT_FOUND.")
+            return [{"tableName": "labels"}] if exists else []
+        if "labels" not in sql:
+            return execute(sql)
+        statements.append(sql)
+        if sql.startswith("DESCRIBE DETAIL") and kind:
+            raise ValueError("Source validation query did not complete: EXPECT_TABLE_NOT_VIEW.")
+        if sql.startswith("DESCRIBE TABLE EXTENDED"):
+            return [{"col_name": "Type", "data_type": kind or "MANAGED"}]
+        if sql.startswith("DESCRIBE TABLE"):
+            return [{"col_name": name, "data_type": dtype} for name, dtype in label_columns.items()]
+        return execute(sql)
+
+    return query, statements
+
+
+def _endpoint_config(layout="multi_target"):
+    """An endpoint project; a multi-target layout serves a model set."""
+    return _config() | {"prediction_delivery": "endpoint", "training_layout": layout}
+
+
+SILVER = {"id": "bigint", "y": "double", "known_at": "date"}
+
+
+@pytest.mark.parametrize("kind", [None, "STREAMING_TABLE", "MATERIALIZED_VIEW"])
+def test_model_set_endpoint_accepts_record_key_labels_with_date_availability(kind):
+    """Preview must accept the silver label table that endpoint monitoring now joins."""
+    from skyulf.integrations.databricks.projects.source_validation import validate_project_sources
+
+    query, _ = _endpoint_query(SILVER, kind=kind)
+    report = validate_project_sources(
+        _endpoint_config(),
+        query,
+        label_table="cat.data.labels",
+        label_available_at_column="known_at",
+    )
+    assert report["status"] == "passed"
+    assert any("00:00 UTC" in warning for warning in report["warnings"])
+
+
+def test_single_model_endpoint_still_needs_request_columns():
+    """A single-model request carries no record keys, so preview keeps the request contract."""
+    from skyulf.integrations.databricks.projects.source_validation import validate_project_sources
+
+    query, _ = _endpoint_query(SILVER)
+    with pytest.raises(ValueError, match="databricks_request_id"):
+        validate_project_sources(
+            _endpoint_config("single_model"),
+            query,
+            label_table="cat.data.labels",
+            label_available_at_column="known_at",
+        )
+
+
+def test_record_key_label_types_must_match_request_text():
+    """A TIMESTAMP record key would never equal the request's text value."""
+    from skyulf.integrations.databricks.projects.source_validation import validate_project_sources
+
+    query, _ = _endpoint_query(SILVER | {"id": "timestamp"})
+    with pytest.raises(ValueError, match="id.*timestamp"):
+        validate_project_sources(
+            _endpoint_config(),
+            query,
+            label_table="cat.data.labels",
+            label_available_at_column="known_at",
+        )
+
+
+def test_endpoint_label_table_may_not_exist_yet_but_its_schema_must():
+    """Like enrollment, preview warns for a missing endpoint label table and fails a bad schema."""
+    from skyulf.integrations.databricks.projects.source_validation import validate_project_sources
+
+    query, _ = _endpoint_query(SILVER, exists=False)
+    report = validate_project_sources(
+        _endpoint_config(),
+        query,
+        label_table="cat.data.labels",
+        label_available_at_column="known_at",
+    )
+    assert "cat.data.labels" not in report["tables"]
+    assert any(
+        "cat.data.labels does not exist yet" in warning and "awaiting_labels" in warning
+        for warning in report["warnings"]
+    )
+    query, _ = _endpoint_query(SILVER, schema_exists=False)
+    with pytest.raises(ValueError, match="SCHEMA_NOT_FOUND"):
+        validate_project_sources(
+            _endpoint_config(),
+            query,
+            label_table="cat.data.labels",
+            label_available_at_column="known_at",
+        )

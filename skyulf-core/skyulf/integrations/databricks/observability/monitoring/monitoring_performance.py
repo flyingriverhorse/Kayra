@@ -9,13 +9,14 @@ from .....inference.pipeline_scoring import score_pipeline
 from ...shared._contracts import table_name
 from .monitoring_config import MonitorConfig, json_digest, qualified_name
 from .monitoring_metrics import build_performance_report
-from .monitoring_sources import read_current_observation, read_labels
+from .monitoring_sources import AWAITING_LABELS, read_current_observation, read_labels
 from .performance.performance_policy import (
     completed_performance_window,
     evaluate_performance,
     selected_performance_window,
     validate_performance_policy,
 )
+from .serving.serving_labels import read_serving_labels, serving_record_keys
 from .serving.serving_observation import (
     observation_keys,
     read_serving_observation,
@@ -73,6 +74,8 @@ def population_contract(metric_digest: str, evidence: dict) -> str:
     }
     if any(not isinstance(value, str) or not value for value in identity.values()):
         raise ValueError("Performance requires concrete source, prediction and label table IDs.")
+    if evidence.get("label_join_keys"):
+        identity["label_join_keys"] = evidence["label_join_keys"]
     if evidence.get("feature_lookup") is not None:
         from ...feature_store.lifecycle_config import parse_feature_binding  # noqa: PLC0415
 
@@ -178,6 +181,22 @@ def _production_baseline(
     return {**saved, "report_id": report_id} if saved else None
 
 
+def _performance_labels(
+    spark: Any,
+    config: MonitorConfig,
+    spec: Any,
+    keys: tuple[str, ...],
+    predictions: Any,
+    now: datetime,
+    label_reader: Any,
+) -> tuple[Any, Any, dict]:
+    """Endpoints may drop repeated or unkeyed requests; batch predictions pass unchanged."""
+    if config.serving_endpoint:
+        return read_serving_labels(spark, config, spec, predictions, now)
+    labels, evidence = label_reader(spark, config, keys, spec.target_column, predictions, now)
+    return predictions, labels, evidence
+
+
 def observe_performance(
     spark: Any,
     namespace: str,
@@ -208,7 +227,11 @@ def observe_performance(
     observation_reader = bind_observation_reader(observation_reader, config, artifact)
     keys = observation_keys(config, spec)
     if config.serving_endpoint:
-        observation_reader = partial(read_serving_observation, artifact=artifact)
+        observation_reader = partial(
+            read_serving_observation,
+            artifact=artifact,
+            record_keys=serving_record_keys(config, spec),
+        )
     _, predictions, evidence, _ = observation_reader(
         spark,
         config,
@@ -220,7 +243,13 @@ def observe_performance(
         start=start,
         end=end,
     )
-    labels, label_evidence = label_reader(spark, config, keys, spec.target_column, predictions, now)
+    predictions, labels, label_evidence = _performance_labels(
+        spark, config, spec, keys, predictions, now, label_reader
+    )
+    if label_evidence.get("label_state") == AWAITING_LABELS:
+        reason = f"{AWAITING_LABELS}: {config.label_table} does not exist yet"
+        awaiting = unavailable_performance(config, now, reason, reference["model_version"])
+        return awaiting | {"window_start": start.isoformat(), "window_end": end.isoformat()}
     report = _measure(predictions, labels, artifact, spec, config, now)
     metric_digest = performance_contract(artifact, spec, config)
     current = {

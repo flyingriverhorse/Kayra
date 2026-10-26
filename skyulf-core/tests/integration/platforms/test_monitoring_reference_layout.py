@@ -39,6 +39,7 @@ def prepared_reference(monkeypatch):
         target="y",
         trace=None,
         replace_on_acquire=False,
+        source_kind=None,
     ):
         """Return actual serialized membership while replacing only remote dependencies."""
         frame = source.rename(columns={"y": target}).copy()
@@ -61,7 +62,8 @@ def prepared_reference(monkeypatch):
             }
         spec = TrainingSpec(
             table="a.b.training",
-            version=1,
+            version=0 if source_kind else 1,
+            source_kind=source_kind,
             record_key_columns=("id",),
             input_columns=tuple(inputs),
             target_column=target,
@@ -370,3 +372,15 @@ def test_membership_name_avoids_case_insensitive_spark_columns():
     assert marker == "_is_train"
     assert population["IS_TRAIN"].tolist() == [7, 7]
     assert population[marker].tolist() == [True, False]
+
+
+def test_unversioned_reference_types_come_from_replayed_rows(prepared_reference, monkeypatch):
+    """A redefined ST or MV must not retype the rows that training saved and monitoring replays."""
+    replayed = []
+    monkeypatch.setattr(
+        reference, "_replayed_schema", lambda frame: replayed.append(frame) or "saved-schema"
+    )
+    # The harness Spark has no .read, so any live source read fails this test.
+    receipt, _ = prepared_reference(source_kind="MATERIALIZED_VIEW")
+    assert receipt["format"] == 2
+    assert len(replayed) == 1 and list(replayed[0].columns) == ["id", "x", "y"]

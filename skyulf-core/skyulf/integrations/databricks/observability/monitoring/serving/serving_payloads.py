@@ -11,6 +11,7 @@ from typing import Any
 
 REQUEST_KEY = "databricks_request_id"
 ROW_KEY = "request_row_index"
+REQUEST_TIME = "__skyulf_request_time"
 _LATENCY_BUCKET_EDGES_MS = (5, 10, 25, 50, 100, 250, 500, 1000)
 _PAYLOAD_COLUMNS = (
     REQUEST_KEY,
@@ -207,6 +208,19 @@ def _expand(parsed: Any, field: str) -> Any:
     return parsed.select(REQUEST_KEY, fn.posexplode(fn.col(field)).alias(ROW_KEY, "_record"))
 
 
+def _request_keys(parsed: Any, keys: tuple[str, ...]) -> Any:
+    """Carry caller record keys and request time for the delayed-label join."""
+    fn = _spark_functions()
+    rows = parsed.select(
+        REQUEST_KEY,
+        fn.col("request_time").alias(REQUEST_TIME),
+        fn.posexplode(fn.col("_inputs")).alias(ROW_KEY, "_record"),
+    )
+    return rows.select(
+        REQUEST_KEY, ROW_KEY, REQUEST_TIME, *(fn.col("_record").getItem(k).alias(k) for k in keys)
+    )
+
+
 def _output_name(name: str, dtype: str, prefix: str) -> str:
     """Validate a scalar column contract in its original configured order."""
     if not name.startswith(prefix):
@@ -333,6 +347,7 @@ def parse_serving_payloads(
     output_prefix: str,
     start: datetime,
     end: datetime,
+    record_key_columns: tuple[str, ...] = (),
 ) -> tuple[Any, Any, dict[str, int | float | list[int] | None], datetime | None]:
     """Read one served version into distributed features and saved predictions.
 
@@ -340,6 +355,8 @@ def parse_serving_payloads(
     operational counts. Only successful requests without logging errors supply
     features and saved predictions; logging_error_count counts affected requests,
     not error codes or prediction rows. Identity and sampling checks remain strict.
+    ``record_key_columns`` adds those request fields as text (NULL when absent)
+    and the request time to each prediction row, without validating them.
     """
     fn = _spark_functions()
     _require_columns(payloads, _PAYLOAD_COLUMNS, "inference payloads")
@@ -361,4 +378,7 @@ def parse_serving_payloads(
     current = _typed_records(_expand(parsed, "_inputs"), input_columns)
     predictions = _typed_records(_expand(parsed, "_outputs"), output_columns, output_prefix)
     summary, observed_at = _summary(selected, predictions)
+    if record_key_columns:
+        keys = _request_keys(parsed, record_key_columns)
+        predictions = predictions.join(keys, [REQUEST_KEY, ROW_KEY], "left")
     return current, predictions, summary, observed_at

@@ -109,7 +109,7 @@ variables:
   monitoring_performance_policies:
     description: 'JSON object keyed by fully qualified component model name; {} disables performance policy'
 {{if eq .performance_policy_mode "off"}}    default: '{}'
-{{else}}    # Verify concrete baseline versions before activation; edit each component independently.
+{{else}}    # No baseline.model_version: each enrolled version is compared with its own training holdout.
     default: >-
       {
 {{if eq .training_layout "multi_target"}}{{range $slot := (regexp "[1-8]").FindAllString "12345678" -1}}{{if le $slot $.branch_count}}        {{if ne $slot "1"}},{{end}}"${var.catalog}.${var.metadata_schema}.{{$.project_name}}_{{index $ (printf "branch_%s_name" $slot)}}${var.resource_suffix}": {{template "performance_policy" (map (pair "values" $) (pair "task" (index $ (printf "branch_%s_task" $slot))))}}

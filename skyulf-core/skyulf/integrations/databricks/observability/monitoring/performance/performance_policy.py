@@ -67,12 +67,20 @@ def _baseline_reference(value: Any) -> dict:
         report_id = value.get("report_id")
         if not _is_digest(report_id):
             raise ValueError("baseline.report_id must be a SHA-256 hex digest.")
+    # A training holdout without a version means the version being enrolled.
+    if kind == "training_holdout" and "model_version" not in value:
+        allowed.discard("model_version")
     if set(value) != allowed:
         raise ValueError("baseline has missing or unknown fields.")
-    version = value.get("model_version")
+    if "model_version" in value:
+        _baseline_version(value["model_version"])
+    return deepcopy(value)
+
+
+def _baseline_version(version: Any) -> None:
+    """Require a concrete registry version rather than an alias or malformed text."""
     if type(version) is not str or not re.fullmatch(r"[1-9][0-9]*", version):
         raise ValueError("baseline.model_version must be a concrete positive version string.")
-    return deepcopy(value)
 
 
 def _is_digest(value: Any) -> bool:

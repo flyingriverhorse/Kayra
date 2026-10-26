@@ -86,6 +86,7 @@ def test_labels_are_joined_on_spark_and_replacement_rejected(spark, monkeypatch)
         [(1, 3.0, cutoff), (2, 4.0, cutoff), (3, 8.0, cutoff)],
         "id long, target double, available_at timestamp",
     )
+    monkeypatch.setattr(sources, "label_table_kind", lambda *args: "MANAGED")
     monkeypatch.setattr(sources, "read_snapshot", lambda *args: labels)
     monkeypatch.setattr(sources, "snapshot_at", lambda *args: 4)
     monkeypatch.setattr(sources, "table_identity", lambda *args: "original")

@@ -92,6 +92,8 @@ create or fill input tables; they must exist.
 - Setup already wrote your answers into `config/training.yml` under `defaults:`
   (`training_table`, `record_key_columns`, `input_columns`, `target_column`); edit
   them there.
+- `training_table` may be a Delta table, a streaming table, a materialized view or a
+  view. Training reads it once per run and every later step replays those saved rows.
 - Scoring reads new rows through Change Data Feed. Turn it on once per source table:
 
   ```sql
@@ -393,6 +395,16 @@ separate monitoring job after requests arrive. Learn rollout only after one
 version works. See [serving and caller examples](https://www.skyulf.com/manual/user_guide/databricks_serving.html),
 [serving monitoring](https://www.skyulf.com/manual/user_guide/databricks_serving_monitoring.html),
 and [traffic rollout](https://www.skyulf.com/manual/user_guide/databricks_serving_rollout.html).
+
+Endpoint labels: a model-set endpoint receives its record keys in every request,
+so `monitoring_label_table` can be the table that already holds the keys and
+targets (a Streaming Table works); the latest request per key is matched. A
+single-model endpoint needs a table with `databricks_request_id` and
+`request_row_index`. The label table may be created after the endpoint:
+performance shows `awaiting_labels` until then. Call the endpoint through the SQL
+function in `config/serving.yml` (`sql_function.name`) with the record keys as
+arguments, so the endpoint can be renamed without breaking callers. Switching to
+a record-key label table starts a new performance streak.
 
 ## Optional feature tables
 

@@ -462,7 +462,7 @@ def run_serving_endpoint(
         monitoring_values,
         {} if namespace is None else model.metadata.metadata,
     )
-    validate_serving_label_sources(spark, configs)
+    label_warnings = validate_serving_label_sources(spark, configs, plan.record_key_columns)
     owner = settings["ownership"]
     result = ensure_owned_endpoint(
         client, plan, ownership=owner, tags=settings["tags"], permissions=settings["permissions"]
@@ -498,6 +498,7 @@ def run_serving_endpoint(
             monitoring_values,
             tracking_uri=settings.get("tracking_uri", "databricks"),
             registry_uri=settings.get("registry_uri", "databricks-uc"),
+            warnings=label_warnings,
         ),
         "verification": counts,
         "examples": _request_examples(plan, function, source_table, records[0]),

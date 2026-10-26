@@ -65,9 +65,25 @@ def test_performance_policy_covers_each_component_with_matching_metric(tmp_path,
     for policy in policies.values():
         assert validate_performance_policy(policy) == policy
         assert policy["mode"] == "report"
-        assert policy["baseline"] == {"kind": "training_holdout", "model_version": "1"}
+        assert policy["baseline"] == {"kind": "training_holdout"}
     if layout == "multi_target":
         assert {policy["metric"] for policy in policies.values()} == {"wape", "accuracy"}
+
+
+def test_performance_policy_pins_an_answered_baseline_version(tmp_path):
+    """An explicit baseline answer still pins one version instead of the enrolled one."""
+    project = _generate_project(
+        tmp_path,
+        monitoring="true",
+        monitoring_schema="monitoring",
+        label_table_name="outcomes",
+        label_available_at_column="known_at",
+        performance_policy_mode="report",
+        performance_baseline_version="3",
+    )
+    variables = yaml.safe_load((project / "deployment/variables.yml").read_text())["variables"]
+    (policy,) = json.loads(variables["monitoring_performance_policies"]["default"]).values()
+    assert policy["baseline"] == {"kind": "training_holdout", "model_version": "3"}
 
 
 @pytest.mark.parametrize(

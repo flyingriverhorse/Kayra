@@ -52,7 +52,9 @@ def _row(request_id, inputs, outputs, *, entity="entity-1", status=200, **overri
     return tuple(values[name] for name in names)
 
 
-def _parse(spark, rows, entity_rows=None, *, output_columns=(("out_prediction", "double"),)):
+def _parse(
+    spark, rows, entity_rows=None, *, output_columns=(("out_prediction", "double"),), **options
+):
     """Use one endpoint and concrete artifact schema for each test."""
     payloads = spark.createDataFrame(rows, PAYLOAD_SCHEMA)
     entities = spark.createDataFrame(
@@ -70,6 +72,7 @@ def _parse(spark, rows, entity_rows=None, *, output_columns=(("out_prediction", 
         output_prefix="out_",
         start=NOW - timedelta(hours=1),
         end=NOW + timedelta(hours=1),
+        **options,
     )
 
 
@@ -320,6 +323,7 @@ def test_partial_capture_metrics_preserve_drift_and_performance_eligibility(
         render_drift_output,
     )
     from skyulf.integrations.databricks.observability.monitoring.monitoring_store import result_row
+    from skyulf.integrations.databricks.observability.monitoring.serving import serving_labels
     from skyulf.integrations.databricks.observability.monitoring.serving.serving_observation import (
         add_serving_report_details,
     )
@@ -419,6 +423,7 @@ def test_partial_capture_metrics_preserve_drift_and_performance_eligibility(
         "read_spark_labels",
         lambda *a: (labels, {"label_table_id": "labels"}),
     )
+    monkeypatch.setattr(serving_labels, "label_table_missing", lambda *a: False)
     monkeypatch.setattr(monitoring_performance, "load_performance_history", lambda *a: [])
     artifact = SimpleNamespace(
         manifest=SimpleNamespace(
@@ -743,3 +748,137 @@ def test_latency_distribution_query_keeps_only_valid_scoped_samples(spark):
         ("serving_monitor", "other context"),
     ):
         assert spark.sql(source, args=params | {field: value}).count() == 0
+
+
+def test_record_keys_ride_along_only_when_requested(spark):
+    """Model-set keys reach the label join; other parsers keep today's prediction columns."""
+    inputs = [
+        {"x": 1, "name": "a", "company": "11", "month": "2026-09-01"},
+        {"x": 2, "name": "b", "company": 12},
+        {"x": 3, "name": "c"},
+    ]
+    outputs = [{"out_prediction": 4.0}, {"out_prediction": 5.0}, {"out_prediction": 6.0}]
+    row = _row("request-1", inputs, outputs)
+    _, plain, _, _ = _parse(spark, [row])
+    assert plain.columns == ["databricks_request_id", "request_row_index", "prediction"]
+    _, keyed, summary, _ = _parse(spark, [row], record_key_columns=("company", "month"))
+    rows = keyed.orderBy("request_row_index").collect()
+    assert [(r.company, r.month, r.prediction) for r in rows] == [
+        ("11", "2026-09-01", 4.0),
+        ("12", None, 5.0),
+        (None, None, 6.0),
+    ]
+    assert {r[serving_payloads.REQUEST_TIME] for r in rows} == {NOW.replace(tzinfo=None)}
+    assert summary["prediction_row_count"] == 3
+
+
+class _StreamingLabels:
+    """Real Spark whose label table is a Streaming Table that rejects history reads."""
+
+    def __init__(self, spark, labels):
+        """Serve ``labels`` for every table name; delegate everything else to ``spark``."""
+        self._spark, self._labels = spark, labels
+        self.catalog = type("Catalog", (), {"tableExists": staticmethod(lambda name: True)})()
+
+    def table(self, name):
+        """Return the label rows for the configured label table."""
+        return self._labels
+
+    def sql(self, statement):
+        """Answer the catalog type; any history or detail statement fails like dedicated."""
+        if statement.startswith("DESCRIBE TABLE EXTENDED"):
+            return self._spark.createDataFrame([("Type", "STREAMING_TABLE")], "a string, b string")
+        raise RuntimeError("STREAMING_TABLE_OPERATION_NOT_ALLOWED")
+
+
+@pytest.mark.parametrize("target,values", [("target_a", (11.0, 19.0)), ("target_b", (1.0, 2.0))])
+def test_model_set_labels_join_latest_request_by_text_and_date_keys(
+    spark, monkeypatch, target, values
+):
+    """Silver labels (int/DATE keys, DATE availability) score only the latest request per key."""
+    from skyulf.integrations.databricks.observability.monitoring.spark import (
+        spark_monitoring_sources,
+    )
+
+    monkeypatch.setattr(spark_monitoring_sources, "source_table_identity", lambda *a: "uc-id")
+    from skyulf.integrations.databricks.observability.monitoring.monitoring_config import (
+        MonitorConfig,
+    )
+    from skyulf.integrations.databricks.observability.monitoring.serving.serving_labels import (
+        REQUEST_KEYS,
+        read_serving_labels,
+    )
+    from skyulf.integrations.databricks.observability.monitoring.spark.spark_monitoring_metrics import (
+        build_spark_performance_report,
+    )
+
+    earlier, later = NOW - timedelta(hours=2), NOW - timedelta(hours=1)
+    predictions = spark.createDataFrame(
+        [
+            ("r1", 0, 10.0, "11", "2026-09-01", earlier),
+            ("r2", 0, 12.0, "11", "2026-09-01", later),
+            ("r2", 1, 20.0, "12", "2026-09-01", later),
+            ("r3", 0, 5.0, None, None, later),
+            ("r4", 0, 6.0, "", "2026-09-01", later),
+        ],
+        "databricks_request_id string, request_row_index int, prediction double, "
+        f"company string, month string, `{serving_payloads.REQUEST_TIME}` timestamp",
+    )
+    labels = spark.createDataFrame(
+        [
+            (11, NOW.date().replace(day=1, month=9), 11.0, 1.0, NOW.date().replace(day=1)),
+            (12, NOW.date().replace(day=1, month=9), 19.0, 2.0, NOW.date().replace(day=1)),
+            (13, NOW.date().replace(day=1, month=9), 99.0, 9.0, NOW.date().replace(day=1)),
+        ],
+        "company long, month date, target_a double, target_b double, available date",
+    )
+    config = MonitorConfig(
+        environment="test",
+        project="online",
+        model_name="a.b.model",
+        model_version="1",
+        source_table="a.b.payload",
+        prediction_table="a.b.payload",
+        execution_engine="spark",
+        reference_namespace="a.monitoring",
+        serving_endpoint="endpoint",
+        label_table="a.b.silver",
+        result_available_at_column="available",
+        model_set_name="a.b.group",
+        model_set_version="2",
+        model_set_branch="risk",
+    )
+    spec = type("Spec", (), {"record_key_columns": ("company", "month"), "target_column": target})
+    scored, joined, evidence = read_serving_labels(
+        _StreamingLabels(spark, labels), config, spec, predictions, NOW
+    )
+    assert scored.columns == ["databricks_request_id", "request_row_index", "prediction"]
+    assert sorted(tuple(row) for row in scored.collect()) == [("r2", 0, 12.0), ("r2", 1, 20.0)]
+    assert joined is not None
+    assert sorted((r[0], r[1], r[2]) for r in joined.collect()) == [
+        ("r2", 0, values[0]),
+        ("r2", 1, values[1]),
+    ]
+    assert evidence["unkeyed_requests"] == 2 and evidence["duplicate_key_rows"] == 1
+    assert evidence["label_join_keys"] == ["company", "month"]
+    assert evidence["label_version"] is None
+    report = build_spark_performance_report(
+        scored,
+        joined,
+        record_key_columns=REQUEST_KEYS,
+        target_column=target,
+        result_available_at_column="available",
+        as_of=NOW,
+        task="regression",
+    )
+    assert report["labeled_rows"] == 2 and report["label_coverage"] == 1.0
+    early = build_spark_performance_report(
+        scored,
+        joined,
+        record_key_columns=REQUEST_KEYS,
+        target_column=target,
+        result_available_at_column="available",
+        as_of=datetime(2026, 9, 30, 23, 59, tzinfo=UTC),
+        task="regression",
+    )
+    assert early["labeled_rows"] == 0

@@ -77,9 +77,11 @@ def test_native_serving_label_schema_accepts_request_outcomes(delta_spark):
         "databricks_request_id string, request_row_index int, available_at string",
     )
     frame.createOrReplaceTempView(name)
-    config: Any = SimpleNamespace(label_table=name, result_available_at_column="available_at")
+    config: Any = SimpleNamespace(
+        label_table=name, result_available_at_column="available_at", model_set_name=None
+    )
     try:
-        validate_serving_label_sources(delta_spark, [config])
+        assert validate_serving_label_sources(delta_spark, [config]) == []
         frame.drop("databricks_request_id").createOrReplaceTempView(name)
         with pytest.raises(ValueError, match="business record keys"):
             validate_serving_label_sources(delta_spark, [config])

@@ -112,9 +112,9 @@
   "performance_baseline_version": {
     "order": 765,
     "type": "string",
-    "default": "1",
-    "description": "6. Monitoring | Concrete registered model version whose saved holdout supplies the baseline. Verify it before activation; edit each component policy if model-set versions differ",
-    "pattern": "^[1-9][0-9]*$",
+    "default": "",
+    "description": "6. Monitoring | Optional registered model version whose saved holdout supplies the baseline. Empty compares each monitored version with its own training holdout",
+    "pattern": "^(?:[1-9][0-9]*)?$",
     "skip_prompt_if": {"properties": {"performance_policy_mode": {"const": "off"}}}
   }
 }

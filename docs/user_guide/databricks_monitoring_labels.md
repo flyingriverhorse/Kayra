@@ -58,18 +58,31 @@ is outcome availability, not the prediction time or the job execution time.
 | Observation source | Required label identity |
 | --- | --- |
 | Batch predictions | The model's saved `record_key_columns`, including every component of a composite key. |
-| Serving predictions | `databricks_request_id` plus zero-based `request_row_index`, distinguishing multiple rows in one request. |
+| Model-set endpoint predictions | The model set's record keys (for example a silver table), or the request columns below. |
+| Single-model endpoint predictions | `databricks_request_id` plus zero-based `request_row_index`, distinguishing multiple rows in one request. |
 
-Both need the saved target column and a valid UTC availability timestamp (or an aware ISO timestamp
-string). Eligible label keys must be unique. Actuals must use the saved classification classes or
-finite numeric regression targets.
+All need the saved target column and a valid availability value: a UTC timestamp, an aware ISO
+timestamp string, or a DATE (00:00 UTC that day). Eligible label keys must be unique. Actuals must
+use the saved classification classes or finite numeric regression targets.
 
-For endpoint-only projects, `monitoring_label_table` is a request-outcomes table:
-`databricks_request_id` must be a string and `request_row_index` an integer.
-The endpoint job checks these columns before creating or updating serving resources.
-Keep the request ID returned by serving and the position of each input row when
-recording its eventual outcome. Two requests for the same business record remain
-two observations; Skyulf does not guess that relationship from a customer or transaction ID.
+For endpoints, Skyulf picks the join from the label table's columns. A table with
+`databricks_request_id` (string) and `request_row_index` (integer) is a request-outcomes
+table: keep the request ID returned by serving and the position of each input row when
+recording the outcome, and two requests for the same record stay two observations. A
+model-set endpoint receives its record keys in every request, so its label table can be
+the table that already holds the keys and targets: the latest request per key is matched
+and the older rows are counted as `duplicate_key_rows`. A single-model endpoint does not
+receive record keys and still needs the request-outcomes table. See
+[how labels join an endpoint](databricks_serving_monitoring.md#how-labels-join-an-endpoint).
+
+The endpoint job checks these columns before creating or updating serving resources. For an
+endpoint, a label table that does not exist yet in an existing schema only produces a warning;
+monitoring then reports performance as `unavailable` with reason
+`awaiting_labels: <table> does not exist yet` and drift runs normally. A missing schema fails,
+and batch monitors still fail on a missing label table. Key types are checked again once the
+table exists. A Streaming Table,
+materialized view or view is read without a Delta version pin; the availability column decides
+which labels a run may use, so a corrected label is read with its latest value.
 
 The table used by `training_label_table` still joins by the training record keys.
 It can be a different table. If one automatically configured monitoring label table

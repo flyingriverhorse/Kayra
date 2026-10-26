@@ -214,6 +214,11 @@ def _validate_performance_enrollment(config: MonitorConfig) -> None:
         raise ValueError(
             "Active performance_policy requires label_table and result_available_at_column."
         )
+    baseline = policy.get("baseline", {})
+    if baseline and "model_version" not in baseline:
+        if config.model_version is None:
+            raise ValueError("baseline.model_version is required with model_alias selection.")
+        baseline["model_version"] = config.model_version
     object.__setattr__(config, "performance_policy", policy)
 
 
