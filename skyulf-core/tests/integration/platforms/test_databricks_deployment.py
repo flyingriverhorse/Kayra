@@ -133,11 +133,13 @@ def test_resolved_personal_targets_isolate_users_and_pause_clocks(
     second = _resolve(project, target, offline_workspace)
     for bundle in (first, second):
         jobs = bundle["resources"]["jobs"]
-        assert set(jobs) == {"train", "score", "monitoring"}
+        assert set(jobs) == {"train", "score", "monitoring", "teardown"}
+        assert "schedule" not in jobs["teardown"]  # Teardown runs only when started by hand.
         for key, job in jobs.items():
             # Databricks development prefix, project name kept (two projects stay distinct).
             assert job["name"] == f"[dev alice] sm33_generated_{key}"
-            assert job["schedule"]["pause_status"] == "PAUSED"
+            if key != "teardown":
+                assert job["schedule"]["pause_status"] == "PAUSED"
             assert not job.get("run_as", {}).get("service_principal_name")
             # Deployer and the default pipeline_owner are the same user: one owner entry.
             owner = {

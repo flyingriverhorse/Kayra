@@ -6,7 +6,8 @@ Use this page to remove one target of a generated project, for example a
 finished `test` trial or a personal development target. `databricks bundle
 destroy` removes what the Bundle deployed. Data, models and monitoring evidence
 are Unity Catalog or workspace objects that the Bundle never managed, so they
-stay.
+stay. A personal `*_development` target can remove them first with its
+[teardown job](#personal-development-targets-teardown-job).
 
 ```mermaid
 flowchart LR
@@ -84,6 +85,47 @@ These stay, because the Bundle never created them as resources:
 
 [Tables in your workspace](databricks_workspace_tables.md) explains what each of
 these objects holds and which ones grow over time.
+
+## Personal development targets: teardown job
+
+Each personal `*_development` target has a `teardown` job; `test`, `syst` and
+`prod` do not, and the job refuses to run unless the Bundle mode is
+`development` and `resource_suffix` is set. It removes only what this
+deployment created, so a fresh deploy and train start clean, for example after
+a Core upgrade instead of approving with `allow_unloadable_champion`.
+
+```powershell
+databricks bundle run teardown -t test_development --params dry_run=true --profile YOUR_PROFILE
+# Read the list in the run output, then:
+databricks bundle run teardown -t test_development --params dry_run=false --profile YOUR_PROFILE
+databricks bundle destroy -t test_development --profile YOUR_PROFILE
+```
+
+Every name comes from the project's configuration bound to this target, the
+same way the jobs bind it; nothing is found by scanning a schema.
+
+| Object | Deleted when |
+| --- | --- |
+| Serving endpoint and its UC SQL function | They carry this deployment's owner tags (project, target, suffix) |
+| Registered models (model set first, then its component models) | The name carries `resource_suffix`; Unity Catalog removes the versions and aliases with the model |
+| Monitoring rows in `development_monitoring_schema` | Only this deployment's models, project and target in `model_inventory`, `monitoring_results` and `performance_actions`; other developers' rows and the store tables stay |
+| Prediction tables, full-rebuild generations and model-set views | The name carries `resource_suffix`; a generation also needs this deployment's model in its `skyulf.model_name` property |
+| Endpoint payload view and telemetry tables | The logging prefix carries `resource_suffix` |
+
+Never touched: source, label, training and feature tables, the shared
+monitoring store tables and views, and the `monitor_ref_*` / `monitor_src_*`
+monitoring references. References are owned per project and target, which all
+developers of the project share; after teardown no inventory row names them, so
+`monitoring_cleanup` does not retire them either. Drop a
+`monitor_ref_<id>_*` table by hand only after the `payload` of its
+`monitor_ref_<id>_receipt` table names your model. The MLflow experiment is
+inside the target's folder and goes with `bundle destroy`.
+
+Each line of the run output has a status: `would_delete` (dry run),
+`deleted`, `already_absent`, `skipped` (with the reason) or `failed`. The run
+continues after a failure and then fails the job. Fix the cause, usually a
+missing permission, and run it again: finished objects report
+`already_absent`.
 
 ## Common errors and fixes
 

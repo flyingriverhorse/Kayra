@@ -566,6 +566,12 @@ Start from the first failed task and record its run ID.
 | Monitoring, after predictions were written (for example `Spark reference is not prepared`) | Predictions stay. Prepare the reference ([Monitoring](#monitoring) step 4) if that is the error, then run the **same** score request again; it writes nothing new and finishes the measurement. |
 | An alias change whose outcome is unknown | Stop jobs that change aliases and follow alias recovery below; do not roll back instead. |
 | `Local artifact runtime mismatch ...` or report reason `champion_runtime_unavailable` (champion trained on an older Core) | Review the candidate's own metrics in the training report, then run the approve action the report prints (`allow_unloadable_champion: true`). No retraining is needed. Rolling back to the old champion needs the old Core runtime. |
+{{- if eq .personal_development_targets "true"}}
+
+In a personal `*_development` target you can start clean instead: run
+`databricks bundle run teardown -t <target> --params dry_run=true`, review the list,
+run it again with `dry_run=false`, then train again. Shared targets have no teardown job.
+{{- end}}
 
 **Upgrading Core** (`deployment/requirements.txt`): a model loads only with the
 library versions that trained it. After raising the pin, train a new version; to

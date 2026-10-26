@@ -350,7 +350,7 @@
 # name: test_rendered_project_matches_snapshot[personal-targets-init.example.json]
   dict({
     '.gitignore': '1616f3be3463b0c4',
-    'GUIDE.md': '91f3d02ba1d5d932',
+    'GUIDE.md': '96adc2199154629d',
     'README.md': 'f65888ce5dda41bf',
     'config/features.yml': '67b3aecbf7783206',
     'config/inference.yml': 'c04552d031fc281c',
@@ -360,7 +360,7 @@
     'config/training.yml': '4a231a5719e87b33',
     'databricks.yml': '0ddaab6e185e89b5',
     'deployment/requirements.txt': 'e504f3348ccc2b15',
-    'deployment/targets.yml': 'a057060a52a1a0c4',
+    'deployment/targets.yml': 'd353359639c801ec',
     'deployment/train-requirements.txt': '1a7bbe0794f7affa',
     'deployment/variables.yml': '4f940c035e3b8d5e',
     'resources/monitoring.job.yml': '1195ddb460d81933',
@@ -386,6 +386,7 @@
     'src/jobs/register_model.py': 'd6f147342b1a4a90',
     'src/jobs/register_monitor.py': 'a2cf3a01840b4dee',
     'src/jobs/score.py': 'f18c04c94711624c',
+    'src/jobs/teardown.py': '0a38f3c8c4a2b813',
     'src/jobs/train_and_tune.py': '5d425121e8eb1ee1',
     'src/jobs/training_report.py': '2827aa3fc1c5db76',
     'src/jobs/validate_model.py': '642236e7eb85c83c',
@@ -546,7 +547,7 @@
 # name: test_rendered_project_matches_snapshot[separate-identities-init.example.json]
   dict({
     '.gitignore': '1616f3be3463b0c4',
-    'GUIDE.md': '91f3d02ba1d5d932',
+    'GUIDE.md': '96adc2199154629d',
     'README.md': 'f65888ce5dda41bf',
     'config/features.yml': '67b3aecbf7783206',
     'config/inference.yml': 'c04552d031fc281c',
@@ -556,7 +557,7 @@
     'config/training.yml': '4a231a5719e87b33',
     'databricks.yml': '0ddaab6e185e89b5',
     'deployment/requirements.txt': 'e504f3348ccc2b15',
-    'deployment/targets.yml': '6db365d54b7edd8e',
+    'deployment/targets.yml': '2d116e716c516ccf',
     'deployment/train-requirements.txt': '1a7bbe0794f7affa',
     'deployment/variables.yml': '9223a53e559383dc',
     'resources/monitoring.job.yml': '1195ddb460d81933',
@@ -582,6 +583,7 @@
     'src/jobs/register_model.py': 'd6f147342b1a4a90',
     'src/jobs/register_monitor.py': 'a2cf3a01840b4dee',
     'src/jobs/score.py': 'f18c04c94711624c',
+    'src/jobs/teardown.py': '0a38f3c8c4a2b813',
     'src/jobs/train_and_tune.py': '5d425121e8eb1ee1',
     'src/jobs/training_report.py': '2827aa3fc1c5db76',
     'src/jobs/validate_model.py': '642236e7eb85c83c',

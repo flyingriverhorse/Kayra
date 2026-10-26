@@ -193,8 +193,8 @@ targets:
         user_name: ${var.pipeline_owner}
     presets:
       trigger_pause_status: PAUSED
-{{- if $devdash}}
     resources:
+{{- if $devdash}}
       dashboards:
         monitoring_dashboard:
           # Your own dashboard over the development store (development mode prefixes its name).
@@ -204,7 +204,9 @@ targets:
           dataset_catalog: ${var.monitoring_catalog}
           dataset_schema: ${var.development_monitoring_schema}
           embed_credentials: false
+{{- end}}
       jobs:
+{{- if $devdash}}
         monitoring:
           tasks:
             - task_key: dashboard_refresh_enabled
@@ -223,6 +225,7 @@ targets:
               dashboard_task:
                 dashboard_id: ${resources.dashboards.monitoring_dashboard.id}
 {{- end}}
+{{- template "teardown_job" .}}
     workspace:
       host: https://replace-test.example.invalid
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/test_development
@@ -354,6 +357,9 @@ targets:
         user_name: ${var.pipeline_owner}
     presets:
       trigger_pause_status: PAUSED
+    resources:
+      jobs:
+{{- template "teardown_job" .}}
     workspace:
       host: https://replace-syst.example.invalid
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/syst_development
@@ -481,6 +487,9 @@ targets:
         user_name: ${var.pipeline_owner}
     presets:
       trigger_pause_status: PAUSED
+    resources:
+      jobs:
+{{- template "teardown_job" .}}
     workspace:
       host: https://replace-prod.example.invalid
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/prod_development
