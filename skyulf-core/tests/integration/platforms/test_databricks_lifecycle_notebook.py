@@ -408,3 +408,44 @@ def test_notebook_rejects_mixed_graph_contract_before_execution(monkeypatch, pha
     with pytest.raises(ValueError, match="contract"):
         job_runtime.run_lifecycle_notebook(None, dbutils, phase=phase)
     execute.assert_not_called()
+
+
+def _report_dbutils(values, task_values):
+    """A report task whose predecessor values may only exist as task values."""
+
+    def get(*, taskKey, key, default=None, debugValue=None):  # noqa: N803 - dbutils keyword names
+        """Return initialize_run's saved value, or the caller's default when it never ran."""
+        assert taskKey == "initialize_run"
+        return task_values.get(key, default)
+
+    return SimpleNamespace(
+        widgets=SimpleNamespace(getAll=lambda: values),
+        jobs=SimpleNamespace(taskValues=SimpleNamespace(get=get)),
+    )
+
+
+def test_report_reads_predecessor_values_at_run_time():
+    """The ALL_DONE report gets its run reference at run time, so a failed start can't hide it."""
+    from skyulf.integrations.databricks.jobs.shared.job_runtime import report_values
+
+    saved = {"reference_json": '{"run_id": "r1"}', "tracking_uri": "databricks"}
+    values = report_values(_report_dbutils({"decision_result_state": "success"}, saved))
+    assert values["reference_json"] == saved["reference_json"]
+    assert values["tracking_uri"] == "databricks"
+    assert values["decision_result_state"] == "success"
+
+
+def test_report_keeps_values_passed_by_older_job_definitions():
+    """Jobs deployed before this change still pass both values as notebook parameters."""
+    from skyulf.integrations.databricks.jobs.shared.job_runtime import report_values
+
+    passed = {"reference_json": '{"run_id": "old"}', "tracking_uri": "uri"}
+    assert report_values(_report_dbutils(dict(passed), {})) == passed
+
+
+def test_report_names_initialize_run_when_it_never_finished():
+    """Without initialize_run's values the report points at that task's own error."""
+    from skyulf.integrations.databricks.jobs.shared.job_runtime import report_values
+
+    with pytest.raises(ValueError, match="initialize_run did not finish"):
+        report_values(_report_dbutils({"decision_result_state": "upstream_failed"}, {}))

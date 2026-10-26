@@ -22,6 +22,7 @@ from ..shared.job_runtime import (
     notebook_output,
     operator_options,
     read_notebook_config,
+    report_values,
     saved_notebook_request,
 )
 from .branch_notebook import load_training_branch_configs, render_branch_result
@@ -127,7 +128,7 @@ def run_model_set_stage_notebook(
 
 def run_models_report_notebook(dbutils: Any, *, display_html: Any = None) -> str:
     """Close a failed branch invocation even when the complete-only join was skipped."""
-    values = dbutils.widgets.getAll()
+    values = report_values(dbutils)
     store, _ = _saved(values)
     if values.get("decision_result_state", "").lower() != "success":
         store.client.set_terminated(store.run_id, status="FAILED")

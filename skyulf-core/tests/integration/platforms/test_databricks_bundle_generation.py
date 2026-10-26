@@ -1280,6 +1280,9 @@ def test_cli_emits_independent_policies_and_serialized_operator_graph(
     assert tasks["training_report"]["run_if"] == "ALL_DONE"
     completion = tasks["training_report"]["notebook_task"]["base_parameters"]
     assert completion["decision_result_state"] == "{{tasks.model_decision.result_state}}"
+    # The ALL_DONE report reads initialize_run's values at run time; a reference here
+    # would fail as "Failed to resolve references" and hide initialize_run's own error.
+    assert not {"reference_json", "tracking_uri"} & set(completion)
     assert tasks["monitoring_allowed"]["depends_on"] == [{"task_key": "training_report"}]
     assert tasks["register_monitor"]["depends_on"] == [
         {"task_key": "monitoring_allowed", "outcome": "true"}
@@ -1350,7 +1353,7 @@ def test_cli_emits_independent_policies_and_serialized_operator_graph(
             assert runtime["job_run_id"] == "{{job.run_id}}"
             assert runtime["repair_count"] == "{{job.repair_count}}"
             assert runtime["execution_count"] == "{{task.execution_count}}"
-            if task["task_key"] != "initialize_run":
+            if task["task_key"] not in {"initialize_run", "training_report"}:
                 assert runtime["tracking_uri"] == "{{tasks.initialize_run.values.tracking_uri}}"
 
 

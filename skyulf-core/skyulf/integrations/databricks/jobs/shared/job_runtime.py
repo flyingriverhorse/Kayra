@@ -380,6 +380,30 @@ def _prepared_notebook_request(
     }
 
 
+_PREDECESSOR_VALUES = ("reference_json", "tracking_uri")
+
+
+def report_values(dbutils: Any) -> dict[str, str]:
+    """Read the ALL_DONE report's widgets, taking initialize_run's values at run time.
+
+    Job definitions cannot reference a task value that was never set: when initialize_run
+    fails, a `{{tasks.initialize_run.values...}}` parameter turns the report into a second,
+    misleading failure. Older job definitions still pass both values, which are kept.
+    """
+    values = dict(dbutils.widgets.getAll())
+    for key in _PREDECESSOR_VALUES:
+        if not values.get(key):
+            values[key] = dbutils.jobs.taskValues.get(
+                taskKey="initialize_run", key=key, default="", debugValue=""
+            )
+    if not values["reference_json"]:
+        raise ValueError(
+            "initialize_run did not finish, so there is no training run to report; "
+            "its own error above is the cause."
+        )
+    return values
+
+
 def saved_notebook_request(values: dict[str, str]) -> dict[str, Any]:
     """Validate the frozen predecessor reference and prepared tracking URI."""
     try:
@@ -437,7 +461,7 @@ def run_lifecycle_notebook(
     receive references from this job invocation and load the frozen MLflow
     evidence. Notebook metadata is a misuse guard, not workspace authorization.
     """
-    values = dbutils.widgets.getAll()
+    values = report_values(dbutils) if phase == "complete" else dbutils.widgets.getAll()
     context_values = lifecycle_widget_context(values)
     _validate_notebook_phase_contract(phase, values)
     from ..lifecycle.lifecycle_tasks import (  # noqa: PLC0415 - shared runtime helpers avoid a module cycle
