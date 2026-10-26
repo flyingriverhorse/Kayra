@@ -90,3 +90,11 @@ def test_smoke_check_accepts_known_targets(tmp_path, endpoint_project):  # noqa:
 
     bindings = _smoke_project(tmp_path, endpoint_project, {"test": [], "prod": []})
     _check_serving(tmp_path, bindings)
+
+
+def test_view_level_is_kept_per_target(endpoint_project):  # noqa: F811
+    """Viewers must reach the job as CAN_VIEW, never upgraded to CAN_QUERY."""
+    permissions = {"dev": [{"group_name": "dev-viewers", "level": "CAN_VIEW"}], "prod": []}
+    assert _settings(endpoint_project, permissions, "dev")["permissions"] == [
+        {"group_name": "dev-viewers", "level": "CAN_VIEW"}
+    ]

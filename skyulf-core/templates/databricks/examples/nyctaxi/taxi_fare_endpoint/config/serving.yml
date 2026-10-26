@@ -23,6 +23,8 @@ serving_endpoint:
     name: "{catalog}.{metadata_schema}.taxi_fare_endpoint_score{resource_suffix}"
   # Who may call the endpoint: each entry gets endpoint CAN_QUERY and SQL function
   # EXECUTE. Grants are additive; removing an entry does not revoke access.
+  # An entry with `level: CAN_VIEW` only sees the endpoint and its state, granted
+  # right after create/update so a failed deployment can be inspected.
   #
   # Same callers in every target:
   #   permissions:
@@ -34,6 +36,8 @@ serving_endpoint:
   #   permissions:
   #     test:
   #       - group_name: xx-team
+  #       - group_name: xx-viewers
+  #         level: CAN_VIEW
   #     syst:
   #       - group_name: yy-team
   #     prod:

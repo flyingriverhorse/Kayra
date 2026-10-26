@@ -464,7 +464,9 @@ def run_serving_endpoint(
     )
     validate_serving_label_sources(spark, configs)
     owner = settings["ownership"]
-    result = ensure_owned_endpoint(client, plan, ownership=owner, tags=settings["tags"])
+    result = ensure_owned_endpoint(
+        client, plan, ownership=owner, tags=settings["tags"], permissions=settings["permissions"]
+    )
     sql_result = (
         ensure_owned_sql_function(spark, client, function, ownership=owner) if function else None
     )

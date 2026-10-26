@@ -298,6 +298,8 @@ file. The endpoint job's existing dispatch tasks remain in place in either mode.
   permissions:
     test:
       - group_name: test-callers
+      - group_name: test-viewers
+        level: CAN_VIEW
     prod:
       - group_name: prod-callers
       - service_principal_name: <application-id>
@@ -307,6 +309,10 @@ file. The endpoint job's existing dispatch tasks remain in place in either mode.
   a key that is not a target in `deployment/targets.yml`. SQL callers also need
   `USE CATALOG`/`USE SCHEMA` on the function's schema and a SQL warehouse; the job
   grants only `EXECUTE` and endpoint `CAN_QUERY`.
+  An entry with `level: CAN_VIEW` gets only endpoint `CAN_VIEW`, never `CAN_QUERY`
+  or `EXECUTE`. It is granted right after the endpoint is created or updated, before
+  the readiness wait, so the team can see a deployment that fails; `CAN_QUERY` and
+  `EXECUTE` still wait for verification. One principal cannot be listed at both levels.
 - **Compute and cost:** job compute follows serverless/`policy_cluster` settings.
   Set `cost_tag_value` before serving, including serverless targets; its placeholder
   is rejected. Do not use an ownership key as `cost_tag_key`. Set Bundle

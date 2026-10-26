@@ -1061,3 +1061,16 @@ def test_function_grants_can_differ_from_endpoint_callers(prepared_job, configur
     assert kwargs["principals"] == [{"group_name": "users", "level": "CAN_QUERY"}]
     expected = "uc" if configured else "users"
     assert kwargs["function_principals"] == [{"group_name": expected, "level": "CAN_QUERY"}]
+
+
+def test_viewers_reach_the_endpoint_step(prepared_job):
+    """CAN_VIEW entries must reach the endpoint step, which grants them before readiness."""
+    api, settings, registry, *_ = prepared_job
+    settings["permissions"] = [{"group_name": "viewers", "level": "CAN_VIEW"}]
+    settings.pop("function_permissions", None)
+    api.run_serving_endpoint(
+        None, settings, source_table="main.source.inputs", client=Mock(), registry_client=registry
+    )
+    assert api.ensure_owned_endpoint.call_args.kwargs["permissions"] == [
+        {"group_name": "viewers", "level": "CAN_VIEW"}
+    ]
