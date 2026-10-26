@@ -41,7 +41,7 @@ models:
     cv_random_state: 42
     filter_unavailable_results: false # true: skip rows with no result date (or after result_cutoff); they do not count toward max_rows. multi_target skips empty branch targets automatically
     max_rows: 12000
-    max_input_mb: 64
+    max_input_mb: 512
     metric: heldout_rmse
     min_improvement: 0
     # Candidate coverage and allowed loss versus champion; null disables either gate.
@@ -74,7 +74,7 @@ models:
     cv_enabled: false
     filter_unavailable_results: false # true: skip rows with no result date (or after result_cutoff); they do not count toward max_rows. multi_target skips empty branch targets automatically
     max_rows: 12000
-    max_input_mb: 64
+    max_input_mb: 512
     metric: heldout_f1
     min_improvement: 0
     # Candidate coverage and allowed loss versus champion; null disables either gate.

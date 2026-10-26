@@ -323,7 +323,7 @@ apply to the chosen layout and earlier answers:
 | `training_table_version` (not asked for `single_model`) | `null`: pin the latest snapshot at run start |
 | `training_window_mode` | `auto`: full snapshot for random, rolling calendar for temporal |
 | `cv_enabled`, then `cv_folds`, `cv_type`, `cv_shuffle`, `cv_random_state` | CV off; `5`, `k_fold`, `true`, `42` |
-| `max_rows`, `max_input_mb` | `10000`, `64` |
+| `max_rows`, `max_input_mb` | `1000000`, `512` (MiB of pandas memory; keep near 1/8-1/10 of the driver memory) |
 | `training_sample_rows` (per branch for model sets) | `null`: read all rows within the limits; this never samples predictions |
 | `save_preprocessing_diagnostics` | `false`: enable to check fitted preprocessing on a bounded holdout sample |
 | `performance_policy_mode`, task-specific metric, tolerance and baseline version | `off`; when enabled, require outcomes and a monitoring store. See [performance policy](databricks_performance.md). |

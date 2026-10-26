@@ -267,7 +267,11 @@ accuracy must reach it. Choose it from what the business needs, before training.
 lists every model, its parameters and the tuning options.
 
 Training fits **polars** in one process. `max_rows`/`max_input_mb` bound input,
-not total RAM or preprocessing/model expansion. `training_sample_rows` selects
+not total RAM or preprocessing/model expansion. `max_input_mb` is the rows' size in
+pandas memory, not on disk; keep it near 1/8 to 1/10 of the driver memory (512 on a
+4-8 GiB driver, 1500-2000 on 16 GiB), because splitting, encoding, cross-validation
+and the model copy the data. Rough sizes: about 120 bytes per row for 15 numeric
+columns, 400-450 bytes with a few text columns. `training_sample_rows` selects
 eligible rows in Spark before transfer, including holdout; scoring is never sampled.
 `training_table_version: null` pins the latest Delta snapshot once per run.
 For a controlled comparison, reuse the recorded source/label versions and

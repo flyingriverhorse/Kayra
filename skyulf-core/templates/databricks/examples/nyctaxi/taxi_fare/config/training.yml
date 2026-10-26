@@ -37,7 +37,7 @@ defaults:
   filter_unavailable_results: false # true: skip rows with no result date (or after result_cutoff); they do not count toward max_rows. multi_target skips empty branch targets automatically
   skip_missing_targets: true # skip rows whose target is empty; they do not count toward max_rows
   max_rows: 25000
-  max_input_mb: 64
+  max_input_mb: 512
   metric: heldout_rmse
   min_improvement: 0
   # Candidate coverage and allowed loss versus champion; null disables either gate.

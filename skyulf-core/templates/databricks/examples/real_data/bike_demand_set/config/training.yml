@@ -48,7 +48,7 @@ models:
     holdout_start: "2012-07-01T00:00:00Z"
     cutoff: "2012-10-01T00:00:00Z"
     max_rows: 20000
-    max_input_mb: 64
+    max_input_mb: 512
     metric: heldout_rmse
     min_improvement: 0
     # Candidate coverage and allowed loss versus champion; null disables either gate.
@@ -90,7 +90,7 @@ models:
     holdout_start: "2012-07-01T00:00:00Z"
     cutoff: "2012-10-01T00:00:00Z"
     max_rows: 20000
-    max_input_mb: 64
+    max_input_mb: 512
     metric: heldout_rmse
     min_improvement: 0
     # Candidate coverage and allowed loss versus champion; null disables either gate.

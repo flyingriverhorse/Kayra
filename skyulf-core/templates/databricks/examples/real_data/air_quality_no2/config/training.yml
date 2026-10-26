@@ -43,7 +43,7 @@ defaults:
   holdout_start: "2004-09-01T00:00:00Z"
   cutoff: "2004-11-01T00:00:00Z"
   max_rows: 10000
-  max_input_mb: 64
+  max_input_mb: 512
   metric: heldout_rmse
   min_improvement: 0
   # Candidate coverage and allowed loss versus champion; null disables either gate.
