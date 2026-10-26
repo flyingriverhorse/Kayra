@@ -227,7 +227,7 @@ def _train(spark: Any, store: PhaseStore) -> dict[str, Any]:
     request = store.request
     config: dict[str, Any] = request["config"]
     source = config["pipeline"].get("project_python_source")
-    spec = phase_training_spec(request["spec"], source)
+    spec = data_stages.snapshot_spec(store, phase_training_spec(request["spec"], source))
     selection = None
     with TemporaryDirectory(prefix="skyulf-phase-fit-") as directory:
         path = Path(directory) / "artifact"
@@ -340,6 +340,7 @@ def _validate_pinned_spec(fitted_spec: dict[str, Any], pinned_spec: dict[str, An
         "sample_key_sha256",
         "survivor_key_sha256",
         "training_evidence_sha256",
+        "source_snapshot_json",
     }
     defaults = {
         "weight_column": None,

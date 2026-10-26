@@ -9,7 +9,7 @@ from uuid import uuid4
 import pandas as pd
 
 from .....mlflow.shared._client import make_registry_client, require_mlflow
-from ....data.delta_io.delta import table_identity
+from ....data.delta_io.delta import source_table_identity
 from ....jobs.shared.notebook_diagnostics import notebook_task
 from ....shared._contracts import column_name, table_name
 from ....training.fitting.candidate import read_training_snapshot, split_labeled_snapshot
@@ -250,9 +250,9 @@ def _prepare_reference(
 ):
     """Reconstruct and validate bounded local populations without taking the store admission."""
     with notebook_task(f"reference.read_training {identity}", None):
-        source_id = table_identity(spark, spec.table)
+        source_id = source_table_identity(spark, spec.table, spec.source_kind)
         source = read_training_snapshot(spark, spec)
-        if table_identity(spark, spec.table) != source_id:
+        if source_table_identity(spark, spec.table, spec.source_kind) != source_id:
             raise ValueError("Training source was replaced while preparing monitoring reference.")
         client = make_registry_client(require_mlflow(), tracking_uri, registry_uri)
         source_receipt = reference_document(
@@ -274,9 +274,12 @@ def _prepare_reference(
     )
     from ....data.training.training_labels import join_training_labels  # noqa: PLC0415
 
-    source_schema = join_training_labels(
-        spark, read_snapshot(spark, spec.table, spec.version), spec
-    ).schema
+    # Only the schema is used; an unversioned source has no version to read it at.
+    if spec.source_kind is not None:
+        raw = spark.read.table(spec.table)
+    else:
+        raw = read_snapshot(spark, spec.table, spec.version)
+    source_schema = join_training_labels(spark, raw, spec).schema
     source_columns: list[str] = source_receipt["columns"]
     prepared_source = _prepared_frame(spark, source.loc[:, source_columns], source_schema, spec)
     source_identity = source_snapshot_identity(
@@ -301,7 +304,7 @@ def _prepare_reference(
 
 def _verify_source_identity(spark, spec, receipt) -> None:
     """Rebind reconstructed rows to the same physical source and pinned immutable version."""
-    if table_identity(spark, spec.table) != receipt["source_table_id"] or (
+    if source_table_identity(spark, spec.table, spec.source_kind) != receipt["source_table_id"] or (
         spec.version != receipt["source_identity"]["version"]
     ):
         raise ValueError("Training source was replaced while preparing monitoring reference.")

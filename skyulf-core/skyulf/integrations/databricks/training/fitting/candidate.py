@@ -43,7 +43,7 @@ from ....mlflow.lifecycle.validation import (
 )
 from ....mlflow.registration.registry import ResolvedModel, register_model, resolve_model
 from ....mlflow.runs.tracking import TrackingConfig, track_run
-from ...data.delta_io.delta import table_identity
+from ...data.delta_io.delta import UNVERSIONED_KINDS, source_table_identity
 from ...data.training.training_dates import (
     TrainingDateSpec,
     instant_from_microseconds,
@@ -78,7 +78,7 @@ from ...observability.reports.explanations import (
 )
 from ...scoring.batch.frame_batch import fit_workflow
 from ...shared._contracts import column_name, table_name
-from ..shared.holdout_evidence import save_holdout_reference
+from ..shared.holdout_evidence import load_frame_artifact, save_holdout_reference
 from ..shared.preprocessing_checks import (
     log_partition_probe,
     log_preprocessing_probe,
@@ -109,6 +109,9 @@ from .pre_split import (
     projected_fixed_steps,
     target_contract,
 )
+
+# Optional spec fields omitted while None, so older payloads and dataset ids stay unchanged.
+OPTIONAL_SOURCE_FIELDS = ("source_kind", "source_snapshot_json", "training_label_kind")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -156,6 +159,11 @@ class TrainingSpec:
     training_label_table: str | None = None
     training_label_version: int | None = None
     training_label_table_id: str | None = None
+    # Unversioned sources (Lakeflow tables, views) are read live once, then replayed from
+    # the saved snapshot that source_snapshot_json locates; version stays a 0 placeholder.
+    source_kind: str | None = None
+    source_snapshot_json: str | None = None
+    training_label_kind: str | None = None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> TrainingSpec:
@@ -197,8 +205,30 @@ class TrainingSpec:
         self._validate_columns()
         self._validate_budgets_and_sampling()
         self._validate_evidence_digests()
+        self._validate_source_kinds()
         training_lookup(self)
         validate_training_labels(self)
+
+    def _validate_source_kinds(self) -> None:
+        """Accept only known unversioned catalog types, each pinned at placeholder version 0."""
+        for field, version in (
+            ("source_kind", self.version),
+            ("training_label_kind", self.training_label_version),
+        ):
+            kind = getattr(self, field)
+            if kind is not None and (kind not in UNVERSIONED_KINDS or version != 0):
+                raise ValueError(
+                    f"{field} must be one of {sorted(UNVERSIONED_KINDS)} with version 0."
+                )
+        if self.source_snapshot_json is not None and not isinstance(self.source_snapshot_json, str):
+            raise ValueError("source_snapshot_json must be JSON text.")
+        kind = self.source_kind or self.training_label_kind
+        if self.feature_lookup_json is not None and kind is not None:
+            raise ValueError(
+                f"feature_lookup needs Delta history to rebuild its lineage, but a training "
+                f"source is a {kind}. Use a regular Delta table, or produce one in "
+                "config/features.yml."
+            )
 
     def _validate_label_policy(self) -> None:
         """Require explicit booleans for label eligibility and optional diagnostics."""
@@ -378,9 +408,12 @@ class TrainingSpec:
             "feature_binding_json",
             "online_policy_json",
             *LABEL_FIELDS,
+            *OPTIONAL_SOURCE_FIELDS,
         ):
             if settings[field] is None:
                 settings.pop(field)
+        # The saved-snapshot location names a run, not the data; keep it out of identity.
+        settings.pop("source_snapshot_json", None)
         return settings
 
     @property
@@ -555,11 +588,34 @@ PREFILTERED_ROWS = "prefiltered_unavailable_rows"
 
 
 def read_training_snapshot(spark: Any, spec: TrainingSpec) -> pd.DataFrame:
-    """Project and cap a versioned Delta read before materializing driver rows."""
+    """Replay the source rows saved at training when the spec locates them, else read live."""
+    if not isinstance(spec, TrainingSpec):
+        raise TypeError("spec must be TrainingSpec.")
+    if spec.source_snapshot_json is None:
+        return read_live_snapshot(spark, spec)
+    from ....mlflow.shared._client import make_tracking_client  # noqa: PLC0415 - optional MLflow
+
+    try:
+        locator = json.loads(spec.source_snapshot_json)
+        client = make_tracking_client(locator["tracking_uri"])
+        return load_frame_artifact(
+            client, locator["run_id"], locator["path"], locator["receipt"], spec
+        )
+    except (KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError("Saved source snapshot locator is malformed.") from exc
+
+
+def read_live_snapshot(spark: Any, spec: TrainingSpec) -> pd.DataFrame:
+    """Project and cap a pinned source read before materializing driver rows.
+
+    Delta sources are read at their pinned version. Streaming tables, materialized views
+    and views have no history to pin, so they are read as they are now; training saves
+    those rows and every later step replays them through ``read_training_snapshot``.
+    """
     if not isinstance(spec, TrainingSpec):
         raise TypeError("spec must be TrainingSpec.")
     spec = pin_training_labels(spark, pin_training_lookup(spark, spec))
-    source_id = table_identity(spark, spec.table)
+    source_id = source_table_identity(spark, spec.table, spec.source_kind)
     uc_id = capture_training_uc_id(spec.table)
     _pre_split_columns(
         spec.pre_split_steps,
@@ -574,24 +630,7 @@ def read_training_snapshot(spark: Any, spec: TrainingSpec) -> pd.DataFrame:
         ),
     )
     names = spec.source_columns
-    source = spark.read.format("delta").option("versionAsOf", spec.version).table(spec.table)
-    source = join_training_labels(spark, source, spec)
-    source = enrich_training_source(spark, source, spec)
-    source = normalize_training_dates(
-        source.select(*names),
-        event_column=spec.event_column,
-        result_column=spec.result_available_at_column,
-        event_spec=spec.event_time_parsing,
-        result_spec=spec.result_time_parsing,
-    )
-    if spec.event_column is not None:
-        start = instant_microseconds(cast(datetime, spec.start))
-        cutoff = instant_microseconds(cast(datetime, spec.cutoff))
-        source = source.where(
-            f"{column_name(cast(str, spec.event_column))} >= {start} AND "
-            f"{column_name(cast(str, spec.event_column))} < {cutoff}"
-        )
-    source, selection, prefiltered = _limited_population(source, spec)
+    source, selection, prefiltered = _limited_population(_windowed_source(spark, spec, names), spec)
     ordering = ([spec.event_column] if spec.event_column else []) + list(spec.record_key_columns)
     selected = source.orderBy(*ordering).limit(spec.max_rows + 1)
     frame = _materialize_training_rows(selected, spec, names)
@@ -601,9 +640,11 @@ def read_training_snapshot(spark: Any, spec: TrainingSpec) -> pd.DataFrame:
     if spec.training_label_table is not None:
         frame.attrs["training_labels"] = label_binding(spec)
     retain_training_binding(spark, frame, spec)
-    if table_identity(spark, spec.table) != source_id:
+    if source_table_identity(spark, spec.table, spec.source_kind) != source_id:
         raise ValueError("Training source table identity changed while reading rows.")
     frame.attrs["source_table_id"] = source_id
+    if spec.source_kind is not None:
+        frame.attrs |= {"source_kind": spec.source_kind, "source_read_at": _now_iso()}
     if uc_id is not None:
         if capture_training_uc_id(spec.table) != uc_id:
             raise ValueError("Training source Unity Catalog identity changed while reading rows.")
@@ -611,6 +652,35 @@ def read_training_snapshot(spark: Any, spec: TrainingSpec) -> pd.DataFrame:
     if selection is not None:
         frame.attrs["training_selection"] = {**selection, "selected_rows": len(frame)}
     return frame
+
+
+def _windowed_source(spark: Any, spec: TrainingSpec, names: tuple[str, ...]) -> Any:
+    """Join labels and features, project and keep the event window, all still lazy in Spark."""
+    reader = spark.read
+    if spec.source_kind is None:
+        reader = reader.format("delta").option("versionAsOf", spec.version)
+    source = join_training_labels(spark, reader.table(spec.table), spec)
+    source = enrich_training_source(spark, source, spec)
+    source = normalize_training_dates(
+        source.select(*names),
+        event_column=spec.event_column,
+        result_column=spec.result_available_at_column,
+        event_spec=spec.event_time_parsing,
+        result_spec=spec.result_time_parsing,
+    )
+    if spec.event_column is None:
+        return source
+    start = instant_microseconds(cast(datetime, spec.start))
+    cutoff = instant_microseconds(cast(datetime, spec.cutoff))
+    return source.where(
+        f"{column_name(cast(str, spec.event_column))} >= {start} AND "
+        f"{column_name(cast(str, spec.event_column))} < {cutoff}"
+    )
+
+
+def _now_iso() -> str:
+    """Record when an unversioned source was read; its saved rows are the only pin."""
+    return datetime.now(UTC).isoformat()
 
 
 def _limited_population(source: Any, spec: TrainingSpec) -> tuple[Any, dict | None, int]:
@@ -931,7 +1001,7 @@ def log_pipeline_model(
 def training_spec_payload(spec: TrainingSpec, engine: str) -> dict[str, Any]:
     """Serialize concrete selection settings before and after membership enrichment."""
     payload = asdict(spec)
-    for field in LABEL_FIELDS:
+    for field in (*LABEL_FIELDS, *OPTIONAL_SOURCE_FIELDS):
         if payload[field] is None:
             payload.pop(field)
     for field in ("start", "holdout_start", "cutoff", "result_cutoff"):
@@ -1146,6 +1216,7 @@ def fit_candidate(
 ) -> _FittedCandidate:
     """Fit CV and final training rows, persisting selection and provenance evidence."""
     spec = pin_training_labels(spark, pin_fit_lookup(spark, spec, engine))
+    _require_saved_unversioned_rows(spec, prepared_data)
     run.log_config(pipeline_config, artifact_file="pipeline_config.json")
     run.client.log_dict(run.run_id, config, "training_pipeline_config.json")
     run.log_params({key: getattr(cv, field) for key, field in CV_FIELDS.items()})
@@ -1227,6 +1298,17 @@ def fit_candidate(
         holdout,
         native_train,
     )
+
+
+def _require_saved_unversioned_rows(spec: TrainingSpec, prepared_data: Any) -> None:
+    """Refuse a live fit of an unversioned source whose rows no later step could replay."""
+    kind = spec.source_kind or spec.training_label_kind
+    if kind is not None and prepared_data is None and spec.source_snapshot_json is None:
+        raise ValueError(
+            f"A training source is a {kind}, which has no Delta history, so only the generated "
+            "job graph (workflow_contract: 3) can train from it: it saves the rows it reads. "
+            "Regenerate the project with the current Skyulf version and redeploy."
+        )
 
 
 def read_training_partitions(

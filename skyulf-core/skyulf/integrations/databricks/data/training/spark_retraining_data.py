@@ -29,7 +29,7 @@ from ...training.fitting.candidate import (
     training_spec_payload,
 )
 from ...training.weights.weights import extract_training_weights
-from ..delta_io.delta import table_identity
+from ..delta_io.delta import source_table_identity
 from .retraining_data import (
     comparison_spec,
     filter_weight_columns,
@@ -279,10 +279,15 @@ def _pandas_source_types(source: Any, spec: TrainingSpec) -> Any:
 
 
 def _read_source(spark: Any, spec: TrainingSpec) -> Any:
-    """Pin a projected Delta read and retain the local training row and byte budgets."""
+    """Pin a projected read and retain the local training row and byte budgets.
+
+    Delta reads are version-pinned; an unversioned source (ST, MV, view) is read as it is now.
+    """
     functions = _functions()
-    source = spark.read.format("delta").option("versionAsOf", spec.version).table(spec.table)
-    source = join_training_labels(spark, source, spec)
+    reader = spark.read
+    if spec.source_kind is None:
+        reader = reader.format("delta").option("versionAsOf", spec.version)
+    source = join_training_labels(spark, reader.table(spec.table), spec)
     source = enrich_training_source(spark, source, spec)
     source = normalize_training_dates(
         source.select(*spec.source_columns),
@@ -417,7 +422,7 @@ def assess_spark_training_data(spark: Any, monitor: Any, workflow: dict, now: da
     engine = workflow["engine"]
     if engine != artifact.manifest.fitted_engine:
         raise ValueError("On-drift training engine differs from the active model.")
-    identity = table_identity(spark, workflow["training_table"])
+    identity = source_table_identity(spark, workflow["training_table"], saved.source_kind)
     if identity != evidence["prepared_reference_source_table_id"]:
         raise ValueError("Training source physical identity differs from the prepared reference.")
     current = resolve_training_spec(spark, workflow, now)
@@ -430,7 +435,7 @@ def assess_spark_training_data(spark: Any, monitor: Any, workflow: dict, now: da
     _require_supported_recipe(
         replace(saved, sample_key_sha256=None, survivor_key_sha256=None, holdout_key_sha256=None)
     )
-    if table_identity(spark, current.table) != identity:
+    if source_table_identity(spark, current.table, current.source_kind) != identity:
         raise ValueError("Training source table was replaced while resolving its snapshot.")
     source = _read_source(spark, current)
     train = _training_partition(_eligible(source, current), current)
@@ -439,7 +444,7 @@ def assess_spark_training_data(spark: Any, monitor: Any, workflow: dict, now: da
     result = _assessment(
         counts, _baseline(spark, evidence, saved, current, source, columns), columns
     )
-    if table_identity(spark, current.table) != identity:
+    if source_table_identity(spark, current.table, current.source_kind) != identity:
         raise ValueError("Training source table was replaced during freshness assessment.")
     if current.feature_binding_json is not None:
         pin_training_lookup(spark, current)

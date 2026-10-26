@@ -87,6 +87,31 @@ def test_only_winner_registered_after_shared_cv(staged, engine):
         }
 
 
+def test_competition_replays_one_saved_source_read(staged, monkeypatch):
+    """Candidates and later steps must replay the rows load_data read, never the live source."""
+    from unittest.mock import Mock
+
+    from test_databricks_lifecycle_tasks import _real_read_training_snapshot
+
+    from skyulf.integrations.databricks.training.fitting import candidate
+
+    _, _, config, _, frame = staged
+    _competition(config)
+    reads = Mock(side_effect=lambda spark, spec: frame.copy())
+    monkeypatch.setattr(candidate, "read_live_snapshot", reads)
+    monkeypatch.setattr(candidate, "read_training_snapshot", _real_read_training_snapshot)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    loaded = _call(staged, "load_data", prepared.reference)
+    split = _call(staged, "prepare_dataset", loaded.reference)
+    trained = _call(staged, "train", split.reference)
+    locator = json.loads(trained.output["spec"]["source_snapshot_json"])
+    assert locator["run_id"] == prepared.reference["run_id"]
+    selected = _call(staged, "select_best_model", trained.reference)
+    registered = _call(staged, "evaluate_register", selected.reference)
+    _call(staged, "compare", registered.reference)
+    reads.assert_called_once()
+
+
 def test_failed_candidate_prevents_registration(staged, monkeypatch):
     """A partial competition must never silently register its successful candidate."""
     from skyulf.integrations.databricks.training.fitting import candidate as candidate

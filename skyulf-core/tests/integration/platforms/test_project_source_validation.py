@@ -331,3 +331,44 @@ def test_delta_text_availability_preflight_and_runtime(delta_spark):
             delta_spark.sql(f"DROP TABLE IF EXISTS {name}")
     assert not delta_spark.catalog.tableExists(source)
     assert not delta_spark.catalog.tableExists(labels)
+
+
+def _unversioned_query(kind):
+    """Refuse DESCRIBE DETAIL on the training table, as a warehouse does for an MV or view."""
+    execute, statements = _query()
+
+    def query(sql):
+        """Answer the table type and reuse the Delta answers for every other table."""
+        if "train" in sql and sql.startswith("DESCRIBE DETAIL"):
+            raise ValueError("Source validation query did not complete: EXPECT_TABLE_NOT_VIEW.")
+        if sql.startswith("DESCRIBE TABLE EXTENDED"):
+            statements.append(sql)
+            return [
+                {"col_name": "x", "data_type": "double"},
+                {"col_name": "Type", "data_type": kind},
+            ]
+        return execute(sql)
+
+    return query, statements
+
+
+@pytest.mark.parametrize("kind", ["MATERIALIZED_VIEW", "STREAMING_TABLE", "VIEW"])
+def test_training_source_may_be_a_lakeflow_table_or_view(kind):
+    """Training reads STs, MVs and views directly; only the scoring source must be Delta."""
+    from skyulf.integrations.databricks.projects.source_validation import validate_project_sources
+
+    query, _ = _unversioned_query(kind)
+    report = validate_project_sources(_config(), query)
+    assert report["tables"]["cat.data.train"]["change_data_feed"] is False
+    scoring = _config() | {"score_source_table": "cat.data.train"}
+    with pytest.raises(ValueError, match="EXPECT_TABLE_NOT_VIEW"):
+        validate_project_sources(scoring, _unversioned_query(kind)[0])
+
+
+def test_training_source_of_another_type_keeps_the_delta_error():
+    """A failed DESCRIBE DETAIL on an ordinary table must not be mistaken for a view."""
+    from skyulf.integrations.databricks.projects.source_validation import validate_project_sources
+
+    query, _ = _unversioned_query("MANAGED")
+    with pytest.raises(ValueError, match="EXPECT_TABLE_NOT_VIEW"):
+        validate_project_sources(_config(), query)

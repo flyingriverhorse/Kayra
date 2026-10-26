@@ -13,6 +13,10 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
+from skyulf.integrations.databricks.training.fitting.candidate import (
+    read_training_snapshot as _real_read_training_snapshot,
+)
+
 _TRAIN_TASK_STATES = {"training": "success", "operator": "excluded"}
 _OPERATOR_TASK_STATES = {"training": "excluded", "operator": "success"}
 
@@ -179,6 +183,7 @@ def staged(tmp_path, monkeypatch):
     frame = pd.DataFrame({"id": range(20), "x": range(20), "target": range(0, 40, 2)})
     frame.attrs.update(source_table_id="delta-log-id", source_uc_table_id="uc-object-id")
     monkeypatch.setattr(candidate, "read_training_snapshot", lambda spark, spec: frame.copy())
+    monkeypatch.setattr(candidate, "read_live_snapshot", lambda spark, spec: frame.copy())
     monkeypatch.setattr(workflow, "read_training_snapshot", lambda spark, spec: frame.copy())
     config = {
         "engine": "pandas",
@@ -1391,13 +1396,16 @@ def test_task_states_only_accepted_by_complete_before_external_work(monkeypatch,
 @pytest.mark.parametrize("engine", ["pandas", "polars"])
 @pytest.mark.parametrize("policy", ["automatic", "manual_approval"])
 def test_readable_graph_executes_data_stages_before_fitting(staged, monkeypatch, engine, policy):
-    """Named data stages do real work and training consumes their checked saved partitions."""
+    """Named data stages do real work and every later step replays the one saved source read."""
+    from skyulf.integrations.databricks.lifecycle import workflow
     from skyulf.integrations.databricks.training.fitting import candidate
 
     _, client, config, _, frame = staged
     config.update(engine=engine, promotion_policy=policy)
     reads = Mock(side_effect=lambda spark, spec: frame.copy())
-    monkeypatch.setattr(candidate, "read_training_snapshot", reads)
+    monkeypatch.setattr(candidate, "read_live_snapshot", reads)
+    monkeypatch.setattr(candidate, "read_training_snapshot", _real_read_training_snapshot)
+    monkeypatch.setattr(workflow, "read_training_snapshot", _real_read_training_snapshot)
     prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     reads.assert_not_called()
     loaded = _call(staged, "load_data", prepared.reference)
@@ -1422,6 +1430,7 @@ def test_readable_graph_executes_data_stages_before_fitting(staged, monkeypatch,
     assert ("champion" in client.get_registered_model(config["model_name"]).aliases) == (
         policy == "automatic"
     )
+    reads.assert_called_once()
 
 
 def test_readable_graph_rejects_modified_partition_before_fit(staged, monkeypatch):
@@ -1502,7 +1511,7 @@ def test_readable_failed_data_stage_cannot_publish_success(staged, monkeypatch):
     prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     monkeypatch.setattr(
         candidate,
-        "read_training_snapshot",
+        "read_live_snapshot",
         Mock(side_effect=ValueError("source unavailable")),
     )
     with pytest.raises(ValueError, match="source unavailable"):
@@ -1628,6 +1637,7 @@ def _probe_sized_source(monkeypatch):
     frame = pd.DataFrame({"id": range(90), "x": range(90), "target": range(0, 180, 2)})
     frame.attrs.update(source_table_id="delta-log-id", source_uc_table_id="uc-object-id")
     monkeypatch.setattr(candidate, "read_training_snapshot", lambda spark, spec: frame.copy())
+    monkeypatch.setattr(candidate, "read_live_snapshot", lambda spark, spec: frame.copy())
     monkeypatch.setattr(workflow, "read_training_snapshot", lambda spark, spec: frame.copy())
 
 

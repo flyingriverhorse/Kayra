@@ -115,7 +115,7 @@ def prepared_reference(monkeypatch):
         monkeypatch.setattr(reference, "ensure_monitoring_store", lambda *a: "a.monitoring")
         monkeypatch.setattr(reference, "hold_reference_mutation", admission)
         monkeypatch.setattr(reference, "require_reference_mutation", Mock())
-        monkeypatch.setattr(reference, "table_identity", lambda *a: held["source_id"])
+        monkeypatch.setattr(reference, "source_table_identity", lambda *a: held["source_id"])
         monkeypatch.setattr(
             reference, "read_training_snapshot", lambda *a: observe("source", frame)
         )

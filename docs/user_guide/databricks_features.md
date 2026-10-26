@@ -222,10 +222,15 @@ copies go (default: the output schema); `source_snapshot: fail` turns copying of
 The prepared [`lakeflow/bronze_observations`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/lakeflow)
 example runs this end to end, with a `setup.sql` that creates the streaming table.
 
-Train from `output_table`, a regular Delta table. To score, `ai_query` and the
-serving SQL function can read the streaming table itself, and REST callers send
-rows; only the batch `score` job needs a regular table with Change Data Feed, such
-as `output_table`. Training directly from a streaming table stops with a message.
+Training can also read a streaming table, materialized view or view directly as
+its `training_table`, without the features job: each run reads it once, saves the
+rows with the training run in MLflow, and every later step (registration,
+comparison, approval, monitoring) replays the saved rows. No extra Unity Catalog
+table is created. Use the features job when you need `base_transform`, feature
+groups or `feature_lookup`, which still needs a Delta `training_table`. To score,
+`ai_query` and the serving SQL function can read the streaming table itself, and
+REST callers send rows; only the batch `score` job needs a regular table with
+Change Data Feed, such as `output_table`.
 
 ### Derive labels and keys with base_transform
 

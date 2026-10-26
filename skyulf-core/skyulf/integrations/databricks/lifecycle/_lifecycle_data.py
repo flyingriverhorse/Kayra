@@ -1,6 +1,8 @@
 """Checked, bounded training datasets shared by separate lifecycle tasks."""
 
 import hashlib
+import json
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
@@ -37,14 +39,30 @@ def load_frame(store: PhaseStore, name: str, evidence: dict[str, Any]) -> pd.Dat
 
 
 def load_source(spark: Any, store: PhaseStore, spec: training.TrainingSpec) -> dict[str, Any]:
-    """Materialize the bounded pinned source before any splitting or fitting."""
-    frame = training.read_training_snapshot(spark, spec)
-    return {
+    """Materialize the bounded pinned source once; later steps replay these saved rows."""
+    frame = training.read_live_snapshot(spark, spec)
+    output = {
         "source_table": spec.table,
         "source_version": spec.version,
         "source_rows": len(frame),
         "source": save_frame(store, "source", frame),
     }
+    if spec.source_kind is not None:
+        output |= {"source_kind": spec.source_kind, "read_at": frame.attrs["source_read_at"]}
+    return output
+
+
+def snapshot_spec(store: PhaseStore, spec: training.TrainingSpec) -> training.TrainingSpec:
+    """Point a readable-graph spec at this run's saved source rows for every later replay."""
+    if store.request.get("graph_version", 2) != 3:
+        return spec
+    locator = {
+        "run_id": store.run_id,
+        "path": "lifecycle/data/source.parquet",
+        "tracking_uri": store.request["config"]["tracking_uri"],
+        "receipt": store.receipt("load_data")["output"]["source"],
+    }
+    return replace(spec, source_snapshot_json=json.dumps(locator, sort_keys=True))
 
 
 def prepare_dataset(store: PhaseStore, spec: training.TrainingSpec) -> dict[str, Any]:

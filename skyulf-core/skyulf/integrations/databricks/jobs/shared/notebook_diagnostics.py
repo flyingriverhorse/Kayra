@@ -61,9 +61,17 @@ _KNOWN_FAILURES: tuple[tuple[str | None, str | None, str, str], ...] = (
     (
         None,
         "STREAMING_TABLE_OPERATION_NOT_ALLOWED",
-        "Streaming tables and materialized views have no Delta history to pin here. Read "
-        "them through the features job (source_snapshot: materialize, the default) and "
-        "train from its output_table.",
+        "Streaming tables and materialized views have no Delta history here. Training "
+        "reads them directly in the generated job graph (workflow_contract: 3); "
+        "regenerate an older project. The score job, monitoring and feature_lookup "
+        "still need a regular Delta table, such as the features job's output_table.",
+        "streaming-table-operation-not-allowed",
+    ),
+    (
+        None,
+        "only the generated job graph",
+        "Regenerate the project with the current Skyulf version and redeploy; its "
+        "training graph saves the rows it reads from a streaming table or view.",
         "streaming-table-operation-not-allowed",
     ),
     (

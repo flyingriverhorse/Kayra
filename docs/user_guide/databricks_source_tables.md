@@ -39,7 +39,10 @@ change:
 
 Every table must satisfy this contract:
 
-- **Delta tables.** Views and other formats are not accepted as sources.
+- **Delta tables.** The scoring input and the monitoring outcomes must be Delta
+  tables. The training data and training outcomes may also be a streaming table,
+  materialized view or view: training reads them once per run and replays the
+  saved rows, so the check skips their Delta history and change data feed.
 - **Record keys.** The `record_key_columns` exist in every table, are never null
   or non-finite, are unique within each table, and have exactly the same type in
   every table that is joined.

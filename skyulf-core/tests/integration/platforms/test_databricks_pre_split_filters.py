@@ -237,6 +237,9 @@ def test_empty_recipe_preserves_legacy_dataset_identity():
         "training_label_table",
         "training_label_version",
         "training_label_table_id",
+        "source_kind",
+        "source_snapshot_json",
+        "training_label_kind",
     ):
         old.pop(key)
     for key in ("start", "holdout_start", "cutoff", "result_cutoff"):

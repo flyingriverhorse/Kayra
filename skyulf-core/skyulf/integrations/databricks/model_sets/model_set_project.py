@@ -388,7 +388,10 @@ def package_training_model_set(
             "Online policy transport for multi-target model-set packaging is unsupported."
         )
     _completed_parent(outcome, branches, tracking_uri, registry_uri)
-    source = spark.read.option("versionAsOf", outcome.source_version).table(outcome.source_table)
+    reader = spark.read
+    if branches[0].spec.source_kind is None:
+        reader = reader.option("versionAsOf", outcome.source_version)
+    source = reader.table(outcome.source_table)
     keys = _record_key_schema(source, branches[0].spec.record_key_columns)
     component_artifacts: dict[str, Any] = {}
     components = _registered_components(

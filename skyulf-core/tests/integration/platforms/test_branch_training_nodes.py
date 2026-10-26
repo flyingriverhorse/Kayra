@@ -6,19 +6,25 @@ import pytest
 from test_training_branches import _configs, _data, tracked  # noqa: F401 - shared tracking fixture
 
 
+def _live_reads(monkeypatch):
+    """Count live source reads; replays go through the real saved-snapshot reader."""
+    from unittest.mock import Mock
+
+    from skyulf.integrations.databricks.training.fitting import candidate as candidate
+
+    reads = Mock(side_effect=lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy())
+    monkeypatch.setattr(candidate, "read_live_snapshot", reads)
+    return reads
+
+
 def test_branch_tasks_join_only_when_every_model_finished(workflow_config, tracked, monkeypatch):
-    """Regression, classification and ensemble branches must share one immutable parent plan."""
+    """Branches share one parent plan and replay the rows initialize read, one read per branch."""
     from skyulf.integrations.databricks.jobs.training import branch_tasks
     from skyulf.integrations.databricks.lifecycle._lifecycle_state import LifecycleContext
-    from skyulf.integrations.databricks.training.fitting import candidate as candidate
 
     uri, client = tracked
     configs = _configs(workflow_config, store=uri)
-    monkeypatch.setattr(
-        candidate,
-        "read_training_snapshot",
-        lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
-    )
+    reads = _live_reads(monkeypatch)
     context = LifecycleContext("10", "20")
     initialized = branch_tasks.initialize_branch_training(
         None,
@@ -29,6 +35,7 @@ def test_branch_tasks_join_only_when_every_model_finished(workflow_config, track
         tracking_uri=uri,
         experiment_name="branches",
     )
+    assert reads.call_count == 3
     options: dict[str, Any] = {
         "reference": initialized.reference,
         "tracking_uri": uri,
@@ -42,6 +49,7 @@ def test_branch_tasks_join_only_when_every_model_finished(workflow_config, track
     branch_tasks.run_branch_training(None, name="category", **options)
     branch_tasks.run_branch_training(None, name="ensemble", **options)
     result = branch_tasks.assemble_branch_training(None, **options)
+    assert reads.call_count == 3
     assert set(result.output["components"]) == {"amount", "category", "ensemble"}
     assert first.output["run_id"] != result.output["parent_run_id"]
     assert client.get_run(result.output["parent_run_id"]).info.status == "FINISHED"
@@ -62,6 +70,7 @@ def test_branch_failure_finalizes_parent_without_partial_set(workflow_config, tr
     from skyulf.integrations.databricks.lifecycle._lifecycle_state import LifecycleContext
 
     uri, client = tracked
+    _live_reads(monkeypatch)
     initialized = branch_tasks.initialize_branch_training(
         None,
         configs=_configs(workflow_config, store=uri),
@@ -186,11 +195,7 @@ def test_set_registration_evaluation_and_decision_are_separate(
         "composition_config": {"outputs": []},
         "promotion_policy": "manual_approval",
     }
-    monkeypatch.setattr(
-        candidate,
-        "read_training_snapshot",
-        lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
-    )
+    _live_reads(monkeypatch)
     from unittest.mock import Mock
 
     spark = Mock()

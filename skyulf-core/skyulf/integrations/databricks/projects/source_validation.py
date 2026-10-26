@@ -5,6 +5,7 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from ..data.delta_io.delta import UNVERSIONED_KINDS
 from ..data.training.training_dates import TrainingDateSpec, training_date_spec
 from ..shared._contracts import column_name, table_name
 
@@ -71,21 +72,44 @@ def _training_columns(config: dict[str, Any], external: bool) -> list[str]:
     )
 
 
-def _table_schema(query: Query, name: str) -> tuple[dict[str, str], bool]:
-    """Inspect Delta metadata without treating absent permissions as an empty table."""
+def _table_schema(
+    query: Query, name: str, *, unversioned_ok: bool = False
+) -> tuple[dict[str, str], bool]:
+    """Inspect Delta metadata without treating absent permissions as an empty table.
+
+    With ``unversioned_ok`` a streaming table, materialized view or view is accepted too:
+    training reads it directly and saves the rows it read. It has no change data feed here.
+    """
     quoted = table_name(name)
-    detail = query(f"DESCRIBE DETAIL {quoted}")
-    if len(detail) != 1 or detail[0].get("format") != "delta":
-        raise ValueError(f"Source must be an existing Delta table: {name}.")
-    properties = detail[0].get("properties") or {}
-    if isinstance(properties, str):
-        properties = json.loads(properties)
+    properties = _delta_properties(query, quoted, name, unversioned_ok)
     columns = {
         row["col_name"]: row["data_type"].lower()
         for row in query(f"DESCRIBE TABLE {quoted}")
         if row.get("col_name") and not row["col_name"].startswith("#") and row.get("data_type")
     }
     return columns, str(properties.get("delta.enableChangeDataFeed", "false")).lower() == "true"
+
+
+def _delta_properties(query: Query, quoted: str, name: str, unversioned_ok: bool) -> dict:
+    """Return Delta table properties, or none for an accepted unversioned source."""
+    failure: ValueError | None = None
+    try:
+        detail = query(f"DESCRIBE DETAIL {quoted}")
+    except ValueError as exc:
+        detail, failure = [], exc
+    if len(detail) != 1 or detail[0].get("format") != "delta":
+        if unversioned_ok and _table_type(query, quoted) in UNVERSIONED_KINDS:
+            return {}
+        raise failure or ValueError(f"Source must be an existing Delta table: {name}.")
+    properties = detail[0].get("properties") or {}
+    return json.loads(properties) if isinstance(properties, str) else properties
+
+
+def _table_type(query: Query, quoted: str) -> str:
+    """Read the catalog Type row, for example MANAGED or MATERIALIZED_VIEW."""
+    rows = query(f"DESCRIBE TABLE EXTENDED {quoted}")
+    types = [row.get("data_type") for row in rows if str(row.get("col_name")).strip() == "Type"]
+    return str(types[0]).strip().upper() if types else "UNKNOWN"
 
 
 def _keys(query: Query, name: str, columns: dict[str, str], keys: list[str]) -> None:
@@ -177,9 +201,15 @@ def _source_key_sets(config: dict, name: str, monitoring: str | None) -> list[li
 
 def _source_tables(config: dict, query: Query, names: list[str], monitoring: str | None) -> dict:
     """Validate each table's actual identity contracts before inspecting feature columns."""
+    # Training sources are read once and saved, so they may be unversioned; scoring and
+    # monitoring sources still need Delta history and change data feed.
+    readable = {config["training_table"], config.get("training_label_table")} - {
+        config["score_source_table"],
+        monitoring,
+    }
     tables = {}
     for name in names:
-        schema, cdf = _table_schema(query, name)
+        schema, cdf = _table_schema(query, name, unversioned_ok=name in readable)
         for keys in _source_key_sets(config, name, monitoring):
             if keys == ["databricks_request_id", "request_row_index"]:
                 _require_request_key_types(schema, name)

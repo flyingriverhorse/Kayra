@@ -153,3 +153,19 @@ def test_holdout_performance_baseline_uses_saved_model_and_verified_membership(
     ).mean()
     assert evidence["performance_baseline"]["value"] == pytest.approx(expected)
     assert evidence["performance_baseline"]["labeled_rows"] == len(heldout)
+
+
+def test_spark_reference_binds_unversioned_source_by_catalog_id(monkeypatch):
+    """An MV-trained reference must recheck its Unity Catalog id, not DESCRIBE DETAIL."""
+    from skyulf.integrations.databricks.observability.monitoring.spark import (
+        spark_monitoring_reference as module,
+    )
+
+    monkeypatch.setattr(module, "source_table_identity", lambda spark, table, kind: f"uc-{kind}")
+    spec = SimpleNamespace(table="a.b.mv", version=0, source_kind="MATERIALIZED_VIEW")
+    receipt = {"source_table_id": "uc-MATERIALIZED_VIEW", "source_identity": {"version": 0}}
+    module._verify_source_identity(None, spec, receipt)
+    with pytest.raises(ValueError, match="replaced"):
+        module._verify_source_identity(
+            None, SimpleNamespace(**{**vars(spec), "source_kind": None}), receipt
+        )

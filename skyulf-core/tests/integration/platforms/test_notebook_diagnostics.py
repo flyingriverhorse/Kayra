@@ -208,6 +208,10 @@ def test_summary_failure_cannot_fail_completed_task(monkeypatch, capsys):
             "streaming-table-operation-not-allowed",
         ),
         (
+            ValueError("only the generated job graph (workflow_contract: 3) can train from it"),
+            "streaming-table-operation-not-allowed",
+        ),
+        (
             RuntimeError("PERMISSION_DENIED: User does not have SELECT"),
             "permission-denied-in-a-job-run",
         ),

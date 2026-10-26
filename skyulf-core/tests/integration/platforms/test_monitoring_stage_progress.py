@@ -73,7 +73,7 @@ def test_reference_progress_covers_each_population_and_holdout(monkeypatch, caps
         reference, "load_monitoring_artifact", lambda *a, **k: (artifact, spec, {}, evidence)
     )
     monkeypatch.setattr(reference, "ensure_owned_object", lambda *a: False)
-    monkeypatch.setattr(reference, "table_identity", lambda *a: "table-id")
+    monkeypatch.setattr(reference, "source_table_identity", lambda *a: "table-id")
     monkeypatch.setattr(reference, "read_training_snapshot", lambda *a: frame)
     monkeypatch.setattr(reference, "make_registry_client", Mock())
     monkeypatch.setattr(reference, "require_mlflow", Mock())

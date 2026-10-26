@@ -2,6 +2,7 @@
 
 import importlib
 import json
+import os
 from typing import Any
 
 from ...shared._contracts import BatchSpec, table_name
@@ -45,15 +46,61 @@ def table_kind(spark: Any, table: str) -> str:
     return "UNKNOWN"
 
 
-def require_versioned_table(spark: Any, table: str, label: str) -> None:
-    """Fail with the fix when a source cannot be version-pinned (Lakeflow tables, views)."""
-    kind = table_kind(spark, table)
-    if kind in UNVERSIONED_KINDS:
-        raise ValueError(
-            f"{label} {table} is a {kind}, which has no Delta history to pin. Use a regular "
-            "Delta table, or produce one in config/features.yml with base_transform and "
-            "source_snapshot: materialize."
+# Error classes that name an unversioned type when DESCRIBE TABLE EXTENDED is refused too.
+_ERROR_KINDS = {
+    "STREAMING_TABLE_OPERATION_NOT_ALLOWED": "STREAMING_TABLE",
+    "EXPECT_TABLE_NOT_VIEW": "VIEW",
+}
+
+
+def _uc_table(table: str) -> Any:
+    """Read Unity Catalog table metadata, only inside a Databricks runtime."""
+    if not os.environ.get("DATABRICKS_RUNTIME_VERSION"):
+        return None
+    from databricks.sdk import WorkspaceClient  # noqa: PLC0415 - native runtime dependency
+
+    return WorkspaceClient().tables.get(table)
+
+
+def _uc_table_type(table: str) -> str | None:
+    """Return the Unity Catalog table type, or None when it cannot be read."""
+    try:
+        value = getattr(_uc_table(table), "table_type", None)
+    except Exception:  # noqa: BLE001 - a fallback probe; the caller keeps the original error
+        return None
+    return str(getattr(value, "value", value)).upper() if value is not None else None
+
+
+def unversioned_kind(spark: Any, table: str, error: BaseException) -> str | None:
+    """Name the type of a table without Delta history (ST, MV, view), else None.
+
+    Called after a history read failed. Dedicated compute may refuse DESCRIBE on a
+    streaming table as well, so the Unity Catalog type and then ``error`` are fallbacks.
+    """
+    try:
+        kind = table_kind(spark, table)
+    except Exception:  # noqa: BLE001 - fall back to other evidence of the table type
+        kind = _uc_table_type(table) or next(
+            (kind for name, kind in _ERROR_KINDS.items() if name in str(error)), None
         )
+    return kind if kind in UNVERSIONED_KINDS else None
+
+
+def source_table_identity(spark: Any, table: str, kind: str | None = None) -> str:
+    """Return the Delta table id, or the Unity Catalog id for an unversioned ``kind``.
+
+    DESCRIBE DETAIL fails on materialized views and, on dedicated compute, on streaming
+    tables; the catalog id still detects a dropped and recreated table of the same name.
+    """
+    if kind is None:
+        return table_identity(spark, table)
+    identity = getattr(_uc_table(table), "table_id", None)
+    if not isinstance(identity, str) or not identity:
+        raise ValueError(
+            f"{table} is a {kind}; reading it needs its Unity Catalog table id, so run "
+            "this job on Databricks."
+        )
+    return identity
 
 
 def history(spark: Any, table: str, *, limit: int | None = None) -> Any:

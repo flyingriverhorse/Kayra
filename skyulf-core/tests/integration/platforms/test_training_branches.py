@@ -154,7 +154,7 @@ def test_outcome_snapshot_is_shared_and_frozen_in_saved_branches(workflow_config
     history = MagicMock()
     history.return_value.select.return_value.first.side_effect = lambda: {"version": next(versions)}
     monkeypatch.setattr(training_labels, "history", history)
-    monkeypatch.setattr(training_labels, "table_identity", lambda *_: "outcome-table-id")
+    monkeypatch.setattr(training_labels, "source_table_identity", lambda *_: "outcome-table-id")
     monkeypatch.setattr(branches, "controlled_champion_version", lambda *args, **kwargs: None)
     prepared = branches.prepare_training_branches(None, configs)
     assert {branch.spec.training_label_version for branch in prepared} == {3}
@@ -559,3 +559,18 @@ def test_failure_logging_cannot_replace_original_error(
     runs = client.search_runs([client.get_experiment_by_name("branches").experiment_id])
     assert len(runs) == 1
     assert runs[0].info.status == "FAILED"
+
+
+def test_restore_accepts_plans_without_unversioned_fields(workflow_config, monkeypatch):
+    """Plans saved before unversioned sources existed must restore, and new ones round-trip."""
+    monkeypatch.setattr(branches, "controlled_champion_version", lambda *args, **kwargs: None)
+    prepared = branches.prepare_training_branches(MagicMock(), _configs(workflow_config))
+    payload = branches.branch_training_payload(prepared)
+    assert "source_kind" not in payload["branches"][0]["spec"]
+    assert branches.restore_training_branches(payload) == prepared
+    unversioned = tuple(
+        replace(branch, spec=replace(branch.spec, version=0, source_kind="STREAMING_TABLE"))
+        for branch in prepared
+    )
+    restored = branches.restore_training_branches(branches.branch_training_payload(unversioned))
+    assert restored == unversioned

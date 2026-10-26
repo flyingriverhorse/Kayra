@@ -23,6 +23,7 @@ from ..lifecycle.workflow import resolve_training_spec, training_settings, train
 from ..projects.workflow_config import validate_workflow_config
 from ..scoring.shared.prediction_output import TABLE_NAME_PATTERN
 from .fitting.candidate import (
+    OPTIONAL_SOURCE_FIELDS,
     CandidateResult,
     TrainingSpec,
     candidate_config,
@@ -294,12 +295,13 @@ def _pin_branch_sources(
     labels = {(first.training_label_table, first.training_label_version): resolved}
     pinned = []
     for branch in branches:
-        spec = replace(branch.spec, version=resolved.version)
+        spec = replace(branch.spec, version=resolved.version, source_kind=resolved.source_kind)
         if spec.training_label_table is not None:
             key = (spec.training_label_table, spec.training_label_version)
             if key not in labels:
                 labels[key] = pin_training_labels(spark, spec)
-            spec = replace(spec, **{name: getattr(labels[key], name) for name in LABEL_FIELDS})
+            pins = (*LABEL_FIELDS, "training_label_kind")
+            spec = replace(spec, **{name: getattr(labels[key], name) for name in pins})
         pinned.append(replace(branch, spec=spec))
     return tuple(pinned)
 
@@ -367,9 +369,9 @@ def _restore_branch(payload: Any) -> TrainingBranch:
 
 
 def _restore_spec_fields(value: Any) -> dict[str, Any]:
-    """Accept absent optional label metadata in older plans, but require concrete label pins."""
+    """Accept absent optional label/source metadata in older plans; require concrete label pins."""
     if isinstance(value, dict):
-        value = dict.fromkeys(LABEL_FIELDS) | value
+        value = dict.fromkeys((*LABEL_FIELDS, *OPTIONAL_SOURCE_FIELDS)) | value
     _exact_fields(value, {field.name for field in fields(TrainingSpec)}, "branch spec")
     if value["training_label_table"] is not None and any(
         value[name] is None for name in LABEL_FIELDS[1:]

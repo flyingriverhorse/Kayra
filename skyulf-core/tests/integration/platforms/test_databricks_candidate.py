@@ -782,3 +782,156 @@ def test_unlabeled_rows_do_not_count_toward_max_rows():
     source = _Source(rows)
     unfiltered = replace(spec, drop_missing_labels=False)
     assert retraining._labeled_rows_before_limit(source, unfiltered) == (source, 0)
+
+
+def test_unversioned_fields_keep_legacy_identity_and_payload():
+    """Delta specs must keep their saved dataset_id and payload shape after T6 adds fields."""
+    spec = _spec()
+    assert spec.dataset_id == (
+        "workspace.test.labels@4/temporal/"
+        "d3674d10561e189641f3b638cd50379c1dbf0746bc474221e3e77e5fb0cacce6"
+    )
+    payload = retraining.training_spec_payload(spec, "pandas")
+    assert not {"source_kind", "source_snapshot_json", "training_label_kind"} & set(payload)
+    assert retraining.TrainingSpec.from_payload(payload) == spec
+    located = replace(spec, source_snapshot_json=json.dumps({"run_id": "r"}))
+    assert located.dataset_id == spec.dataset_id
+    restored = retraining.training_spec_payload(located, "pandas")
+    assert retraining.TrainingSpec.from_payload(restored) == located
+
+
+def test_unversioned_source_kind_is_validated_and_bound_to_identity():
+    """Only a known unversioned catalog type at placeholder version 0 may mark a live source."""
+    view = _spec(version=0, source_kind="MATERIALIZED_VIEW")
+    assert view.dataset_id != _spec(version=0).dataset_id
+    with pytest.raises(ValueError, match="source_kind"):
+        _spec(version=0, source_kind="MANAGED")
+    with pytest.raises(ValueError, match="source_kind"):
+        _spec(version=3, source_kind="STREAMING_TABLE")
+
+
+_DEDICATED = "[STREAMING_TABLE_OPERATION_NOT_ALLOWED.REQUIRES_SHARED_COMPUTE] not allowed"
+
+
+def test_live_reader_reads_unversioned_source_without_detail_history_or_time_travel(monkeypatch):
+    """Dedicated compute refuses DETAIL/HISTORY/versionAsOf on an ST; a plain read must do."""
+    sdk = pytest.importorskip("databricks.sdk")
+    monkeypatch.setenv("DATABRICKS_RUNTIME_VERSION", "test-runtime")
+    workspace = MagicMock()
+    workspace.tables.get.return_value.table_id = "uc-st-id"
+    monkeypatch.setattr(sdk, "WorkspaceClient", lambda: workspace)
+
+    def refuse(*args, **kwargs):
+        """Fail like a Lakeflow table on dedicated compute."""
+        raise RuntimeError(_DEDICATED)
+
+    source = MagicMock()
+    source.sql.side_effect = refuse
+    source.read.format.side_effect = refuse
+    source.read.option.side_effect = refuse
+    source.read.table.return_value = source
+    for name in ("where", "select", "orderBy", "limit"):
+        getattr(source, name).return_value = source
+    source.count.return_value = 0
+    row = _frame().iloc[0].to_dict()
+    row["event_time"] = int(row["event_time"].value // 1000)
+    row["label_at"] = int(row["label_at"].value // 1000)
+    source.toLocalIterator.return_value = iter([row])
+    monkeypatch.setattr(retraining, "normalize_training_dates", lambda frame, **kwargs: frame)
+    spec = _spec(version=0, source_kind="STREAMING_TABLE")
+    frame = retraining.read_live_snapshot(source, spec)
+    source.read.table.assert_called_once_with("workspace.test.labels")
+    assert len(frame) == 1
+    assert frame.attrs["source_table_id"] == "uc-st-id"
+    assert frame.attrs["source_kind"] == "STREAMING_TABLE"
+    assert datetime.fromisoformat(frame.attrs["source_read_at"]).tzinfo is not None
+
+
+class _ArtifactClient:
+    """Keep logged artifacts in a local folder, like an MLflow artifact store."""
+
+    def __init__(self, root):
+        """Store files under ``root``."""
+        self.root, self.downloads = Path(root), 0
+
+    def log_artifact(self, run_id, path, artifact_path):
+        """Copy one file under its artifact directory."""
+        target = self.root / run_id / artifact_path
+        target.mkdir(parents=True, exist_ok=True)
+        (target / Path(path).name).write_bytes(Path(path).read_bytes())
+
+    def download_artifacts(self, run_id, path, directory):
+        """Return a downloaded copy of one saved file."""
+        self.downloads += 1
+        target = Path(directory) / Path(path).name
+        target.write_bytes((self.root / run_id / path).read_bytes())
+        return str(target)
+
+
+def _saved_snapshot(tmp_path, monkeypatch, spec):
+    """Save ``_frame()`` like the load_data stage and point a spec at it."""
+    from skyulf.integrations.databricks.training.shared.holdout_evidence import (
+        save_frame_artifact,
+    )
+    from skyulf.integrations.mlflow.shared import _client
+
+    client = _ArtifactClient(tmp_path)
+    frame = _frame()
+    frame.attrs = {"source_table_id": "uc-st-id", "source_kind": "STREAMING_TABLE"}
+    receipt = save_frame_artifact(client, "run-1", "source", frame)
+    monkeypatch.setattr(_client, "make_tracking_client", lambda uri: client)
+    locator = {
+        "run_id": "run-1",
+        "path": "lifecycle/data/source.parquet",
+        "tracking_uri": "databricks",
+        "receipt": receipt,
+    }
+    return client, frame, replace(spec, source_snapshot_json=json.dumps(locator))
+
+
+def test_saved_snapshot_replays_exact_rows_without_spark(tmp_path, monkeypatch):
+    """Later steps must replay the training rows, not re-read a source that has moved on."""
+    spec = _spec(version=0, source_kind="STREAMING_TABLE")
+    _, frame, located = _saved_snapshot(tmp_path, monkeypatch, spec)
+    monkeypatch.setattr(retraining, "read_live_snapshot", MagicMock(side_effect=AssertionError))
+    replayed = retraining.read_training_snapshot(object(), located)
+    pd.testing.assert_frame_equal(replayed, frame)
+    assert replayed.attrs == frame.attrs
+
+
+def test_saved_snapshot_rejects_tampering_and_over_budget_receipts(tmp_path, monkeypatch):
+    """Changed bytes must fail, and an over-budget receipt must fail before any download."""
+    client, _, located = _saved_snapshot(tmp_path, monkeypatch, _spec())
+    with pytest.raises(ValueError, match="Saved source snapshot exceeds byte budget"):
+        retraining.read_training_snapshot(object(), replace(located, max_bytes=10))
+    assert client.downloads == 0
+    saved = tmp_path / "run-1" / "lifecycle" / "data" / "source.parquet"
+    saved.write_bytes(saved.read_bytes()[:-1] + b"X")
+    with pytest.raises(ValueError, match="Saved source snapshot"):
+        retraining.read_training_snapshot(object(), located)
+
+
+def test_spec_without_locator_reads_live(monkeypatch):
+    """Legacy and Delta specs without a saved snapshot keep the live versioned read."""
+    live = MagicMock(return_value=_frame())
+    monkeypatch.setattr(retraining, "read_live_snapshot", live)
+    retraining.read_training_snapshot("spark", _spec())
+    live.assert_called_once_with("spark", _spec())
+
+
+def test_fit_rejects_unversioned_source_without_saved_snapshot():
+    """Outside the generated job graph nothing saves the rows read, so replays would drift."""
+    from skyulf.integrations.databricks.training.tuning.cv import CVSpec
+
+    with pytest.raises(ValueError, match="workflow_contract: 3"):
+        retraining.fit_candidate(
+            MagicMock(),
+            _spec(version=0, source_kind="MATERIALIZED_VIEW"),
+            {},
+            run=MagicMock(),
+            pipeline_config={},
+            artifact_path="unused",
+            engine="pandas",
+            cv=CVSpec(),
+            risk_category=None,
+        )

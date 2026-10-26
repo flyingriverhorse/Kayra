@@ -8,7 +8,7 @@ from skyulf.integrations.mlflow.shared._client import require_mlflow
 
 from .....inference.probed_steps import without_partition_probe
 from ....mlflow.registration.registry import load_run_pipeline, packaged_artifact_path
-from ...lifecycle._lifecycle_data import training_partitions
+from ...lifecycle._lifecycle_data import snapshot_spec, training_partitions
 from ...lifecycle._lifecycle_state import LifecycleContext, LifecyclePhaseResult, PhaseStore
 from ...observability.reports.explanation_report import copy_winner_explanations
 from ...training.competition.competition import choose_winner
@@ -62,8 +62,11 @@ def run_competition_training(
     store.begin(phase)
     try:
         recipe = store.request["competition"]["candidates"][name]
-        spec = phase_training_spec(
-            store.request["spec"], recipe["pipeline"].get("project_python_source")
+        spec = snapshot_spec(
+            store,
+            phase_training_spec(
+                store.request["spec"], recipe["pipeline"].get("project_python_source")
+            ),
         )
         with TemporaryDirectory(prefix="skyulf-candidate-task-") as directory:
             fitted, row = fit_training_pipeline(
