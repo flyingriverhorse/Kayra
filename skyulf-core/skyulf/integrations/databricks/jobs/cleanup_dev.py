@@ -234,7 +234,7 @@ def _serving(values: dict[str, str]) -> dict[str, Any] | None:
 def _plan(deployment: _Deployment) -> list[CleanupItem]:
     """Order every item: serving, monitoring rows, models, prediction outputs, logs."""
     items = _serving_items(deployment.serving)
-    # Rows go before models: monitoring_cleanup aborts on a row naming a deleted model.
+    # Rows go before models, so no inventory row is left naming a deleted model.
     items += _monitoring_items(deployment)
     items += [_owned("registered_model", model, deployment) for model in deployment.models]
     items += [_owned("prediction_view", view, deployment) for view in deployment.views]
@@ -278,17 +278,7 @@ def _monitoring_items(deployment: _Deployment) -> list[CleanupItem]:
     if deployment.namespace is None:
         return []
     reason = f"this model's rows in {deployment.namespace}; other models' rows stay"
-    items = [CleanupItem("monitoring_rows", model, "delete", reason) for model in deployment.models]
-    items.append(
-        CleanupItem(
-            "monitoring_references",
-            f"{deployment.namespace}.monitor_ref_*",
-            "skip",
-            "reference tables are shared per project and target; cleanup_dev never drops them. "
-            "See 'Remove a deployed project' to remove them by hand.",
-        )
-    )
-    return items
+    return [CleanupItem("monitoring_rows", model, "delete", reason) for model in deployment.models]
 
 
 def _payload_items(deployment: _Deployment) -> list[CleanupItem]:

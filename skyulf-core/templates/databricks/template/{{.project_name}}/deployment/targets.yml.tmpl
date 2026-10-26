@@ -167,20 +167,6 @@ targets:
 {{- end}}
 {{- end}}
 {{- end}}
-{{if and $acl (eq .monitoring "true")}}
-        monitoring_cleanup:
-{{if eq .deployment_identity "shared_service_principal"}}
-          run_as:
-            service_principal_name: ${var.shared_service_principal}
-{{end}}
-{{if eq .deployment_identity "separate_service_principals"}}
-          run_as:
-            service_principal_name: ${var.score_service_principal}
-{{end}}
-{{if eq .manage_job_permissions "true"}}
-          permissions: ${var.monitoring_permissions}
-{{end}}
-{{end}}
 {{end}}
 {{if eq .personal_development_targets "true"}}
   test_development:
@@ -246,7 +232,6 @@ targets:
       monitoring_enabled: "false"
 {{- end}}
       monitoring_pause_status: PAUSED
-      monitoring_cleanup_pause_status: PAUSED
       monitoring_performance_policies: '{}'
       on_drift: disabled
 {{- if $devdash}}
@@ -331,20 +316,6 @@ targets:
 {{if eq .manage_job_permissions "true"}}
           permissions: ${var.monitoring_permissions}
 {{end}}
-{{if eq .monitoring "true"}}
-        monitoring_cleanup:
-{{if eq .deployment_identity "shared_service_principal"}}
-          run_as:
-            service_principal_name: ${var.shared_service_principal}
-{{end}}
-{{if eq .deployment_identity "separate_service_principals"}}
-          run_as:
-            service_principal_name: ${var.score_service_principal}
-{{end}}
-{{if eq .manage_job_permissions "true"}}
-          permissions: ${var.monitoring_permissions}
-{{end}}
-{{end}}
 {{end}}
 {{if eq .personal_development_targets "true"}}
   syst_development:
@@ -380,7 +351,6 @@ targets:
       monitoring_enabled: "false"
 {{- end}}
       monitoring_pause_status: PAUSED
-      monitoring_cleanup_pause_status: PAUSED
       monitoring_performance_policies: '{}'
       on_drift: disabled
 {{if eq .retraining_mode "scheduled"}}
@@ -461,20 +431,6 @@ targets:
 {{if eq .manage_job_permissions "true"}}
           permissions: ${var.monitoring_permissions}
 {{end}}
-{{if eq .monitoring "true"}}
-        monitoring_cleanup:
-{{if eq .deployment_identity "shared_service_principal"}}
-          run_as:
-            service_principal_name: ${var.shared_service_principal}
-{{end}}
-{{if eq .deployment_identity "separate_service_principals"}}
-          run_as:
-            service_principal_name: ${var.score_service_principal}
-{{end}}
-{{if eq .manage_job_permissions "true"}}
-          permissions: ${var.monitoring_permissions}
-{{end}}
-{{end}}
 {{end}}
 {{if eq .personal_development_targets "true"}}
   prod_development:
@@ -510,7 +466,6 @@ targets:
       monitoring_enabled: "false"
 {{- end}}
       monitoring_pause_status: PAUSED
-      monitoring_cleanup_pause_status: PAUSED
       monitoring_performance_policies: '{}'
       on_drift: disabled
 {{if eq .retraining_mode "scheduled"}}

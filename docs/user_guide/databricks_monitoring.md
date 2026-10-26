@@ -38,7 +38,7 @@ opt in to their own separate store.
 1. [Set up the monitoring store](databricks_monitoring_setup.md): destination,
    owned tables and views, permissions.
 2. [Enroll models and run monitoring](databricks_monitoring_enrollment.md):
-   automatic enrollment, reference preparation, the schedule.
+   automatic enrollment, training references, the schedule.
 3. [Match delayed labels](databricks_monitoring_labels.md): the label table
    needed for performance.
 4. [Drift and data quality](databricks_drift.md): thresholds, statuses, charts.

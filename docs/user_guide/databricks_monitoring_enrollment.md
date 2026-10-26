@@ -3,7 +3,7 @@
 ## When you need it
 
 Use this page after [store setup](databricks_monitoring_setup.md) to enroll activated or scored
-batch models, prepare their references, and start observation. For endpoints, use
+batch models, verify their references, and start observation. For endpoints, use
 [serving monitoring](databricks_serving_monitoring.md).
 
 Monitoring writes to the shared store only for `mode: production` deployments
@@ -125,30 +125,26 @@ databricks bundle deploy -t test --profile YOUR_PROFILE
 databricks bundle run monitoring -t test --profile YOUR_PROFILE
 ```
 
-### Prepare references for a first pinned candidate
+### Verify training references
 
-Activation prepares verified training references. A first manual candidate scored
-by concrete version may be enrolled by scoring without having been activated.
-In that case, the prediction commit can succeed while the monitoring child fails
-with `Spark reference is not prepared; run prepare_spark_monitoring_reference first.`
-Open the score receipt to confirm publication, then run the existing monitoring
-job's preparation action for the enrolled identity:
+Monitoring rebuilds each model's reference from the training rows its MLflow run
+saved; nothing is prepared or stored in the monitoring store. Activation verifies
+those rows before it enrolls the model. To check every enrolled model again, for
+example after changing grants:
 
 ```powershell
 databricks bundle run monitoring -t test --profile YOUR_PROFILE --params monitoring_action=prepare_references
 ```
 
-Use the same project, target and monitoring namespace. Preparation reads the saved
-training evidence and creates/reuses the immutable references; it does not train,
-promote or rescore. After it succeeds, repeat the original score request to finish
-its monitoring handoff. An unchanged source/model replay is a prediction no-op;
-inspect the original commit and the separate child result. Do not delete output
-rows or invent a new watermark to repair monitoring. The preparation action needs
-the [reference/table permissions](databricks_monitoring_setup.md) of the shared store.
+The action reads and checks the saved rows only; it does not train, promote,
+rescore or write tables. If it fails with `Monitoring cannot read training rows
+saved at runs:/...`, grant the monitoring job identity `CAN_READ` on the training
+experiment (and `READ VOLUME` when artifacts are stored in a Unity Catalog
+volume). A model trained before 0.9.7 fails with a message to retrain it.
 
-After reference preparation succeeds, set `monitoring_pause_status: "UNPAUSED"` in the target
-variables and redeploy to let the existing UTC schedule revisit observations. Keep the generated
-schedule paused until references and permissions are verified.
+After a first observation succeeds, set `monitoring_pause_status: "UNPAUSED"` in
+the target variables and redeploy to let the existing UTC schedule revisit
+observations. Keep the generated schedule paused until permissions are verified.
 
 ## What you should see
 
@@ -243,11 +239,10 @@ A deployment alone does not activate or enroll a model. Run the normal lifecycle
 check the concrete version and configuration in inventory. A configured false flag publishes a pause
 only when registration executes; removing configuration does not delete the previous enrollment.
 
-Reference preparation is a separate, one-time activation or explicit migration step. It replays the
-original training source under the existing bounded training row and byte budget, validates the
-original split and writes pinned reference populations. Models without
-`monitoring_source_evidence.json` need retraining or verified original source proof; the job never
-silently reconstructs provenance. Spark freshness checks fail explicitly for unsupported fixed
+Every observation replays the training rows saved in the model's run under the training row and
+byte budget, checks their SHA-256, and validates the original split against the saved training
+evidence. Models without saved rows or `monitoring_source_evidence.json` must be retrained; the job
+never silently reconstructs provenance. Spark freshness checks fail explicitly for unsupported fixed
 normalizers, custom pre-split filters and custom weight generators. Supported source weight columns
 still obey the training contract. Training remains local even when inference is distributed. Spark
 monitoring does not change the training or scoring engine.

@@ -24,14 +24,12 @@ flowchart LR
     subgraph MON["monitoring_catalog.monitoring_schema: shared by all projects"]
         D["4 Delta tables"]
         V["8 views"]
-        R["4 reference tables per monitored model version"]
     end
     T --> TR["train job"] --> M
     S --> SC["score job"] --> P
     M --> SC
     P --> MO["monitoring job"]
     L --> MO
-    TR -. "enrollment" .-> R
     MO --> D
     D --> V
 ```
@@ -117,33 +115,15 @@ queries.
 | `model_version_details` | Lineage and saved metadata of each concrete model version, including its training summary. |
 | `serving_windows` | Serving-endpoint observation windows used by the dashboard's serving charts. |
 
-### Reference populations per monitored model version
+### Training references live in MLflow, not in the store
 
 Drift and retraining checks compare new data with what the model was trained on.
-Rereading the training table on every run would be slow and could see changed
-data, so enrollment copies the needed populations into immutable Delta tables.
-New format-2 references use two tables per identity and a source table that can
-be shared. The identity binds the monitored model, version and verified training
-evidence; source sharing additionally binds its physical Delta ID/version,
-selected columns, exact schema and row values, including duplicate counts.
-
-| Part | What it holds | Used for |
-| --- | --- | --- |
-| `monitor_ref_<identity>_population` | The seen rows plus a recorded boolean training-membership column. Temporal splits keep training rows; random splits also retain holdout rows. | Drift selects training members; freshness checks use the complete seen population. The marker is removed before model/metric use and its name avoids feature collisions. |
-| `monitor_src_<identity>` | The verified, selected training source population, including the target. | Historical reconstruction; shared only when content and schema match exactly. |
-| `_receipt` | One JSON record: the evidence these tables belong to, their table identities, the source table identity and the holdout metric values. | Verifying the tables before use, and the `training_holdout` baseline of performance policies. |
-
-For `N` references with `U` distinct source populations, format 2 needs
-`2 * N + U` tables. Two references using the same population need five tables.
-Four branches with four different target projections need twelve, even when
-their source table and Delta version are the same. A shared source table name
-alone never proves that its data can be reused.
-
-Existing format-1 references still use `_train`, `_seen`, `_source`, `_receipt`.
-They remain readable and eligible for guarded cleanup; upgrades do not migrate
-or delete them. Both formats hold copies bounded by training limits. New projects
-with monitoring include a weekly cleanup job; protected references remain until
-unused and old enough. See [retention and recovery](databricks_monitoring_setup.md#retain-or-clean-old-spark-references).
+That data is the `source.parquet` artifact the training run saved (model sets:
+`source_<branch>.parquet` on the parent run), checked by SHA-256 on every read, so
+the store holds no reference tables. The monitoring job identity needs read access
+to the training experiment. `monitor_ref_*` and `monitor_src_*` tables left by
+releases before 0.9.7 are unused; see
+[reference tables from before 0.9.7](databricks_monitoring_setup.md#reference-tables-from-before-097).
 
 ## Recommended layout
 
@@ -182,7 +162,6 @@ stay in that old store; they are not automatically copied to the new one.
 | --- | --- | --- |
 | Prediction table | New source inserts | Your retention policy; Skyulf does not delete predictions. |
 | `monitoring_results`, `performance_actions`, `retraining_requests` | Monitoring runs and decisions | Keep observation/action evidence for audit. Request status, job cooldown gates and the reserved reference-admission row also receive guarded updates. |
-| Reference tables | New monitored identities and distinct source populations | Use [guarded reference cleanup](databricks_monitoring_setup.md#retain-or-clean-old-spark-references); retained aliases, monitors, policy baselines and unfinished retraining protect references. Shared sources remain while another receipt needs them. |
 | `_v<version>` prediction generations | New versions in `on_model_change: rescore_all` mode | Drop old generations once consumers use the new view. |
 
 Views never need cleanup. Do not drop or recreate the store's tables while any

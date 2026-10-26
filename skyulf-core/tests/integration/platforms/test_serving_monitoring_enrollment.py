@@ -688,9 +688,6 @@ def test_reference_preparation_keeps_served_registry_selection(
         "prepare_spark_monitoring_reference",
         spark_monitoring_reference.prepare_spark_monitoring_reference,
     )
-    monkeypatch.setattr(
-        spark_monitoring_reference, "ensure_monitoring_store", lambda *args: "ops.monitoring"
-    )
     loader = Mock(side_effect=RuntimeError("reference registry reached"))
     monkeypatch.setattr(spark_monitoring_reference, "load_monitoring_artifact", loader)
     with pytest.raises(RuntimeError, match="reference registry reached"):

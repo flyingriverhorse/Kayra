@@ -251,6 +251,12 @@ use `batch_compute: spark`. Log a new certified version. Configurations without
 
 ### Monitoring and serving changes
 
+- 0.9.7 is a clean break: regenerate projects created before it and retrain their
+  models. Monitoring now rebuilds each reference from the training run's saved rows;
+  an older model fails with a message to retrain it. Delete the removed
+  `resources/monitoring_cleanup.job.yml` and its `monitoring_cleanup_*` /
+  `monitoring_reference_retention_days` variables, then drop old reference tables
+  once as shown in [reference tables from before 0.9.7](databricks_monitoring_setup.md#reference-tables-from-before-097).
 - New projects ask for the monitoring catalog and schema and start with
   `monitoring_enabled: "false"` when they are blank. Existing projects keep
   `monitoring_enabled: "true"` in `deployment/variables.yml`; with a blank

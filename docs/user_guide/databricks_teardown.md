@@ -28,7 +28,7 @@ longer run them.
 | Pause serving enrollments | Run the monitoring job with `monitoring_action=enroll_serving` and each entry resubmitted with `enabled: false`; see [serving monitoring](databricks_serving_monitoring.md#what-to-edit). |
 | Stop a continuous feature publication | Run `online_publication` with `publication_action=stop`, then `status`; see [online features](databricks_online_features.md#operate-continuous-feature-publication). A native pipeline keeps running after the job is gone. |
 | Pause a traffic rollout | Pause the `daily_rollout` schedule. Destroying the job does not change endpoint traffic. |
-| Keep training evidence you still need | Approval, rollback and monitoring reference preparation read saved candidate runs. Export or keep them before removing the folder that holds the experiment (see below). |
+| Keep training evidence you still need | Approval, rollback and monitoring read saved candidate runs; monitoring rebuilds its reference from the training run's saved rows. Export or keep them before removing the folder that holds the experiment (see below). |
 
 If this target owns the shared monitoring dashboard (created with
 `--create-dashboard`), other projects use its URL. Either keep the owner target
@@ -75,7 +75,7 @@ These stay, because the Bundle never created them as resources:
 | Training and scoring source tables | Never created by the project |
 | Prediction tables, generation tables and model-set views | Created by the score job at run time |
 | Feature group outputs and the merged feature table | Created by the `features` job at run time |
-| Monitoring store tables and views | `model_inventory`, `monitoring_results`, `performance_actions`, `retraining_requests`, the views, `reference_cleanup_audit`, `monitor_ref_*` references and shared `monitor_src_*` populations; shared with other projects |
+| Monitoring store tables and views | `model_inventory`, `monitoring_results`, `performance_actions`, `retraining_requests`, the views, `reference_cleanup_audit`; shared with other projects |
 | Monitoring enrollment rows | Stay in `model_inventory`; paused if you followed the steps above |
 | Registered models, versions, aliases and tags | Unity Catalog objects |
 | Monitoring experiment named by `monitoring_experiment_name` | Outside the project folder when set to a path such as `/Shared/...` |
@@ -112,13 +112,9 @@ same way the jobs bind it; nothing is found by scanning a schema.
 | Prediction tables, full-rebuild generations and model-set views | The name carries `resource_suffix`; a generation also needs this deployment's model in its `skyulf.model_name` property |
 | Endpoint payload view and telemetry tables | The logging prefix carries `resource_suffix` |
 
-Never touched: source, label, training and feature tables, the shared
-monitoring store tables and views, and the `monitor_ref_*` / `monitor_src_*`
-monitoring references. References are owned per project and target, which all
-developers of the project share; after cleanup_dev no inventory row names them, so
-`monitoring_cleanup` does not retire them either. Drop a
-`monitor_ref_<id>_*` table by hand only after the `payload` of its
-`monitor_ref_<id>_receipt` table names your model. The MLflow experiment is
+Never touched: source, label, training and feature tables, and the shared
+monitoring store tables and views. Monitoring references are the rows saved in
+each training run, so they go with the MLflow experiment. The MLflow experiment is
 inside the target's folder and goes with `bundle destroy`.
 
 Each line of the run output has a status: `would_delete` (dry run),

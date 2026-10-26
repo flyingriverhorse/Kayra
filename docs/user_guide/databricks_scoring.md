@@ -369,10 +369,9 @@ single_model and model_competition call `src/jobs/score.py`; multi_target calls
 The result summary reports the selected concrete model, source end version, input/output counts,
 prediction table Delta version and no-op/write status. When scoring policy metadata is present, the
 committed manifest also reports predicted_count and excluded_count. Monitoring failure after
-publication does not undo a committed prediction write. For a first pinned candidate, enrollment may
-require `monitoring_action=prepare_references`; follow
-[monitor enrollment](databricks_monitoring_enrollment.md) and retry the original score identity
-rather than deleting predictions or inventing a watermark. A no-op may show the previous write's
+publication does not undo a committed prediction write. Fix a monitoring failure as described in
+[monitor enrollment](databricks_monitoring_enrollment.md#verify-training-references) and retry the
+original score identity rather than deleting predictions or inventing a watermark. A no-op may show the previous write's
 model provenance alongside this run's selected model; those are not interchangeable.
 
 For the single-model example, query the resolved output name shown in the job.

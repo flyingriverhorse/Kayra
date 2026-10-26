@@ -66,15 +66,14 @@ def project_configs(spark: Any, namespace: str, values: dict) -> list[MonitorCon
 def prepare_project_references(
     spark: Any, values: dict, *, model_ids: set[str] | None = None
 ) -> dict:
-    """Prepare at activation or explicit legacy migration, never during ordinary observation."""
+    """Verify every enrolled model's saved training rows without observing anything."""
     namespace = monitoring_destination(values)
     if namespace is None:
         return {"status": "disabled"}
     configs = project_configs(spark, namespace, values)
     selected = [config for config in configs if model_ids is None or config.monitor_id in model_ids]
-    holder = notebook_reference_holder(values)
     for config in selected:
-        prepare_spark_monitoring_reference(spark, config, reference_holder=holder)
+        prepare_spark_monitoring_reference(spark, config)
     return {"status": "prepared", "models": len(selected)}
 
 
@@ -124,13 +123,6 @@ def run_project_monitoring_notebook(spark: Any, dbutils: Any) -> dict:
     dbutils.jobs.taskValues.set(key="monitoring_reference", value={"status": "disabled"})
     namespace = monitoring_destination(values)
     action = values.get("monitoring_action", "observe")
-    if namespace is not None and action == "cleanup_references":
-        # A project that stopped monitoring is the one most likely to need cleanup.
-        from ...observability.monitoring.reference_cleanup import (  # noqa: PLC0415
-            cleanup_references,
-        )
-
-        return cleanup_references(spark, values)
     if namespace is None or values.get("monitoring_enabled", "true") != "true":
         return {"status": "disabled"}
     if action == "enroll_serving":
@@ -142,10 +134,7 @@ def run_project_monitoring_notebook(spark: Any, dbutils: Any) -> dict:
     if action == "prepare_references":
         return prepare_project_references(spark, values)
     if action != "observe":
-        raise ValueError(
-            "monitoring_action must be observe, prepare_references, enroll_serving "
-            "or cleanup_references."
-        )
+        raise ValueError("monitoring_action must be observe, prepare_references or enroll_serving.")
     return _observe_project(spark, dbutils, values, namespace)
 
 

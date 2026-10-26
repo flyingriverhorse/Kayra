@@ -202,7 +202,9 @@ def test_plan_lists_only_this_deployments_outputs():
     assert kinds.index("serving_endpoint") < kinds.index("sql_function")
     assert kinds.index("sql_function") < kinds.index("registered_model")
     skipped = {item.kind for item in items if item.action == "skip"}
-    assert {"mlflow_experiment", "monitoring_references"} <= skipped
+    assert "mlflow_experiment" in skipped
+    # Monitoring references live in the training run's artifacts; there is no table to plan.
+    assert "monitoring_references" not in kinds
 
 
 def test_logging_prefix_without_suffix_is_never_planned(tmp_path):

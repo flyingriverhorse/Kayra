@@ -1,6 +1,6 @@
 """Slow monitoring preparation must expose its last operation before completion."""
 
-from contextlib import nullcontext
+import json
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -15,14 +15,6 @@ from skyulf.integrations.databricks.observability.monitoring.spark import (
     spark_monitoring_reference as reference,
 )
 from skyulf.integrations.databricks.training.fitting.candidate import TrainingSpec
-
-
-@pytest.fixture(autouse=True)
-def reference_admission(monkeypatch):
-    """Keep progress tests at the artifact boundary; admission has separate concurrency tests."""
-    monkeypatch.setattr(reference, "ensure_monitoring_store", lambda *a: "a.monitoring")
-    monkeypatch.setattr(reference, "hold_reference_mutation", lambda *a: nullcontext("owner"))
-    monkeypatch.setattr(reference, "require_reference_mutation", Mock())
 
 
 def _config():
@@ -52,12 +44,14 @@ def test_reference_load_failure_identifies_stage_and_preserves_exception(monkeyp
     assert "reference.write_" not in output
 
 
-def test_reference_progress_covers_each_population_and_holdout(monkeypatch, capsys):
-    """Combined population, shared source and holdout measurement need separate timings."""
+def test_reference_progress_covers_saved_rows_and_writes_nothing(monkeypatch, capsys):
+    """Verification shows its load and read stages and never a table write stage."""
     frame = pd.DataFrame({"id": [10, 20, 30], "x": [1, 2, 3], "y": [2, 4, 6]})
+    frame.attrs["source_table_id"] = "table-id"
     artifact = SimpleNamespace(
         manifest=SimpleNamespace(fitted_engine="pandas", project_source_sha256="source")
     )
+    locator = {"run_id": "run", "path": "lifecycle/data/source.parquet", "receipt": {"sha256": "f"}}
     spec = TrainingSpec(
         table="a.b.training",
         version=1,
@@ -67,13 +61,12 @@ def test_reference_progress_covers_each_population_and_holdout(monkeypatch, caps
         split_strategy="random",
         input_columns=("x",),
         target_column="y",
+        source_snapshot_json=json.dumps(locator),
     )
     evidence = {"training_run_id": "run", "model_version": "1"}
     monkeypatch.setattr(
         reference, "load_monitoring_artifact", lambda *a, **k: (artifact, spec, {}, evidence)
     )
-    monkeypatch.setattr(reference, "ensure_owned_object", lambda *a: False)
-    monkeypatch.setattr(reference, "source_table_identity", lambda *a: "table-id")
     monkeypatch.setattr(reference, "read_training_snapshot", lambda *a: frame)
     monkeypatch.setattr(reference, "make_registry_client", Mock())
     monkeypatch.setattr(reference, "require_mlflow", Mock())
@@ -86,33 +79,17 @@ def test_reference_progress_covers_each_population_and_holdout(monkeypatch, caps
     monkeypatch.setattr(
         reference, "split_labeled_snapshot", lambda *a, **k: (frame.head(2), frame.tail(1), None)
     )
-    monkeypatch.setattr(reference, "read_snapshot", lambda *a: SimpleNamespace(schema=None))
-    monkeypatch.setattr(
-        reference,
-        "_prepared_frame",
-        lambda spark, data, *a: SimpleNamespace(
-            schema=SimpleNamespace(jsonValue=lambda: {"columns": list(data.columns)})
-        ),
-    )
-    write = Mock(side_effect=lambda spark, name, data: {"name": name, "id": "id", "version": 0})
-    monkeypatch.setattr(reference, "_write_population", write)
-    monkeypatch.setattr(reference, "measure_holdout_values", lambda *a: {"values": {"rmse": 0.1}})
+    monkeypatch.setattr(reference, "_replayed_schema", Mock())
+    monkeypatch.setattr(reference, "_prepared_frame", Mock())
 
-    receipt = reference.prepare_spark_monitoring_reference(Mock(), _config())
+    record = reference.prepare_spark_monitoring_reference(Mock(), _config())
 
     output = capsys.readouterr().out
-    for stage in (
-        "load_model",
-        "read_training",
-        "write_population",
-        "write_source",
-        "measure_holdout",
-        "write_receipt",
-    ):
+    for stage in ("load_model", "read_training"):
         assert f"STARTED | reference.{stage} a.b.model/1" in output
         assert f"COMPLETED | reference.{stage} a.b.model/1" in output
-    assert write.call_count == 3
-    assert receipt["holdout"]["values"]["rmse"] == 0.1
+    assert "reference.write_" not in output
+    assert record["format"] == 3
 
 
 def test_quality_failure_identifies_component_before_remote_work(monkeypatch, capsys):

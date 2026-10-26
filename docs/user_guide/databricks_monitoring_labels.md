@@ -148,8 +148,8 @@ databricks bundle deploy -t test --profile YOUR_PROFILE
 databricks bundle run monitoring -t test --profile YOUR_PROFILE
 ```
 
-Unpause the monitoring schedule after
-[reference preparation](databricks_monitoring_enrollment.md#the-command). Revisited windows can
+Unpause the monitoring schedule after a first observation succeeds
+([training references](databricks_monitoring_enrollment.md#verify-training-references)). Revisited windows can
 acquire late outcomes even without another scoring batch. A historical backfill updates evidence but
 cannot independently submit training.
 

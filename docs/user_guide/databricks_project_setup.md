@@ -286,12 +286,7 @@ create schemas. Personal development targets set `monitoring_enabled` to
 their own separate store (see
 [development monitoring](databricks_monitoring_enrollment.md#development-monitoring-optional)).
 
-Configured projects also include an independent weekly `monitoring_cleanup`
-job. It defaults to Sunday 04:00 UTC, confirmed cleanup and a 90-day minimum
-reference age. Its cron, confirmation and pause controls are editable per
-target; personal development keeps it paused. Review
-[reference retention](databricks_monitoring_setup.md#retain-or-clean-old-spark-references)
-before deployment. Setup does not move or delete tables in an existing store.
+Setup does not move or delete tables in an existing store.
 
 To turn monitoring on later, set `monitoring_catalog`, `monitoring_schema` and
 `monitoring_enabled: "true"` in `deployment/variables.yml`, or per target under

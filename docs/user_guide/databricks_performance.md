@@ -208,10 +208,8 @@ table/availability settings from the complete example above. With baseline WAPE
 0.05, the limit is 0.06: this is a 20% relative increase, not 20 percentage points.
 WAPE suits this example when actual values can be zero because it uses the whole
 population's absolute actual total; MAPE divides by each individual actual.
-`report` never requests training. Spark monitoring reads cached holdout metrics
-from its prepared reference; an older cache without WAPE produces unavailable
-policy evidence until a compatible reference exists. The in-memory path measures
-the verified holdout with the fitted model. Neither path rewrites historical
+`report` never requests training. Spark and in-memory monitoring both measure the
+verified holdout from the training run's saved rows with the fitted model. Neither path rewrites historical
 training-run metrics.
 
 ```python

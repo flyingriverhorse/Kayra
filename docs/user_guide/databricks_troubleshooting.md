@@ -33,7 +33,7 @@ The linked section explains the cause and the fix.
 | `Set both monitoring_catalog and monitoring_schema.` | Set both in `deployment/variables.yml`, or leave both blank with `monitoring_enabled: "false"`. See [if no destination is set](databricks_monitoring_setup.md#if-no-destination-is-set) |
 | `Local artifact runtime mismatch for skyulf-core: requires ..., found ...` or report reason `champion_runtime_unavailable` | The model was produced by another runtime. Approve a reviewed replacement with `allow_unloadable_champion=true`, or run with the producing release. See [below](#champion-saved-by-another-core-release). |
 | `bundle init` fails with `ERROR_monitoring_schema_is_required_with_monitoring_catalog` | A monitoring catalog was answered without a schema. Answer both, or leave both blank to start without monitoring. See [project setup](databricks_project_setup.md#monitoring-destination). |
-| `Spark reference is not prepared; run prepare_spark_monitoring_reference first.` | [Monitoring enrollment](databricks_monitoring_enrollment.md#common-errors-and-fixes) |
+| `Monitoring cannot read training rows saved at runs:/...` or `... retrain it with the current project.` | [Training references](databricks_monitoring_enrollment.md#verify-training-references) |
 | `Serving endpoint is not ready or its config update is pending.` | [Serving](databricks_serving.md#common-errors-and-fixes) |
 | `Serving endpoint config update failed: UPDATE_FAILED.` | [Below](#serving-endpoint-update-failed) |
 | `Owned serving endpoint must have exactly one served entity.` | [Below](#serving-endpoint-does-not-serve-one-entity) |

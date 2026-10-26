@@ -188,15 +188,30 @@ def test_historical_transport_does_not_reapply_string_parsing(monkeypatch):
     normalizer = MagicMock(return_value=frame)
     monkeypatch.setattr(spark_retraining_data, "_functions", MagicMock)
     monkeypatch.setattr(spark_retraining_data, "_counts", lambda *args: frame)
-    monkeypatch.setattr(spark_retraining_data, "read_reference_population", lambda *args: frame)
     monkeypatch.setattr(spark_retraining_data, "normalize_training_dates", normalizer)
     monkeypatch.setattr(spark_retraining_data, "_pandas_source_types", lambda *args: frame)
     monkeypatch.setattr(spark_retraining_data, "_overlay_weights", lambda *args: frame)
     monkeypatch.setattr(spark_retraining_data, "_eligible", lambda *args: frame)
-    evidence = {"prepared_reference": {"seen": {}, "source": {}}}
-    spark_retraining_data._baseline(None, evidence, spec, spec, frame, ["x", "y"])
+    readers = {"seen": lambda: frame, "source": lambda: frame}
+    spark_retraining_data._baseline(readers, spec, spec, frame, ["x", "y"])
     assert normalizer.call_args.kwargs["event_spec"] == TrainingDateSpec()
     assert normalizer.call_args.kwargs["result_spec"] == TrainingDateSpec()
+
+
+def test_baseline_reads_the_training_source_only_for_changed_weights(monkeypatch):
+    """Unweighted models must not read (or rebuild) the saved source population at all."""
+    from unittest.mock import Mock
+
+    from skyulf.integrations.databricks.data.training import spark_retraining_data
+
+    seen = MagicMock()
+    counts = Mock(return_value="counts")
+    monkeypatch.setattr(spark_retraining_data, "_functions", MagicMock)
+    monkeypatch.setattr(spark_retraining_data, "_counts", counts)
+    readers = {"seen": lambda: seen, "source": Mock(side_effect=AssertionError("source read"))}
+    spec = _spec()
+    assert spark_retraining_data._baseline(readers, spec, spec, None, ["x", "y"]) == "counts"
+    counts.assert_called_once_with(seen, ["x", "y"])
 
 
 def test_assessment_does_not_require_serverless_unsupported_persistence(monkeypatch):
@@ -213,8 +228,8 @@ def test_assessment_does_not_require_serverless_unsupported_persistence(monkeypa
     counts.cache.side_effect = ValueError("DataFrame.cache unsupported on serverless")
     monkeypatch.setattr(
         module,
-        "load_spark_monitoring_reference",
-        Mock(return_value=(artifact, spec, None, evidence)),
+        "load_spark_reference_populations",
+        Mock(return_value=(artifact, spec, {}, evidence)),
     )
     monkeypatch.setattr(module, "source_table_identity", Mock(return_value="identity"))
     monkeypatch.setattr(module, "resolve_training_spec", Mock(return_value=spec))
@@ -330,8 +345,8 @@ def test_assessment_checks_unversioned_identity_by_catalog_id(monkeypatch):
     identity = Mock(return_value="uc-mv")
     monkeypatch.setattr(
         module,
-        "load_spark_monitoring_reference",
-        Mock(return_value=(artifact, spec, None, evidence)),
+        "load_spark_reference_populations",
+        Mock(return_value=(artifact, spec, {}, evidence)),
     )
     monkeypatch.setattr(module, "source_table_identity", identity)
     monkeypatch.setattr(module, "resolve_training_spec", Mock(return_value=spec))

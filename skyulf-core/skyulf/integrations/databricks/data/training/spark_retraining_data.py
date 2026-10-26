@@ -4,6 +4,7 @@ import hashlib
 import importlib
 import json
 import pickle  # nosec B403 - Spark row byte sizing only; no pickle deserialization
+from collections.abc import Callable, Mapping
 from dataclasses import replace
 from datetime import datetime
 from typing import Any, cast
@@ -16,8 +17,7 @@ from ...feature_store.training import enrich_training_source, pin_training_looku
 from ...jobs.lifecycle.lifecycle_tasks import phase_training_spec
 from ...lifecycle.workflow import resolve_training_spec
 from ...observability.monitoring.spark.spark_monitoring_reference import (
-    load_spark_monitoring_reference,
-    read_reference_population,
+    load_spark_reference_populations,
 )
 from ...observability.monitoring.spark.spark_monitoring_sources import require_unique_keys
 from ...training.fitting.candidate import (
@@ -370,8 +370,7 @@ def _overlay_weights(saved: Any, current: Any, keys: tuple[str, ...], weights: s
 
 
 def _baseline(
-    spark: Any,
-    evidence: dict,
+    readers: Mapping[str, Callable[[], Any]],
     saved: TrainingSpec,
     current: TrainingSpec,
     source: Any,
@@ -379,12 +378,11 @@ def _baseline(
 ) -> Any:
     """Union original counts with weight-counterfactual counts using maximum multiplicity."""
     functions = _functions()
-    records = evidence["prepared_reference"]
-    baseline = _counts(read_reference_population(spark, records["seen"]), columns)
+    baseline = _counts(readers["seen"](), columns)
     weights = filter_weight_columns(saved, current)
     if not weights:
         return baseline
-    historical = read_reference_population(spark, records["source"])
+    historical = readers["source"]()
     historical = normalize_training_dates(
         historical,
         event_column=saved.event_column,
@@ -413,7 +411,7 @@ def assess_spark_training_data(spark: Any, monitor: Any, workflow: dict, now: da
         raise ValueError(
             "On-drift retraining requires training_version=null for the latest snapshot."
         )
-    artifact, saved, _, evidence = load_spark_monitoring_reference(
+    artifact, saved, readers, evidence = load_spark_reference_populations(
         spark,
         monitor,
         tracking_uri=workflow.get("tracking_uri", "databricks"),
@@ -441,9 +439,7 @@ def assess_spark_training_data(spark: Any, monitor: Any, workflow: dict, now: da
     train = _training_partition(_eligible(source, current), current)
     columns = [*current.input_columns, current.target_column]
     counts = _counts(train, columns)
-    result = _assessment(
-        counts, _baseline(spark, evidence, saved, current, source, columns), columns
-    )
+    result = _assessment(counts, _baseline(readers, saved, current, source, columns), columns)
     if source_table_identity(spark, current.table, current.source_kind) != identity:
         raise ValueError("Training source table was replaced during freshness assessment.")
     if current.feature_binding_json is not None:

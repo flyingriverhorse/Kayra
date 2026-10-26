@@ -10,6 +10,7 @@ from collections.abc import Iterator, Mapping
 from contextlib import ExitStack, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlsplit
 from uuid import uuid4
@@ -17,9 +18,15 @@ from uuid import uuid4
 from ...data.delta_io.delta import table_identity
 from ...shared._contracts import table_name
 from .monitoring_config import qualified_name
-from .monitoring_store import ensure_owned_object
+from .monitoring_store import OWNER, PROPERTY, ensure_owned_object
 
 CONTROL_ROW = "control:reference_mutation"
+# The audit table keeps its historical name; admission recovery is its only writer now.
+AUDIT_TABLE = "reference_cleanup_audit"
+AUDIT_SCHEMA = (
+    "audit_id STRING, cleanup_id STRING, reference_id STRING, table_name STRING, "
+    "action STRING, status STRING, reason STRING, recorded_at TIMESTAMP"
+)
 _WAIT_TIMEOUT_S = 600
 _DATA_CONFLICTS = {
     base + suffix
@@ -511,8 +518,6 @@ def recover_reference_mutation(
     and completed tasks, not merely a terminal state name. Manual holders require verified
     process shutdown and operator SQL recovery, never an elapsed-time timeout.
     """
-    from .reference_cleanup import append_reference_recovery  # noqa: PLC0415 - cycle boundary
-
     if type(confirm) is not bool:
         raise ValueError("Reference recovery confirm must be a bool.")
     if _current(spark, namespace) is not None:
@@ -532,3 +537,43 @@ def recover_reference_mutation(
     authority.release(owner)
     append_reference_recovery(spark, namespace, owner=owner, status="released", evidence=evidence)
     return result | {"status": "released"}
+
+
+def _audit_table(spark: Any, namespace: str) -> str:
+    """Create or validate the owned audit destination for admission recovery."""
+    audit = qualified_name(f"{namespace}.{AUDIT_TABLE}")
+    if not ensure_owned_object(spark, audit):
+        spark.sql(
+            f"CREATE TABLE IF NOT EXISTS {table_name(audit)} ({AUDIT_SCHEMA}) "
+            f"USING DELTA TBLPROPERTIES ('{PROPERTY}' = '{OWNER}')"
+        )
+    expected = spark.createDataFrame([], AUDIT_SCHEMA).schema.simpleString()
+    if not ensure_owned_object(spark, audit) or (
+        spark.table(audit).schema.simpleString() != expected
+    ):
+        raise ValueError(f"Cleanup audit table differs: {audit}.")
+    return audit
+
+
+def append_reference_recovery(
+    spark: Any, namespace: str, *, owner: str, status: str, evidence: dict
+) -> None:
+    """Audit explicit admission recovery without impersonating the failed operation's owner.
+
+    The recovery caller must independently verify the holder has terminated and append
+    intent before conditionally clearing that exact token, then append released afterward.
+    """
+    if not re.fullmatch(r"[0-9a-f]{32}", owner) or status not in {"intent", "released"}:
+        raise ValueError("Invalid reference admission recovery audit identity or status.")
+    row = {
+        "audit_id": uuid4().hex,
+        "cleanup_id": owner,
+        "reference_id": owner,
+        "table_name": qualified_name(f"{namespace}.retraining_requests"),
+        "action": "release_admission",
+        "status": status,
+        "reason": json.dumps(evidence, sort_keys=True, allow_nan=False),
+        "recorded_at": datetime.now(UTC),
+    }
+    audit = _audit_table(spark, namespace)
+    spark.createDataFrame([row], AUDIT_SCHEMA).writeTo(audit).append()

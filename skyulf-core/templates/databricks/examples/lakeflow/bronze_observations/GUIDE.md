@@ -460,11 +460,10 @@ The `monitoring` job is generated even when setup had monitoring off.
    share a dashboard.
 3. **Dashboard (optional).** One project creates it, the others connect to it; the
    comments in `deployment/targets.yml` show both.
-4. **First pinned version only:** prepare its reference once, then score again:
-
-   ```powershell
-   databricks bundle run -t test --profile YOUR_PROFILE monitoring --params monitoring_action=prepare_references
-   ```
+4. **Training artifacts are the reference.** Monitoring rebuilds each model's training
+   population from the rows its MLflow training run saved; no reference tables are
+   created. The monitoring job identity needs `CAN_READ` on the training experiment
+   (and `READ VOLUME` when artifacts are stored in a Unity Catalog volume).
 
 5. **Run scoring.** Each committed score run starts the monitoring job, which writes
    drift for that run.
@@ -472,15 +471,15 @@ The `monitoring` job is generated even when setup had monitoring off.
    `monitoring_result_available_at_column` in `deployment/variables.yml`.
 
 Personal development targets use their own monitoring schema and never retrain.
-After preparing references, inspect the enrolled model and configured selectors. A one-run score override does not change monitoring's
+Before enabling schedules, inspect the enrolled model and configured selectors. A one-run score override does not change monitoring's
 persistent selector. For model sets, component monitoring requires `all` or
-`separate_views`, not `combined_only`. Enable schedules only after checking references.
+`separate_views`, not `combined_only`. Enable schedules only after a first observation succeeds.
 
 Drift is distribution change; performance metrics need real matched labels.
 Performance policies additionally need mature windows and enough eligible labels.
 Missing outcomes are not zero accuracy. Retraining opts in via `on_drift: retrain`
 or policy `mode: retrain`, retaining freshness/cooldown/request guards. Dashboard
-refresh reads results; reference cleanup is separate. See [monitoring setup](https://www.skyulf.com/manual/user_guide/databricks_monitoring_setup.html),
+refresh reads results. See [monitoring setup](https://www.skyulf.com/manual/user_guide/databricks_monitoring_setup.html),
 [enrollment](https://www.skyulf.com/manual/user_guide/databricks_monitoring_enrollment.html),
 [labels](https://www.skyulf.com/manual/user_guide/databricks_monitoring_labels.html),
 [performance policies](https://www.skyulf.com/manual/user_guide/databricks_performance.html),
@@ -557,7 +556,7 @@ Start from the first failed task and record its run ID.
 | --- | --- |
 | Training (any train-job task) | Fix the cause and start a **new** train run. Repairing or retrying the failed run is rejected. |
 | Scoring, after an approval or promotion succeeded | Run the score job again; do not retrain or approve again. |
-| Monitoring, after predictions were written (for example `Spark reference is not prepared`) | Predictions stay. Prepare the reference ([Monitoring](#monitoring) step 4) if that is the error, then run the **same** score request again; it writes nothing new and finishes the measurement. |
+| Monitoring, after predictions were written (for example `Monitoring cannot read training rows saved at runs:/...`) | Predictions stay. Grant the read access in [Monitoring](#monitoring) step 4 if that is the error, then run the **same** score request again; it writes nothing new and finishes the measurement. A model trained before 0.9.7 must be retrained. |
 | An alias change whose outcome is unknown | Stop jobs that change aliases and follow alias recovery below; do not roll back instead. |
 | `Local artifact runtime mismatch ...` or report reason `champion_runtime_unavailable` (champion trained on an older Core) | Review the candidate's own metrics in the training report, then run the approve action the report prints (`allow_unloadable_champion: true`). No retraining is needed. Rolling back to the old champion needs the old Core runtime. |
 

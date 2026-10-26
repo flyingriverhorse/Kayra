@@ -81,8 +81,6 @@ Replace `YOUR_PROFILE` in every command.
    `config/inference.yml` nor any alias. Scheduled runs use `model_version` in
    `config/inference.yml`; set it to the same version when you are ready.
    Check the committed output, then `monitoring_report` and `evaluate_retraining`.
-   Before monitoring an unactivated pinned candidate for the first time, prepare its
-   [reference](https://www.skyulf.com/manual/user_guide/databricks_monitoring_enrollment.html).
 
 6. **Approve later (optional).** Approval makes a version the champion, which
    champion scoring needs. It uses the `quality_threshold` set before training. Copy the

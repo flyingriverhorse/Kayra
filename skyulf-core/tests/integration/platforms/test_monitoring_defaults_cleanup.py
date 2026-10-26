@@ -1,14 +1,10 @@
-"""Shared-store defaults and the independent reference-retention schedule."""
+"""Shared-store defaults and the job identities that hold the store admission."""
 
 import json
 
 import pytest
 import yaml
 from test_databricks_bundle_generation import CLI_ONLY, TEMPLATE_ROOT, _generate_project
-from test_databricks_deployment import (
-    _resolve,
-    offline_workspace,  # noqa: F401 - register the shared pytest fixture
-)
 
 
 def test_monitoring_schema_default_is_shared():
@@ -50,15 +46,15 @@ def test_rendered_monitoring_destination_defaults(tmp_path, settings, catalog, s
     assert variables["monitoring_catalog"]["default"] == catalog
     assert variables["monitoring_schema"]["default"] == schema
     assert variables["monitoring_enabled"]["default"] == ("true" if catalog else "false")
-    assert (project / "resources/monitoring_cleanup.job.yml").exists() is bool(catalog)
+    assert not (project / "resources/monitoring_cleanup.job.yml").exists()
 
 
 @CLI_ONLY
 @pytest.mark.parametrize(
     "identity", ["deployer", "shared_service_principal", "separate_service_principals"]
 )
-def test_cleanup_job_has_independent_clock_and_existing_monitoring_identity(tmp_path, identity):
-    """Retention must not run observation/retraining and must preserve the monitoring permissions."""
+def test_store_writers_record_their_job_identity_and_no_cleanup_job_exists(tmp_path, identity):
+    """Admission recovery needs each writer's run and task; no retention job is generated."""
     project = _generate_project(
         tmp_path,
         monitoring="true",
@@ -68,34 +64,13 @@ def test_cleanup_job_has_independent_clock_and_existing_monitoring_identity(tmp_
         rescore_when_history_expires="true",
     )
     variables = yaml.safe_load((project / "deployment/variables.yml").read_text())["variables"]
-    assert variables["monitoring_cleanup_cron"]["default"] == "0 0 4 ? * SUN"
-    assert variables["monitoring_cleanup_confirm"]["default"] == "true"
-    assert variables["monitoring_cleanup_pause_status"]["default"] == "UNPAUSED"
-    assert variables["monitoring_reference_retention_days"]["default"] == "90"
-    job = yaml.safe_load((project / "resources/monitoring_cleanup.job.yml").read_text())[
-        "resources"
-    ]["jobs"]["monitoring_cleanup"]
-    assert job["schedule"] == {
-        "quartz_cron_expression": "${var.monitoring_cleanup_cron}",
-        "timezone_id": "UTC",
-        "pause_status": "${var.monitoring_cleanup_pause_status}",
-    }
-    assert job["max_concurrent_runs"] == 1
-    assert len(job["tasks"]) == 1
-    task = job["tasks"][0]
-    assert task["notebook_task"]["notebook_path"] == "../src/jobs/monitor_project.py"
-    parameters = task["notebook_task"]["base_parameters"]
-    assert parameters["job_run_id"] == "{{job.run_id}}"
-    assert parameters["task_key"] == "cleanup_references"
-    assert parameters["workspace_host"] == "${workspace.host}"
-    assert parameters["monitoring_action"] == "cleanup_references"
-    assert parameters["monitoring_project"] == "${bundle.name}"
-    assert parameters["monitoring_environment"] == "${bundle.target}"
-    assert parameters["cleanup_confirm"] == "{{job.parameters.cleanup_confirm}}"
-    assert {item["name"]: item["default"] for item in job["parameters"]} == {
-        "cleanup_confirm": "${var.monitoring_cleanup_confirm}",
-        "reference_retention_days": "${var.monitoring_reference_retention_days}",
-    }
+    assert not {
+        "monitoring_cleanup_cron",
+        "monitoring_cleanup_confirm",
+        "monitoring_cleanup_pause_status",
+        "monitoring_reference_retention_days",
+    } & set(variables)
+    assert not (project / "resources/monitoring_cleanup.job.yml").exists()
     for resource, task_key in (
         ("monitoring", "monitor_model"),
         ("score", "prepare_monitoring"),
@@ -112,45 +87,10 @@ def test_cleanup_job_has_independent_clock_and_existing_monitoring_identity(tmp_
         assert owner["workspace_host"] == "${workspace.host}"
     targets = yaml.safe_load((project / "deployment/targets.yml").read_text())["targets"]
     for target in targets.values():
+        assert "monitoring_cleanup_pause_status" not in target.get("variables", {})
+        jobs = target.get("resources", {}).get("jobs") or {}
+        assert "monitoring_cleanup" not in jobs
         if target["mode"] == "development":
-            assert target["variables"]["monitoring_cleanup_pause_status"] == "PAUSED"
             # Only the personal cleanup_dev job; no short-name override, no shared identity.
-            assert set(target["resources"]["jobs"]) == {"cleanup_dev"}
-            assert "run_as" not in target["resources"]["jobs"]["cleanup_dev"]
-        else:
-            jobs = target["resources"]["jobs"]
-            assert jobs["monitoring_cleanup"] == jobs["monitoring"]
-
-
-@CLI_ONLY
-@pytest.mark.parametrize("target", ["test", "test_development"])
-def test_cleanup_schedule_and_destination_resolve_per_target(tmp_path, target, offline_workspace):
-    """Real Bundle resolution must retain custom stores, dry runs, schedules and development pauses."""
-    project = _generate_project(tmp_path, monitoring="true", personal_development_targets="true")
-    path = project / "deployment/targets.yml"
-    document = yaml.safe_load(path.read_text())
-    document["targets"]["test"]["variables"].update(
-        {
-            "monitoring_catalog": "custom_ops",
-            "monitoring_schema": "existing_store",
-            "monitoring_cleanup_cron": "0 30 5 ? * MON",
-            "monitoring_cleanup_confirm": "false",
-            "monitoring_cleanup_pause_status": "PAUSED",
-            "monitoring_reference_retention_days": "120",
-        }
-    )
-    path.write_text(yaml.safe_dump(document, sort_keys=False))
-    resolved = _resolve(project, target, offline_workspace)
-    job = resolved["resources"]["jobs"]["monitoring_cleanup"]
-    assert job["schedule"]["pause_status"] == "PAUSED"
-    parameters = {item["name"]: item["default"] for item in job["parameters"]}
-    task = job["tasks"][0]["notebook_task"]["base_parameters"]
-    if target == "test":
-        assert parameters == {"cleanup_confirm": "false", "reference_retention_days": "120"}
-        assert task["monitoring_catalog"] == "custom_ops"
-        assert task["monitoring_schema"] == "existing_store"
-        assert job["schedule"]["quartz_cron_expression"] == "0 30 5 ? * MON"
-    else:
-        assert task["monitoring_enabled"] == "false"
-        assert task["monitoring_deployment_mode"] == "development"
-        assert parameters == {"cleanup_confirm": "true", "reference_retention_days": "90"}
+            assert set(jobs) == {"cleanup_dev"}
+            assert "run_as" not in jobs["cleanup_dev"]
