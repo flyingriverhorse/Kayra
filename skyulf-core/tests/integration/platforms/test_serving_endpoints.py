@@ -249,6 +249,64 @@ def test_create_stops_on_failed_deployment(spec, resolved, artifact, package, mo
     assert clock[0] == 0
 
 
+def _failed_endpoint():
+    """A first deployment whose container build failed, as the REST API reports it."""
+    return {
+        "state": {"ready": "NOT_READY", "config_update": "UPDATE_FAILED"},
+        "pending_config": {
+            "served_entities": [
+                {
+                    "name": "model-3",
+                    "state": {
+                        "deployment": "DEPLOYMENT_FAILED",
+                        "deployment_state_message": "Container image build failed.",
+                    },
+                }
+            ]
+        },
+    }
+
+
+def test_failed_deployment_reports_the_endpoint_reason(spec, resolved, artifact, package):
+    """UPDATE_FAILED must carry the reason only the endpoint owner (the job) can read."""
+    configured = replace(spec, logging_mode="disabled")
+    plan = build_pinned_endpoint(
+        configured, resolved=resolved, artifact=artifact, package_info=package
+    )
+    client = SimpleNamespace(serving_endpoints=Mock())
+    client.serving_endpoints.get.return_value = _failed_endpoint()
+    build = "\n".join(f"step {index}" for index in range(80))
+    client.serving_endpoints.build_logs.return_value = SimpleNamespace(
+        logs=build + "\nERROR: No matching distribution found for skyulf-core==0.9.5"
+    )
+    client.serving_endpoints.logs.side_effect = RuntimeError("container never started")
+    with pytest.raises(ValueError) as caught:
+        require_pinned_endpoint_ready(client, plan)
+    message = str(caught.value)
+    assert message.startswith("Serving endpoint config update failed: UPDATE_FAILED.")
+    assert "model-3: Container image build failed." in message
+    assert "No matching distribution found for skyulf-core==0.9.5" in message
+    assert "step 29" not in message and "step 31" in message
+    assert "logs unavailable: RuntimeError" in message
+    client.serving_endpoints.build_logs.assert_called_once_with(configured.endpoint_name, "model-3")
+
+
+def test_failed_deployment_keeps_its_error_when_details_fail(spec, resolved, artifact, package):
+    """A failure while reading details must never replace the original error."""
+    configured = replace(spec, logging_mode="disabled")
+    plan = build_pinned_endpoint(
+        configured, resolved=resolved, artifact=artifact, package_info=package
+    )
+    failed = _failed_endpoint()
+    failed["pending_config"]["served_entities"] = "not-a-list"
+    client = SimpleNamespace(serving_endpoints=Mock())
+    client.serving_endpoints.get.return_value = failed
+    with pytest.raises(
+        ValueError, match=r"^Serving endpoint config update failed: UPDATE_FAILED\."
+    ):
+        require_pinned_endpoint_ready(client, plan)
+
+
 def test_wait_rejects_wrong_ready_config_immediately(
     spec, resolved, artifact, package, monkeypatch
 ):

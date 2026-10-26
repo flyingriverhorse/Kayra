@@ -20,6 +20,7 @@ from uuid import uuid4
 from ..data.admission import PublishAdmission
 from ..shared.json_contracts import finite_json_digest
 from .contracts import PinnedEndpointPlan, PinnedEndpointSpec
+from .endpoints import explain_failed_update
 from .rollout_endpoints import (
     RolloutEndpointPlan,
     build_rollout_endpoint,
@@ -196,6 +197,7 @@ def _identity(endpoint_id: Any, revision: Any) -> None:
 
 
 def _verify(
+    client: Any,
     endpoint: dict[str, Any],
     record: dict[str, Any],
     plan: RolloutEndpointPlan,
@@ -211,7 +213,12 @@ def _verify(
     projected = deepcopy(endpoint)
     projected["state"] = {"ready": "READY", "config_update": "NOT_UPDATING"}
     rollout_endpoint_ready(projected, plan, challenger_percentage=percentage)
-    return rollout_endpoint_ready(endpoint, plan, challenger_percentage=percentage)
+    return explain_failed_update(
+        client,
+        plan.champion.spec.endpoint_name,
+        endpoint,
+        lambda: rollout_endpoint_ready(endpoint, plan, challenger_percentage=percentage),
+    )
 
 
 def _result(
@@ -331,12 +338,13 @@ def _reconcile(
     target = revision == request["target_config_version"]
     percentage = request["target_percentage"] if target else state.challenger_percentage
     wanted_revision = request["target_config_version"] if target else record["config_version"]
-    ready = _verify(endpoint, record, plan, revision=wanted_revision, percentage=percentage)
+    ready = _verify(client, endpoint, record, plan, revision=wanted_revision, percentage=percentage)
     pending = endpoint.get("pending_config")
     if pending:
         projected = deepcopy(endpoint)
         projected["config"] = pending
         _verify(
+            client,
             projected,
             record,
             plan,
@@ -384,6 +392,7 @@ def reconcile_rollout(
             return _reconcile(client, store, record, plan, state, clock)
         endpoint = _request(client, state.endpoint_name)
         ready = _verify(
+            client,
             endpoint,
             record,
             plan,
@@ -415,7 +424,9 @@ def hold_completed_rollout(
         if record["status"] != "COMMITTED" or state.phase != "COMPLETE":
             raise ValueError("Guarded promotion requires a committed COMPLETE rollout.")
         endpoint = _request(client, state.endpoint_name)
-        ready = _verify(endpoint, record, plan, revision=record["config_version"], percentage=100)
+        ready = _verify(
+            client, endpoint, record, plan, revision=record["config_version"], percentage=100
+        )
         if not ready or endpoint.get("pending_config"):
             raise ValueError("Guarded promotion requires a settled ready endpoint.")
         yield record
@@ -463,6 +474,7 @@ def _apply(
     request = _pending(record, plan, state)
     endpoint = _request(client, state.endpoint_name)
     if not _verify(
+        client,
         endpoint,
         record,
         plan,
@@ -506,6 +518,7 @@ def advance_rollout(
             return _reconcile(client, store, record, plan, state, clock)
         endpoint = _request(client, state.endpoint_name)
         ready = _verify(
+            client,
             endpoint,
             record,
             plan,

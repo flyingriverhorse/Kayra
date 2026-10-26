@@ -814,6 +814,27 @@ def test_readiness_clock_rollback_leaves_prepared_intent(setup):
     assert s.store.load()["state"]["challenger_percentage"] == 0
 
 
+def test_failed_traffic_update_reports_the_entity_reason(setup):
+    """A failed rollout deployment names the served entity's own reason, not only UPDATE_FAILED."""
+    s = setup
+    s.clock[0] += timedelta(days=1)
+
+    def fail():
+        """Databricks marks the update failed and explains it on the challenger entity."""
+        s.client.value["state"]["config_update"] = "UPDATE_FAILED"
+        s.client.value["config"]["served_entities"][1]["state"] = {
+            "deployment_state_message": "Model server crashed: ImportError skyulf"
+        }
+
+    s.client.after_put = fail
+    with pytest.raises(s.api.RolloutOutcomeUnknownError) as caught:
+        advance(s)
+    message = str(caught.value.__cause__)
+    assert message.startswith("Serving endpoint config update failed: UPDATE_FAILED.")
+    assert "challenger: Model server crashed: ImportError skyulf" in message
+    assert "build_logs unavailable" in message
+
+
 def test_foreign_pending_configuration_is_never_treated_as_ready(setup):
     """Native READY does not override an outstanding unowned pending configuration."""
     s = setup
