@@ -553,6 +553,7 @@ Start from the first failed task and record its run ID.
 | Scoring, after an approval or promotion succeeded | Run the score job again; do not retrain or approve again. |
 | Monitoring, after predictions were written (for example `Spark reference is not prepared`) | Predictions stay. Prepare the reference ([Monitoring](#monitoring) step 4) if that is the error, then run the **same** score request again; it writes nothing new and finishes the measurement. |
 | An alias change whose outcome is unknown | Stop jobs that change aliases and follow alias recovery below; do not roll back instead. |
+| `Local artifact runtime mismatch ...` or report reason `champion_runtime_unavailable` (champion trained on an older Core) | Review the candidate's own metrics in the training report, then run the approve action the report prints (`allow_unloadable_champion: true`). No retraining is needed. Rolling back to the old champion needs the old Core runtime. |
 
 **Upgrading Core** (`deployment/requirements.txt`): a model loads only with the
 library versions that trained it. After raising the pin, train a new version; to
@@ -561,3 +562,14 @@ and its versions until the new one is checked. Follow [ordered upgrades](https:/
 [alias recovery](https://www.skyulf.com/manual/user_guide/databricks_lifecycle_recovery.html),
 and [troubleshooting](https://www.skyulf.com/manual/user_guide/databricks_troubleshooting.html).
 These local instructions match the generated revision; public guides may be newer.
+
+**Core from a Unity Catalog Volume** (no package index for jobs): upload the wheel
+and replace the `skyulf-core[mlflow]==<version>` line in `deployment/requirements.txt`
+with `/Volumes/<catalog>/<schema>/<volume>/skyulf_core-<version>-py3-none-any.whl[mlflow]`.
+Every job, serverless or policy cluster, installs from that file; its `run_as`
+identity needs `READ VOLUME`. A logged model still requires `skyulf-core==<version>`,
+not the Volume path. A model admitted for Spark scoring carries its own Core wheel;
+other models need that version on PyPI or a private index, where the endpoint build
+installs it: `SKYULF_MODEL_PIP_INDEX_URL` on policy clusters (with
+`SKYULF_MODEL_PIP_BUNDLE_WHEELS`, the training job downloads it into the model
+instead), or the workspace default package repository on serverless.

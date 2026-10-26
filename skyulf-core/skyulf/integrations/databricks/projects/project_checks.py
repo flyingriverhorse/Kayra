@@ -4,6 +4,7 @@ import ast
 from pathlib import Path
 from typing import Any
 
+from ..jobs.lifecycle.retraining_task import retraining_policy
 from ..jobs.serving_endpoint_job import read_serving_endpoint_settings
 from ..jobs.serving_job import validate_serving_section
 from ..lifecycle.workflow import resolve_target_config
@@ -128,6 +129,32 @@ def _check_feature_targets(root: Path) -> None:
         )
 
 
+def _on_drift_values(deployment: Path) -> dict[str, Any]:
+    """Collect the declared on_drift default and every per-target override by location."""
+    values = {}
+    if (deployment / "variables.yml").is_file():
+        declared = read_yaml_mapping(deployment / "variables.yml").get("variables") or {}
+        on_drift = declared.get("on_drift") or {}
+        values["variables.yml: variables.on_drift.default"] = on_drift.get("default")
+    if (deployment / "targets.yml").is_file():
+        targets = read_yaml_mapping(deployment / "targets.yml").get("targets") or {}
+        for name, target in targets.items():
+            overrides = (target or {}).get("variables") or {}
+            values[f"targets.yml: targets.{name}.variables.on_drift"] = overrides.get("on_drift")
+    return values
+
+
+def _check_on_drift(root: Path) -> None:
+    """Reject an on_drift value at deploy time that retraining would reject at run time."""
+    for where, value in _on_drift_values(root / "deployment").items():
+        if value is None:
+            continue
+        try:
+            retraining_policy({"on_drift": str(value)})
+        except ValueError as exc:
+            raise ValueError(f"deployment/{where}: {exc}") from exc
+
+
 def _check_packages(root: Path) -> list[str]:
     """Reuse training's inert snapshot validation without importing project packages."""
     checked = []
@@ -157,12 +184,14 @@ def check_project(project_path: str | Path, bindings: dict[str, str]) -> dict[st
     Present features/composition packages use the same snapshot checks as training;
     declared dependencies are parsed, never installed or imported. Search and
     competition-metric settings get preview's checks, and an optional
-    config/serving.yml gets the serving jobs' own pre-remote checks.
+    config/serving.yml gets the serving jobs' own pre-remote checks, and on_drift in
+    deployment/ gets retraining's value check.
     """
     root = Path(project_path).resolve(strict=True)
     config = _check_config(root, bindings)
     _check_serving(root, bindings)
     _check_feature_targets(root)
+    _check_on_drift(root)
     sources = sorted((root / "src").rglob("*.py"))
     if not sources:
         raise ValueError("Project src must contain Python source files.")

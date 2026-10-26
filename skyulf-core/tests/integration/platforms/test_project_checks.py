@@ -391,3 +391,29 @@ def test_smoke_rejects_enabled_serving_settings_the_jobs_reject(
     with pytest.raises(ValueError) as caught:
         check_project(root, _bindings())
     assert str(caught.value).startswith(message)
+
+
+def test_smoke_rejects_unsupported_on_drift_default_and_target_override(tmp_path, workflow_config):
+    """A bad on_drift must fail smoke before deploy, not later in the monitoring job."""
+    root = _project(tmp_path, workflow_config)
+    deployment = root / "deployment"
+    deployment.mkdir()
+    variables = deployment / "variables.yml"
+    targets = deployment / "targets.yml"
+    variables.write_text("variables:\n  on_drift:\n    default: disabled\n", encoding="utf-8")
+    targets.write_text(
+        "targets:\n  dev:\n    variables:\n      on_drift: retrain\n  prod: {}\n", encoding="utf-8"
+    )
+    assert check_project(root, _bindings())["status"] == "passed"
+    targets.write_text(
+        "targets:\n  prod:\n    variables:\n      on_drift: true\n", encoding="utf-8"
+    )
+    message = (
+        r"targets\.yml: targets\.prod\.variables\.on_drift: on_drift must be disabled or retrain"
+    )
+    with pytest.raises(ValueError, match=message):
+        check_project(root, _bindings())
+    targets.write_text("targets: {}\n", encoding="utf-8")
+    variables.write_text("variables:\n  on_drift:\n    default: Retrain\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="variables.on_drift.default: on_drift must be disabled"):
+        check_project(root, _bindings())

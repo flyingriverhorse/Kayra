@@ -132,6 +132,19 @@ def test_template_public_links_resolve_to_documented_pages_and_anchors():
     assert checked
 
 
+def test_task_failure_fix_links_resolve_to_troubleshooting_sections():
+    """Every Fix/Docs link a failed job task prints must open an existing section."""
+    from skyulf.integrations.databricks.jobs.shared.notebook_diagnostics import (
+        _DOCS,
+        _KNOWN_FAILURES,
+    )
+
+    page = ROOT / "docs" / (urlsplit(_DOCS).path.removeprefix("/manual/")[:-5] + ".md")
+    anchors = _anchors(page.read_text(encoding="utf-8"))
+    missing = [anchor for *_, anchor in _KNOWN_FAILURES if anchor not in anchors]
+    assert _KNOWN_FAILURES and not missing
+
+
 def test_databricks_topic_links_resolve_after_splitting_guides():
     """Moving a guide must preserve reachable files and sections from its readers."""
     sources = [
