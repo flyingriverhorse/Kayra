@@ -323,6 +323,57 @@ def test_approval_frame_pins_integer_version_and_saved_columns(monkeypatch):
     assert result == "frame"
 
 
+def test_approval_frame_reads_an_unversioned_score_source_plainly(monkeypatch):
+    """Set approval works when the score source is a materialized view or a Streaming Table
+    on dedicated compute, which have no Delta history to pin."""
+    from skyulf.integrations.databricks.model_sets import model_set_project as module
+    from skyulf.integrations.mlflow.spark import spark_model
+
+    spark = Mock()
+    artifact = SimpleNamespace(
+        manifest=SimpleNamespace(
+            input_schema=[SimpleNamespace(name="id"), SimpleNamespace(name="x")],
+            record_key_columns=("id",),
+        )
+    )
+    refused = RuntimeError("[EXPECT_TABLE_NOT_VIEW.NO_ALTERNATIVE] 'DESCRIBE HISTORY' ...")
+
+    def no_history(*args):
+        """A materialized view refuses DESCRIBE HISTORY."""
+        raise refused
+
+    monkeypatch.setattr(module, "latest_source_version", no_history)
+    monkeypatch.setattr(module, "unversioned_kind", lambda spark, table, error: "MATERIALIZED_VIEW")
+    monkeypatch.setattr(module, "bounded_frame", Mock(return_value="frame"))
+    monkeypatch.setattr(spark_model, "optional_partition_certificate", lambda artifact: None)
+    result = module.approval_frame(
+        spark, artifact, {"score_source_table": "a.b.mv", "max_rows": 80, "max_input_mb": 4}
+    )
+    spark.read.table.assert_called_once_with("a.b.mv")
+    spark.read.option.assert_not_called()
+    assert result == "frame"
+
+
+def test_approval_frame_keeps_other_history_errors(monkeypatch):
+    """A Delta table whose history read fails for another reason still fails loudly."""
+    from skyulf.integrations.databricks.model_sets import model_set_project as module
+    from skyulf.integrations.mlflow.spark import spark_model
+
+    monkeypatch.setattr(spark_model, "optional_partition_certificate", lambda artifact: None)
+
+    def broken(*args):
+        """History is refused for a reason unrelated to the table type."""
+        raise RuntimeError("PERMISSION_DENIED")
+
+    monkeypatch.setattr(module, "latest_source_version", broken)
+    monkeypatch.setattr(module, "unversioned_kind", lambda spark, table, error: None)
+    artifact = SimpleNamespace(
+        manifest=SimpleNamespace(input_schema=[], record_key_columns=("id",))
+    )
+    with pytest.raises(RuntimeError, match="PERMISSION_DENIED"):
+        module.approval_frame(Mock(), artifact, {"score_source_table": "a.b.t", "max_rows": 1})
+
+
 def test_local_contextful_approval_keeps_complete_population(monkeypatch):
     """Uncertified group or window computations must still refuse a truncated population."""
     from skyulf.integrations.databricks.model_sets import model_set_project as module

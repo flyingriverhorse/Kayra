@@ -26,6 +26,7 @@ from ...mlflow.registration.registry import (
     unwrap_feature_package,
 )
 from ..data.admission import SingleWriterAdmission
+from ..data.delta_io.delta import unversioned_kind
 from ..feature_store.lifecycle_config import binding_json, deserialize_feature_spec
 from ..feature_store.model_sets import (
     enrich_approval_source,
@@ -520,6 +521,21 @@ def project_endpoints(config: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _approval_source(spark: Any, table: str) -> Any:
+    """Read the score source at its latest Delta version, or plainly when it has none.
+
+    A materialized view, a view, or a Streaming Table on dedicated compute has no Delta
+    history to pin; the approval probe then reads the current rows.
+    """
+    try:
+        version = int(latest_source_version(spark, table)["version"])
+    except Exception as exc:  # noqa: BLE001 - only an unversioned table kind is recovered
+        if unversioned_kind(spark, table, exc) is None:
+            raise
+        return spark.read.table(table)
+    return spark.read.option("versionAsOf", version).table(table)
+
+
 def approval_frame(spark: Any, artifact: Any, config: dict[str, Any]) -> Any:
     """Sample certified row-local sets after validating all source record keys.
 
@@ -537,10 +553,7 @@ def approval_frame(spark: Any, artifact: Any, config: dict[str, Any]) -> Any:
 
         require_partition_safe_model_set(artifact)
     sampled = distributed or optional_partition_certificate(artifact) is not None
-    table = config["score_source_table"]
-    source = spark.read.option(
-        "versionAsOf", int(latest_source_version(spark, table)["version"])
-    ).table(table)
+    source = _approval_source(spark, config["score_source_table"])
     columns = tuple(column.name for column in artifact.manifest.input_schema)
     source_columns = feature_source_columns(artifact) if feature_binding(artifact) else columns
     validate_feature_source(source, artifact)
