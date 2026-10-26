@@ -1,15 +1,15 @@
-{{- if ne .personal_development_targets "true"}}{{skip "teardown.py"}}{{end -}}
+{{- if ne .personal_development_targets "true"}}{{skip "cleanup_dev.py"}}{{end -}}
 # Databricks notebook source
 """Remove what this personal development deployment created; dry_run=true only lists it."""
 
 import json
 
 from skyulf.integrations.databricks.jobs.shared.notebook_diagnostics import notebook_task
-from skyulf.integrations.databricks.jobs.teardown import run_teardown_notebook
+from skyulf.integrations.databricks.jobs.cleanup_dev import run_cleanup_dev_notebook
 
 if __name__ == "__main__":
-    with notebook_task("teardown", globals()["dbutils"]):
-        output = run_teardown_notebook(globals()["spark"], globals()["dbutils"])
+    with notebook_task("cleanup_dev", globals()["dbutils"]):
+        output = run_cleanup_dev_notebook(globals()["spark"], globals()["dbutils"])
 
 # COMMAND ----------
 

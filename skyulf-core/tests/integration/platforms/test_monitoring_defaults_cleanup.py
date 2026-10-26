@@ -114,9 +114,9 @@ def test_cleanup_job_has_independent_clock_and_existing_monitoring_identity(tmp_
     for target in targets.values():
         if target["mode"] == "development":
             assert target["variables"]["monitoring_cleanup_pause_status"] == "PAUSED"
-            # Only the personal teardown job; no short-name override, no shared identity.
-            assert set(target["resources"]["jobs"]) == {"teardown"}
-            assert "run_as" not in target["resources"]["jobs"]["teardown"]
+            # Only the personal cleanup_dev job; no short-name override, no shared identity.
+            assert set(target["resources"]["jobs"]) == {"cleanup_dev"}
+            assert "run_as" not in target["resources"]["jobs"]["cleanup_dev"]
         else:
             jobs = target["resources"]["jobs"]
             assert jobs["monitoring_cleanup"] == jobs["monitoring"]

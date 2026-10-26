@@ -473,9 +473,9 @@ def test_personal_targets_keep_outputs_and_identity_separate(tmp_path, identity)
         assert personal["variables"]["monitoring_pause_status"] == "PAUSED"
         assert personal["variables"]["monitoring_enabled"] == "false"
         # No short-name overrides: the development prefix keeps the project in job names.
-        # Personal targets add only the dev teardown job.
+        # Personal targets add only the dev cleanup_dev job.
         assert set(personal["resources"]) == {"jobs"}
-        assert set(personal["resources"]["jobs"]) == {"teardown"}
+        assert set(personal["resources"]["jobs"]) == {"cleanup_dev"}
         assert "name_prefix" not in personal.get("presets", {})
         assert "run_as" not in personal
         for job in ("train", "score", "monitoring"):

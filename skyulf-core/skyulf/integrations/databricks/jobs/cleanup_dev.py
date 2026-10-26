@@ -33,8 +33,8 @@ _ROW_FILTER = "lower(model_name) = :model AND project = :project AND environment
 
 
 @dataclass(frozen=True, slots=True)
-class TeardownItem:
-    """One object teardown deletes or deliberately leaves.
+class CleanupItem:
+    """One object cleanup_dev deletes or deliberately leaves.
 
     Attributes:
         kind: Object kind, such as ``registered_model`` or ``prediction_table``.
@@ -76,17 +76,17 @@ def require_development_target(values: dict[str, str]) -> str:
     suffix = values.get("resource_suffix", "")
     if values.get("bundle_mode") != "development" or not suffix.strip():
         raise ValueError(
-            "Teardown runs only in a personal development target (mode: development "
+            "cleanup_dev runs only in a personal development target (mode: development "
             "with a resource_suffix); shared targets are never torn down."
         )
     return suffix
 
 
-def plan_teardown(values: dict[str, str]) -> list[TeardownItem]:
+def plan_cleanup(values: dict[str, str]) -> list[CleanupItem]:
     """List every object this deployment created, in deletion order.
 
     Args:
-        values: The teardown job parameters for one development target.
+        values: The cleanup_dev job parameters for one development target.
 
     Returns:
         Items to delete and items deliberately left, each with a reason.
@@ -98,7 +98,7 @@ def plan_teardown(values: dict[str, str]) -> list[TeardownItem]:
     return _plan(_resolve(values))
 
 
-def run_teardown(
+def run_cleanup(
     values: dict[str, str], *, spark: Any, client: Any, dry_run: bool
 ) -> list[dict[str, str]]:
     """Delete, or with ``dry_run`` only check, every planned object.
@@ -108,7 +108,7 @@ def run_teardown(
     ``already_absent``.
 
     Args:
-        values: The teardown job parameters for one development target.
+        values: The cleanup_dev job parameters for one development target.
         spark: Active Spark session.
         client: Databricks ``WorkspaceClient``.
         dry_run: Read and report only.
@@ -122,8 +122,8 @@ def run_teardown(
     return [_run_item(item, deployment, spark, client, dry_run) for item in _plan(deployment)]
 
 
-def run_teardown_notebook(spark: Any, dbutils: Any) -> dict[str, Any]:
-    """Run the teardown job task and fail it when any item failed.
+def run_cleanup_dev_notebook(spark: Any, dbutils: Any) -> dict[str, Any]:
+    """Run the cleanup_dev job task and fail it when any item failed.
 
     Args:
         spark: Active Spark session.
@@ -142,12 +142,12 @@ def run_teardown_notebook(spark: Any, dbutils: Any) -> dict[str, Any]:
     from databricks.sdk import WorkspaceClient  # noqa: PLC0415 - optional integration dependency
 
     dry_run = values["dry_run"] == "true"
-    items = run_teardown(values, spark=spark, client=WorkspaceClient(), dry_run=dry_run)
+    items = run_cleanup(values, spark=spark, client=WorkspaceClient(), dry_run=dry_run)
     output = {"dry_run": dry_run, "items": items}
     print(json.dumps(output, indent=2))
     failed = [item["name"] for item in items if item["status"] == "failed"]
     if failed:
-        raise RuntimeError(f"Teardown failed for {len(failed)} item(s): {', '.join(failed)}.")
+        raise RuntimeError(f"cleanup_dev failed for {len(failed)} item(s): {', '.join(failed)}.")
     return output
 
 
@@ -225,13 +225,13 @@ def _serving(values: dict[str, str]) -> dict[str, Any] | None:
         return None
     from .serving_endpoint_job import _bound_settings  # noqa: PLC0415
 
-    # Cost tags are only written on create; teardown never needs the real value.
+    # Cost tags are only written on create; cleanup_dev never needs the real value.
     return _bound_settings(
-        dict(settings), {**values, "cost_tag_key": "skyulf_teardown", "cost_tag_value": "none"}
+        dict(settings), {**values, "cost_tag_key": "skyulf_cleanup_dev", "cost_tag_value": "none"}
     )
 
 
-def _plan(deployment: _Deployment) -> list[TeardownItem]:
+def _plan(deployment: _Deployment) -> list[CleanupItem]:
     """Order every item: serving, monitoring rows, models, prediction outputs, logs."""
     items = _serving_items(deployment.serving)
     # Rows go before models: monitoring_cleanup aborts on a row naming a deleted model.
@@ -244,7 +244,7 @@ def _plan(deployment: _Deployment) -> list[TeardownItem]:
         items.append(replace(generations, owners=tuple(models)))
     items += _payload_items(deployment)
     items.append(
-        TeardownItem(
+        CleanupItem(
             "mlflow_experiment",
             deployment.values.get("experiment_name", "<bundle root>/experiment"),
             "skip",
@@ -254,46 +254,44 @@ def _plan(deployment: _Deployment) -> list[TeardownItem]:
     return items
 
 
-def _owned(kind: str, name: str, deployment: _Deployment) -> TeardownItem:
+def _owned(kind: str, name: str, deployment: _Deployment) -> CleanupItem:
     """Delete a name only when it carries this target's resource suffix."""
     if deployment.suffix.lower() in name.lower():
-        return TeardownItem(kind, name, "delete", "name carries this target's resource_suffix")
-    return TeardownItem(kind, name, "skip", "name lacks this target's resource_suffix")
+        return CleanupItem(kind, name, "delete", "name carries this target's resource_suffix")
+    return CleanupItem(kind, name, "skip", "name lacks this target's resource_suffix")
 
 
-def _serving_items(settings: dict[str, Any] | None) -> list[TeardownItem]:
+def _serving_items(settings: dict[str, Any] | None) -> list[CleanupItem]:
     """Plan the endpoint and its SQL function; both are checked against owner tags."""
     if settings is None:
         return []
     reason = "deleted only when it carries this deployment's owner tags"
-    items = [TeardownItem("serving_endpoint", settings["endpoint_name"], "delete", reason)]
+    items = [CleanupItem("serving_endpoint", settings["endpoint_name"], "delete", reason)]
     function = settings["sql_function"]
     if function.get("enabled", True):
-        items.append(TeardownItem("sql_function", function["name"], "delete", reason))
+        items.append(CleanupItem("sql_function", function["name"], "delete", reason))
     return items
 
 
-def _monitoring_items(deployment: _Deployment) -> list[TeardownItem]:
+def _monitoring_items(deployment: _Deployment) -> list[CleanupItem]:
     """Plan this deployment's rows in the development store; shared objects stay."""
     if deployment.namespace is None:
         return []
     reason = f"this model's rows in {deployment.namespace}; other models' rows stay"
-    items = [
-        TeardownItem("monitoring_rows", model, "delete", reason) for model in deployment.models
-    ]
+    items = [CleanupItem("monitoring_rows", model, "delete", reason) for model in deployment.models]
     items.append(
-        TeardownItem(
+        CleanupItem(
             "monitoring_references",
             f"{deployment.namespace}.monitor_ref_*",
             "skip",
-            "reference tables are shared per project and target; teardown never drops them. "
-            "See the teardown guide to remove them by hand.",
+            "reference tables are shared per project and target; cleanup_dev never drops them. "
+            "See 'Remove a deployed project' to remove them by hand.",
         )
     )
     return items
 
 
-def _payload_items(deployment: _Deployment) -> list[TeardownItem]:
+def _payload_items(deployment: _Deployment) -> list[CleanupItem]:
     """Plan the endpoint's payload view and telemetry tables."""
     settings = deployment.serving
     if settings is None or settings.get("logging_mode", "telemetry") == "disabled":
@@ -305,7 +303,7 @@ def _payload_items(deployment: _Deployment) -> list[TeardownItem]:
 
 
 def _run_item(
-    item: TeardownItem, deployment: _Deployment, spark: Any, client: Any, dry_run: bool
+    item: CleanupItem, deployment: _Deployment, spark: Any, client: Any, dry_run: bool
 ) -> dict[str, str]:
     """Run one item; any error becomes a failed result instead of stopping the run."""
     result = {"kind": item.kind, "name": item.name, "action": item.action}

@@ -1,4 +1,4 @@
-"""The development teardown job removes only what one personal deployment created."""
+"""The development cleanup_dev job removes only what one personal deployment created."""
 
 import json
 import re
@@ -21,7 +21,7 @@ from test_databricks_bundle_generation import (  # noqa: E402
     _generate_project,
 )
 
-from skyulf.integrations.databricks.jobs.teardown import plan_teardown, run_teardown  # noqa: E402
+from skyulf.integrations.databricks.jobs.cleanup_dev import plan_cleanup, run_cleanup  # noqa: E402
 
 EXAMPLES = Path(__file__).resolve().parents[3] / "templates/databricks/examples"
 ENDPOINT = EXAMPLES / "nyctaxi/taxi_fare_endpoint"
@@ -88,7 +88,7 @@ class FakeSpark:
             self.rows[name] = [dict(row) for row in rows.get(table, [])]
 
     def sql(self, query: str, args: dict | None = None) -> SimpleNamespace:
-        """Apply the few statement shapes teardown issues."""
+        """Apply the few statement shapes cleanup_dev issues."""
         self.statements.append(query)
         names = [part.replace("`", "") for part in re.findall(r"`[^\s(),]+`", query)]
         if query.startswith("SHOW TBLPROPERTIES"):
@@ -126,7 +126,7 @@ class FakeSpark:
 
 
 def _result(rows: list[dict]) -> SimpleNamespace:
-    """Mimic the DataFrame methods teardown reads."""
+    """Mimic the DataFrame methods cleanup_dev reads."""
     return SimpleNamespace(collect=lambda: rows, first=lambda: rows[0] if rows else None)
 
 
@@ -179,19 +179,19 @@ def _status(results: list[dict]) -> dict[tuple[str, str], str]:
     [{"bundle_mode": "production"}, {"bundle_mode": ""}, {"resource_suffix": ""}],
 )
 def test_refuses_shared_targets_before_reading_anything(overrides):
-    """A production target or an empty suffix must stop teardown before any lookup or delete."""
+    """A production target or an empty suffix must stop cleanup_dev before any lookup or delete."""
     spark, client = FakeSpark(), _client()
     with pytest.raises(ValueError, match="development"):
-        plan_teardown(_values(**overrides))
+        plan_cleanup(_values(**overrides))
     with pytest.raises(ValueError, match="development"):
-        run_teardown(_values(**overrides), spark=spark, client=client, dry_run=False)
+        run_cleanup(_values(**overrides), spark=spark, client=client, dry_run=False)
     assert spark.statements == []
     assert client.method_calls == []
 
 
 def test_plan_lists_only_this_deployments_outputs():
     """Source, label and training tables are never planned; deleted names carry the suffix."""
-    items = plan_teardown(_values())
+    items = plan_cleanup(_values())
     names = {item.name for item in items}
     assert not any(table in name for name in names for table in ("trips_train", "trips_score"))
     assert {ENDPOINT_NAME, FUNCTION, MODEL} <= names
@@ -215,7 +215,7 @@ def test_logging_prefix_without_suffix_is_never_planned(tmp_path):
         text.replace('"taxi_fare_endpoint_serving{resource_suffix}"', '"shared_serving"'),
         encoding="utf-8",
     )
-    payload = [item for item in plan_teardown(_values(project)) if item.kind == "payload_log"]
+    payload = [item for item in plan_cleanup(_values(project)) if item.kind == "payload_log"]
     assert payload
     assert all(item.action == "skip" and "resource_suffix" in item.reason for item in payload)
 
@@ -223,7 +223,7 @@ def test_logging_prefix_without_suffix_is_never_planned(tmp_path):
 def test_model_set_plan_covers_the_set_and_its_component_models():
     """A model-set project removes the set, every branch model and their prediction tables."""
     values = _values(MODEL_SET, serving_config_path=str(MODEL_SET / "config/serving.yml"))
-    items = plan_teardown(values)
+    items = plan_cleanup(values)
     planned = {(item.kind, item.name) for item in items if item.action == "delete"}
     models = [item.name for item in items if item.kind == "registered_model"]
     assert models[0] == f"ws.ml.demand_set{SUFFIX}"
@@ -239,7 +239,7 @@ def test_model_set_plan_covers_the_set_and_its_component_models():
 def test_foreign_endpoint_and_function_are_skipped():
     """An endpoint or function without this deployment's owner tags is never deleted."""
     client = _client({**OWNER, "suffix": "_test_dev_99"})
-    results = run_teardown(_values(), spark=_deployed_spark(), client=client, dry_run=False)
+    results = run_cleanup(_values(), spark=_deployed_spark(), client=client, dry_run=False)
     status = _status(results)
     assert status[("serving_endpoint", ENDPOINT_NAME)] == "skipped"
     assert status[("sql_function", FUNCTION)] == "skipped"
@@ -250,7 +250,7 @@ def test_foreign_endpoint_and_function_are_skipped():
 def test_other_models_monitoring_rows_stay_in_the_shared_development_store():
     """Teammates share the dev store; only this deployment's model rows are deleted."""
     spark = _deployed_spark()
-    results = run_teardown(_values(), spark=spark, client=_client(), dry_run=False)
+    results = run_cleanup(_values(), spark=spark, client=_client(), dry_run=False)
     assert _status(results)[("monitoring_rows", MODEL)] == "deleted"
     for table in ("model_inventory", "monitoring_results"):
         assert [row["model_name"] for row in spark.rows[f"{STORE}.{table}"]] == [
@@ -263,7 +263,7 @@ def test_other_models_monitoring_rows_stay_in_the_shared_development_store():
 def test_dry_run_reads_but_never_deletes():
     """dry_run=true lists what would go and issues no delete or drop."""
     spark, client = _deployed_spark(), _client()
-    results = run_teardown(_values(), spark=spark, client=client, dry_run=True)
+    results = run_cleanup(_values(), spark=spark, client=client, dry_run=True)
     assert not [s for s in spark.statements if s.startswith(("DROP", "DELETE"))]
     for api in (client.serving_endpoints, client.functions, client.registered_models):
         api.delete.assert_not_called()
@@ -278,14 +278,14 @@ def test_rerun_after_partial_failure_completes_with_already_absent():
     """A failed delete is reported, the rest continues, and a rerun finishes the job."""
     spark, client = _deployed_spark(), _client()
     client.registered_models.delete.side_effect = RuntimeError("permission denied")
-    first = _status(run_teardown(_values(), spark=spark, client=client, dry_run=False))
+    first = _status(run_cleanup(_values(), spark=spark, client=client, dry_run=False))
     assert first[("registered_model", MODEL)] == "failed"
     assert first[("serving_endpoint", ENDPOINT_NAME)] == "deleted"
 
     client.registered_models.delete.side_effect = None
     for api in (client.serving_endpoints, client.functions):
         api.get.side_effect = NotFound("gone")
-    second = run_teardown(_values(), spark=spark, client=client, dry_run=False)
+    second = run_cleanup(_values(), spark=spark, client=client, dry_run=False)
     status = _status(second)
     assert "failed" not in status.values()
     assert status[("registered_model", MODEL)] == "deleted"
@@ -302,7 +302,7 @@ def test_full_rebuild_generations_of_other_models_are_kept():
     for name, model in ((f"{table}_v1", f"ws.ml.demand_set{SUFFIX}"), (f"{table}_v2", "x.y.z")):
         spark.properties[name] = {"skyulf.mode": "full_rebuild", "skyulf.model_name": model}
     values = _values(MODEL_SET, serving_config_path="")
-    status = _status(run_teardown(values, spark=spark, client=_client(), dry_run=False))
+    status = _status(run_cleanup(values, spark=spark, client=_client(), dry_run=False))
     assert status[("prediction_table", table)] == "deleted"
     assert status[("prediction_generations", f"{table}_v*")] == "deleted"
     assert set(spark.objects) == {f"{table}_v2".lower()}
@@ -316,7 +316,7 @@ def _targets(project: Path) -> dict:
 
 
 @needs_cli
-def test_teardown_job_exists_only_in_personal_development_targets(tmp_path):
+def test_cleanup_dev_job_exists_only_in_personal_development_targets(tmp_path):
     """Shared targets never get the job; each dev target gets a dry-run-by-default job."""
     project = _generate_project(
         tmp_path,
@@ -329,9 +329,9 @@ def test_teardown_job_exists_only_in_personal_development_targets(tmp_path):
     )
     targets = _targets(project)
     for name in ("test", "syst", "prod"):
-        assert "teardown" not in ((targets[name].get("resources") or {}).get("jobs") or {})
+        assert "cleanup_dev" not in ((targets[name].get("resources") or {}).get("jobs") or {})
     for name in DEV_TARGETS:
-        job = targets[name]["resources"]["jobs"]["teardown"]
+        job = targets[name]["resources"]["jobs"]["cleanup_dev"]
         assert job["parameters"] == [{"name": "dry_run", "default": "true"}]
         assert job["max_concurrent_runs"] == 1
         assert "schedule" not in job
@@ -340,18 +340,18 @@ def test_teardown_job_exists_only_in_personal_development_targets(tmp_path):
         assert parameters["bundle_mode"] == "${bundle.mode}"
         assert parameters["resource_suffix"] == "${var.resource_suffix}"
         assert (project / "deployment" / task["notebook_task"]["notebook_path"]).resolve() == (
-            project / "src/jobs/teardown.py"
+            project / "src/jobs/cleanup_dev.py"
         ).resolve()
     # The development dashboard and its refresh task survive next to the new job.
     dev = targets["test_development"]["resources"]
     assert "monitoring_dashboard" in dev["dashboards"]
     assert "monitoring" in dev["jobs"]
-    assert (project / "src/jobs/teardown.py").exists()
+    assert (project / "src/jobs/cleanup_dev.py").exists()
 
 
 @needs_cli
-def test_projects_without_personal_targets_have_no_teardown(tmp_path):
+def test_projects_without_personal_targets_have_no_cleanup_dev(tmp_path):
     """Without development targets there is nothing to tear down, so no notebook ships."""
     project = _generate_project(tmp_path)
-    assert not (project / "src/jobs/teardown.py").exists()
-    assert "teardown" not in (project / "deployment/targets.yml").read_text(encoding="utf-8")
+    assert not (project / "src/jobs/cleanup_dev.py").exists()
+    assert "cleanup_dev" not in (project / "deployment/targets.yml").read_text(encoding="utf-8")

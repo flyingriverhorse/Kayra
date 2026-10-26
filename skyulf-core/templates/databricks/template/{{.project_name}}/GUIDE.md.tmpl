@@ -569,8 +569,8 @@ Start from the first failed task and record its run ID.
 {{- if eq .personal_development_targets "true"}}
 
 In a personal `*_development` target you can start clean instead: run
-`databricks bundle run teardown -t <target> --params dry_run=true`, review the list,
-run it again with `dry_run=false`, then train again. Shared targets have no teardown job.
+`databricks bundle run cleanup_dev -t <target> --params dry_run=true`, review the list,
+run it again with `dry_run=false`, then train again. Shared targets have no cleanup_dev job.
 {{- end}}
 
 **Upgrading Core** (`deployment/requirements.txt`): a model loads only with the
