@@ -312,7 +312,7 @@ def test_deduplicate_rejects_conflicting_targets_before_selecting_survivor(engin
 def test_deduplicate_cannot_hide_duplicate_source_keys():
     """Deduplication must not turn an invalid source identity into valid training data."""
     frame = _frame()
-    frame.loc[1, "id"] = frame.loc[0, "id"]
+    frame.loc[1, "id"] = frame["id"].iloc[0]
     step = {
         "name": "dedup",
         "transformer": "Deduplicate",
