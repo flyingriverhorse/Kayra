@@ -371,6 +371,8 @@ footer .col small{font-size:12px;color:#8a887f;padding-left:15px}
 .evidence h3{font-size:22px}
 .evidence li p{font-size:15px}
 @media (max-width:860px){.evidence .lead{grid-template-columns:minmax(0,1fr)}}
+.leak .src{font-size:14px;line-height:1.55;color:var(--soft);max-width:68ch}
+.leak .src a{color:inherit;text-decoration:underline;text-underline-offset:3px}
 </style>
 </head>
 <body>
@@ -522,13 +524,14 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
 
 <section id="why" class="section leak">
   <div style="display:flex;flex-direction:column;gap:20px">
-    <h2>Your model says <span class="good">94%.</span><br>Production says <span class="bad">71%.</span></h2>
+    <h2>Your model says <span class="good">88%.</span><br>Production says <span class="bad">75%.</span></h2>
     <p class="lede">Usually nothing is broken. The score was just measured wrong, and nothing in a normal notebook tells you that.</p>
+    <p class="src">Measured, not invented: the mean of 10 seeded runs of a logistic regression whose feature selection saw the test rows, scored on its own test split and on 5,000 fresh rows. Done in the safe order, the same model reports 72% and gets 69%. <a href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/10_leakage_score_gap.ipynb">Re-run it in the score-gap notebook →</a></p>
   </div>
   <div class="grid">
     <div class="text">
       <h3>The bug that doesn't raise an error</h3>
-      <p>Fill missing values, scale a column or encode a category <em>before</em> you split into train and test, and those steps quietly learn from the test rows. Your validation score now includes answers it was supposed to be guessing. The code runs fine. The number just isn't real.</p>
+      <p>Fill missing values, scale a column, encode a category or pick features <em>before</em> you split into train and test, and those steps quietly learn from the test rows. Your validation score now includes answers it was supposed to be guessing. The code runs fine. The number just isn't real.</p>
       <p>Kayra reads the order of your steps before anything trains. In the library you get the step, the splitter and the fix by name. On the canvas the run is stopped before it starts.</p>
       <a class="more" href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/09_leakage_safety.ipynb">Walk through it in the leakage notebook →</a>
     </div>
