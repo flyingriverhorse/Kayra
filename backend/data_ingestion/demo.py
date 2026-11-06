@@ -27,7 +27,7 @@ IRIS_SOURCE_ID = "iris-demo"
 IRIS_NAME = "Iris Flower Dataset"
 DEMO_BLOCKED_MESSAGE = (
     "This public demo does not accept uploads, new data sources or deletions. "
-    "Use the pre-loaded Iris dataset, or run Skyulf yourself to work with your own data."
+    "Use the pre-loaded Iris dataset, or run Kayra yourself to work with your own data."
 )
 
 
