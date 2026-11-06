@@ -526,7 +526,7 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
   <div style="display:flex;flex-direction:column;gap:20px">
     <h2>Your model says <span class="good">88%.</span><br>Production says <span class="bad">75%.</span></h2>
     <p class="lede">Usually nothing is broken. The score was just measured wrong, and nothing in a normal notebook tells you that.</p>
-    <p class="src">Measured, not invented: the mean of 10 seeded runs of a logistic regression whose feature selection saw the test rows, scored on its own test split and on 5,000 fresh rows. Done in the safe order, the same model reports 72% and gets 69%. <a href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/10_leakage_score_gap.ipynb">Re-run it in the score-gap notebook →</a></p>
+    <p class="src">Where these numbers come from: one model, trained twice on the same data. When feature selection peeked at the test rows, the test score said 88% but 5,000 new rows gave 75%. In the correct order, the test score said 72% and the new rows gave 69%, close to the truth. Average of 10 runs. <a href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/10_leakage_score_gap.ipynb">Run the notebook yourself →</a></p>
   </div>
   <div class="grid">
     <div class="text">
