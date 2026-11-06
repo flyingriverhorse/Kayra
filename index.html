@@ -334,6 +334,43 @@ footer .bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12p
   .cta .btns{width:100%}
   .cta .pill{flex:1 1 auto;text-align:center}
 }
+
+/* hero, audience, tour modal and evidence layout */
+.hero .frame{aspect-ratio:8/3}
+.hero .frame img{object-position:center}
+.hero .stats .big{font-size:15px}
+.hero .note{font-size:13px;opacity:.8}
+.who{gap:32px}
+.who-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+.who-grid > div{border:1px solid var(--line);border-radius:6px;padding:24px;display:flex;flex-direction:column;gap:10px;background:#fff}
+.who-grid h3{font-family:var(--serif);font-size:26px;line-height:1.1}
+.who-grid p{font-size:16px;line-height:1.55;color:var(--soft)}
+.tour-btn{align-self:flex-start;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:12px 18px;font-size:15px;font-weight:500;cursor:pointer}
+#tourLb video{max-width:100%;max-height:100%;border-radius:6px;background:#000}
+.vs-list{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding-top:16px;border-top:1px solid var(--sand-line)}
+.evidence .vs-list li{display:block;padding:0;border:0;font-size:15px;line-height:1.5;color:var(--soft)}
+.vs-list b{color:var(--ink);font-weight:600}
+footer .col a.prod{flex-direction:column;align-items:flex-start;gap:2px}
+footer .col a.prod > span{display:flex;align-items:center;gap:8px}
+footer .col small{font-size:12px;color:#8a887f;padding-left:15px}
+
+.evidence .lead{position:static}
+.evidence .vs-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:28px 40px;border-top:1px solid var(--ink);padding-top:32px;margin-top:8px}
+.evidence .vs-row > div{display:flex;flex-direction:column;gap:8px}
+.evidence .vs-row .vs{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--amber-deep)}
+.evidence .vs-row h3{font-size:24px}
+.evidence .vs-row p{font-size:15px;line-height:1.55;color:var(--soft)}
+
+/* evidence: heading on top, the six items in a compact three-column grid */
+.evidence{grid-template-columns:minmax(0,1fr);gap:28px;padding:clamp(48px,6vw,84px) var(--edge)}
+.evidence .lead{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:end;gap:10px 56px}
+.evidence .lead .eyebrow{grid-column:1/-1}
+.evidence .lead p{max-width:none}
+.evidence ol{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0 36px;border-top:0}
+.evidence li{grid-template-columns:32px minmax(0,1fr);border-top:1px solid var(--ink);border-bottom:0;padding:18px 0 22px}
+.evidence h3{font-size:22px}
+.evidence li p{font-size:15px}
+@media (max-width:860px){.evidence .lead{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -373,19 +410,17 @@ footer .bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12p
       <div class="ctas">
         <a class="pill dark" href="https://api.skyulf.com/" target="_blank" rel="noopener">Try the live demo</a>
         <a class="pill line" href="#run">Run it locally</a>
-        <a class="plain" href="https://github.com/flyingriverhorse/Kayra">GitHub ↗</a>
       </div>
-      <span class="note">No signup and no install — the demo runs the real app in your browser. (Free instance, so the first load can take ~30s to wake.)</span>
+      <span class="note">Runs in your browser, no signup. The free instance can take ~30 s to wake.</span>
       <button type="button" class="pip" id="pip" aria-label="Copy install command">$ pip install skyulf-core <span id="pipLabel">Copy</span></button>
       <div class="stats">
-        <a href="https://github.com/flyingriverhorse/Kayra">★ <span id="stars">47</span> stars</a>
-        <a href="https://pypistats.org/packages/skyulf-core">↓ <span id="monthly">1.1k</span> / month</a>
-        <a href="https://pepy.tech/projects/skyulf-core">↓ <span id="total">22k</span> total</a>
+        <a class="big" href="https://pepy.tech/projects/skyulf-core"><b><span id="total">22k</span></b> downloads</a>
+        <a href="https://pypistats.org/packages/skyulf-core"><span id="monthly">1.1k</span> / month</a>
+        <a href="https://github.com/flyingriverhorse/Kayra">★ <span id="stars">47</span></a>
       </div>
-      <span class="tag">Self-hosted · Apache-2.0 library · your data stays on your machine</span>
     </div>
   </div>
-  <div class="frame"><img src="./static/img/canvas.jpg?v=20261106" alt="Kayra visual pipeline canvas with connected nodes" fetchpriority="high"></div>
+  <div class="frame"><img src="./static/img/canvas-hero.jpg?v=20261106b" alt="Kayra visual pipeline canvas with connected nodes" fetchpriority="high"></div>
 </section>
 
 <dl class="proof cells" aria-label="Kayra in numbers">
@@ -395,14 +430,15 @@ footer .bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12p
   <div><dt>on scikit-learn, pandas &amp; Polars</dt><dd>Python&nbsp;3.12</dd></div>
 </dl>
 
-<section class="section tour" aria-labelledby="tour-title">
+<section id="who" class="section who" aria-labelledby="who-title">
   <div class="intro">
-    <span class="eyebrow">A 30-SECOND TOUR</span>
-    <h2 class="h2" id="tour-title">See it move.</h2>
-    <p class="lede">The dashboard, a multi-branch pipeline, three runs side by side, a drift report and the model registry, recorded from a local Kayra install.</p>
+    <span class="eyebrow">WHO IT'S FOR</span>
+    <h2 class="h2" id="who-title">Built for teams who can't afford a wrong score.</h2>
   </div>
-  <div class="tour-frame">
-    <video id="tour" src="./static/video/kayra-tour.webm?v=20261106" poster="./static/img/dashboard.jpg?v=20261106" muted playsinline loop preload="none" controls width="1280" height="720" aria-label="Screen recording of the Kayra app: dashboard, canvas, experiments, data drift and model registry"></video>
+  <div class="who-grid">
+    <div><h3>Data that can't leave your network</h3><p>Hospitals, banks and public bodies run Kayra on their own servers. Nothing is uploaded, nothing is billed per prediction.</p></div>
+    <div><h3>Notebook users who need to ship</h3><p>Keep scikit-learn, get leakage checks, versioned runs, a model registry and a REST endpoint, and export back to a notebook any time.</p></div>
+    <div><h3>Databricks teams</h3><p>Start locally, then generate a Databricks bundle with training, scoring, monitoring and serving jobs on Unity Catalog.</p></div>
   </div>
 </section>
 
@@ -421,7 +457,7 @@ footer .bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12p
       <button type="button" class="shot" data-zoom="./static/img/dashboard.jpg?v=20261106" aria-label="Enlarge dashboard screenshot"><img src="./static/img/dashboard.jpg?v=20261106" alt="Kayra dashboard with jobs, deployments and data sources" loading="lazy" decoding="async"></button>
       <pre class="code"><span class="p">$ </span>git clone https://github.com/flyingriverhorse/Kayra
 <span class="p">$ </span>docker compose up</pre>
-      <div class="links"><a href="https://api.skyulf.com/" target="_blank" rel="noopener">Open the live demo →</a><a href="./manual/guides/platform_setup.html">Setup guide →</a></div>
+      <div class="links"><a href="./manual/guides/platform_setup.html">Setup guide →</a></div>
     </article>
     <article class="card cream">
       <div class="meta"><span>Standalone Python library</span><span>Apache-2.0</span></div>
@@ -461,6 +497,7 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
 <section id="how" class="section path">
   <div class="head">
     <h2 class="h2">From a raw file to a monitored model.</h2>
+    <button type="button" class="tour-btn" id="tourBtn"><span aria-hidden="true">▶</span> Watch the 30-second tour</button>
     <p class="lede">Every stage lives in one workspace, so nothing gets lost between a notebook, a spreadsheet of results and whatever is actually running in production.</p>
   </div>
   <div class="grid">
@@ -514,7 +551,7 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
   </div>
 </section>
 
-<section class="section dbx" aria-labelledby="dbx-title">
+<section class="section dbx sand" aria-labelledby="dbx-title">
   <div class="text">
     <span class="eyebrow">LOCAL TO CLUSTER</span>
     <h2 class="h2" id="dbx-title">Start on your laptop. Scale out to Databricks.</h2>
@@ -529,11 +566,6 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
 <span class="p">$ </span>databricks bundle run monitoring -t test</pre>
 </section>
 
-<section class="compare cells" aria-label="How Kayra compares">
-  <div><span class="vs">vs. a plain scikit-learn Pipeline</span><h3>Same estimators, plus everything around them.</h3><p>Kayra uses scikit-learn's own models. It adds what you would otherwise write by hand: a check on step order, a record of every run, side-by-side comparison, serving and drift reports.</p></div>
-  <div><span class="vs">vs. managed cloud ML services</span><h3>Your data never leaves your machine.</h3><p>Kayra runs on your own computer or server, so nothing is uploaded and nothing is billed per prediction. Every step of the pipeline stays readable, and a trained model exports as a standalone project.</p></div>
-  <div><span class="vs">vs. drag-and-drop ML tools</span><h3>The canvas is not a dead end.</h3><p>Any pipeline exports to a runnable Jupyter notebook, and the same pipeline runs from the Apache-2.0 library with no UI at all.</p></div>
-</section>
 
 <section id="features" class="section feat">
   <div class="head">
@@ -615,6 +647,11 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
       </div>
     </li>
   </ol>
+  <div class="vs-row" aria-label="How Kayra compares">
+    <div><span class="vs">vs. a plain scikit-learn Pipeline</span><h3>Same estimators, plus everything around them.</h3><p>The step-order check, run records, comparison, serving and drift reports you would otherwise write by hand.</p></div>
+    <div><span class="vs">vs. managed cloud ML</span><h3>Your data stays on your machine.</h3><p>Nothing is uploaded and nothing is billed per prediction; a trained model exports as a standalone project.</p></div>
+    <div><span class="vs">vs. drag-and-drop tools</span><h3>The canvas is not a dead end.</h3><p>Every pipeline exports to a runnable notebook and runs from the Apache-2.0 library with no UI.</p></div>
+  </div>
 </section>
 
 <section id="updates" class="section rel">
@@ -676,13 +713,14 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
 <footer>
   <div class="cols">
     <div class="col" style="gap:14px"><div class="logo"><img src="./static/img/logo-192.png?v=20261106" alt="" width="26" height="26">Skyulf</div><div class="line">Open tools that run on your own ground.</div></div>
-    <nav class="col" aria-label="Products"><div class="k">PRODUCTS</div><a href="./"><span class="dot" aria-hidden="true"></span>Kayra</a><a href="https://koloni.skyulf.com/"><span class="dot koloni" aria-hidden="true"></span>Koloni</a></nav>
+    <nav class="col" aria-label="Products"><div class="k">PRODUCTS</div><a href="./" class="prod"><span><span class="dot" aria-hidden="true"></span>Kayra</span><small>Build, verify and ship ML pipelines</small></a><a href="https://koloni.skyulf.com/" class="prod"><span><span class="dot koloni" aria-hidden="true"></span>Koloni</span><small>Agents do the work. You decide.</small></a></nav>
     <nav class="col" aria-label="Resources"><div class="k">RESOURCES</div><a href="./manual/index.html">Docs</a><a href="./manual/guides/platform_setup.html">Quick start</a><a href="https://github.com/flyingriverhorse/Kayra">GitHub</a><a href="https://pypi.org/project/skyulf-core/">PyPI</a><a href="https://github.com/flyingriverhorse/Kayra/discussions">Community</a></nav>
     <nav class="col" aria-label="Project"><div class="k">PROJECT</div><a href="https://github.com/flyingriverhorse/Kayra/releases">Releases</a><a href="https://github.com/flyingriverhorse/Kayra/blob/master/CONTRIBUTING.md">Contributing</a><a href="https://github.com/flyingriverhorse/Kayra/blob/master/SECURITY.md">Security</a><a href="https://github.com/flyingriverhorse/Kayra/blob/master/LICENSE">License</a><a href="https://www.linkedin.com/in/murat-u/">LinkedIn</a></nav>
   </div>
   <div class="bottom"><span>© 2025–2026 Murat Unsal</span><span>Libraries Apache-2.0 · Platforms AGPLv3</span></div>
 </footer>
 
+<div class="lb" id="tourLb" role="dialog" aria-modal="true" aria-label="Kayra tour video"><video id="tourVideo" src="./static/video/kayra-tour.webm?v=20261106" poster="./static/img/dashboard.jpg?v=20261106" muted playsinline controls preload="none"></video><button type="button" id="tourClose">esc ✕</button></div>
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Image preview"><img id="lbImg" src="" alt=""><button type="button" id="lbClose">esc ✕</button></div>
 
 <script>
@@ -752,15 +790,14 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
   var onScroll = function () { top.classList.toggle('scrolled', window.scrollY > 40); };
   window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
-  // tour video: load and play only while visible, never for reduced-motion users
-  var tour = $('tour');
-  if (tour && 'IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { tour.play().catch(function () {}); } else { tour.pause(); }
-      });
-    }, { threshold: 0.4 }).observe(tour);
-  }
+  // the tour plays in a modal opened from "How it works"
+  var tLb = $('tourLb'), tVid = $('tourVideo');
+  var openTour = function () { tLb.classList.add('open'); tVid.currentTime = 0; tVid.play().catch(function () {}); $('tourClose').focus(); };
+  var closeTour = function () { tVid.pause(); tLb.classList.remove('open'); };
+  $('tourBtn').addEventListener('click', openTour);
+  $('tourClose').addEventListener('click', closeTour);
+  tLb.addEventListener('click', function (e) { if (e.target === tLb) closeTour(); });
+  window.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTour(); });
 
   // live numbers; the markup keeps sensible fallbacks if any request fails
   var compact = function (n) { try { return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n); } catch (e) { return String(n); } };
