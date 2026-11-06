@@ -9,6 +9,14 @@ from unittest.mock import Mock
 import pytest
 
 
+def _initialize_task_values():
+    """Task values whose saved initialize_run outputs the ALL_DONE report reads at run time."""
+    saved = {"reference_json": '{"phase": "prepare"}', "tracking_uri": "databricks"}
+    task_values = Mock()
+    task_values.get.side_effect = lambda *, taskKey, key, default=None, debugValue=None: saved[key]  # noqa: N803 - dbutils keyword names
+    return task_values
+
+
 @pytest.mark.parametrize(
     "change",
     [
@@ -16,6 +24,7 @@ import pytest
         {"execution_count": "2"},
         {"job_run_id": "{{job.run_id}}"},
         {"workflow_contract": "1"},
+        {"workflow_contract": "2"},
         {"phase": "operator"},
         {"task_role": "score"},
     ],
@@ -31,13 +40,13 @@ def test_phase_notebook_rejects_unsafe_context_before_loading_config(change):
         "job_run_id": "20",
         "repair_count": "0",
         "execution_count": "1",
-        "workflow_contract": "2",
+        "workflow_contract": "3",
         "config_path": "must-not-open.json",
         **change,
     }
     dbutils = SimpleNamespace(widgets=SimpleNamespace(getAll=lambda: values))
     with pytest.raises(ValueError):
-        execute(None, dbutils, phase="prepare")
+        execute(None, dbutils, phase="initialize")
 
 
 def test_downstream_notebook_uses_saved_reference_without_editable_config(monkeypatch):
@@ -56,7 +65,7 @@ def test_downstream_notebook_uses_saved_reference_without_editable_config(monkey
         "job_run_id": "20",
         "repair_count": "0",
         "execution_count": "1",
-        "workflow_contract": "2",
+        "workflow_contract": "3",
         "reference_json": json.dumps(reference),
         "tracking_uri": "databricks",
         "config_path": "must-not-open.json",
@@ -86,7 +95,7 @@ def test_downstream_notebook_uses_saved_reference_without_editable_config(monkey
     execute.assert_called_once()
 
 
-@pytest.mark.parametrize("phase", ["compare_decide", "complete"])
+@pytest.mark.parametrize("phase", ["model_decision", "complete"])
 def test_first_candidate_notebook_renders_null_champion_metrics(monkeypatch, phase, caplog):
     """First-model reports must show quality and operator actions instead of JSON fallback."""
     from skyulf.integrations.databricks.jobs.lifecycle import lifecycle_tasks
@@ -130,16 +139,15 @@ def test_first_candidate_notebook_renders_null_champion_metrics(monkeypatch, pha
         "job_run_id": "20",
         "repair_count": "0",
         "execution_count": "1",
-        "workflow_contract": "2",
+        "workflow_contract": "3",
         "reference_json": '{"phase": "prepare"}',
         "tracking_uri": "databricks",
-        "training_result_state": "success",
-        "operator_result_state": "excluded",
+        "decision_result_state": "success",
     }
     reports = []
     dbutils = SimpleNamespace(
         widgets=SimpleNamespace(getAll=lambda: values),
-        jobs=SimpleNamespace(taskValues=Mock()),
+        jobs=SimpleNamespace(taskValues=_initialize_task_values()),
     )
     output = job_runtime.run_lifecycle_notebook(
         None, dbutils, phase=phase, display_html=reports.append, exit_notebook=False
@@ -152,7 +160,7 @@ def test_first_candidate_notebook_renders_null_champion_metrics(monkeypatch, pha
         assert "Available action: approve" in visible and "Available action: reject" in visible
         assert "If rollback is needed" not in visible
     else:
-        assert "Awaiting manual review" in visible and "finalize_and_report" in visible
+        assert "Awaiting manual review" in visible and "training_report" in visible
     assert "Readable output unavailable" not in caplog.text
 
 
@@ -172,13 +180,10 @@ def test_completion_publishes_score_request_only_after_verified_result(monkeypat
         "job_run_id": "20",
         "repair_count": "0",
         "execution_count": "1",
-        "workflow_contract": "2",
-        "reference_json": '{"phase": "prepare"}',
-        "tracking_uri": "databricks",
-        "training_result_state": "failed" if fails else "success",
-        "operator_result_state": "excluded",
+        "workflow_contract": "3",
+        "decision_result_state": "failed" if fails else "success",
     }
-    task_values = Mock()
+    task_values = _initialize_task_values()
     display = Mock()
     dbutils = SimpleNamespace(
         widgets=SimpleNamespace(getAll=lambda: values),
@@ -195,10 +200,7 @@ def test_completion_publishes_score_request_only_after_verified_result(monkeypat
         assert json.loads(result) == payload
         task_values.set.assert_any_call(key="score_requested", value=True)
         assert "Scoring requested" in display.call_args.args[0]
-    assert execute.call_args.kwargs["task_states"] == {
-        "training": "failed" if fails else "success",
-        "operator": "excluded",
-    }
+    assert execute.call_args.kwargs["task_states"] == {"decision": "failed" if fails else "success"}
 
 
 @pytest.mark.parametrize(
@@ -259,7 +261,7 @@ def test_phase_output_escapes_values_and_folds_technical_digests():
     assert "&lt;script&gt;" in output
 
 
-@pytest.mark.parametrize("phase", ["compare", "decide", "compare_decide"])
+@pytest.mark.parametrize("phase", ["compare", "decide", "model_decision"])
 def test_phase_report_shows_comparison_and_actual_promotion_decision(phase):
     """Reviewers must see metrics and the alias decision without opening technical JSON."""
     from skyulf.integrations.databricks.jobs.shared.job_output import render_lifecycle_output
@@ -287,11 +289,11 @@ def test_phase_report_shows_comparison_and_actual_promotion_decision(phase):
     assert "heldout_rmse" in visible and "1.5" in visible and "2.0" in visible
     assert "candidate_improved" in visible
     assert "Eligible" in visible
-    if phase in {"decide", "compare_decide"}:
+    if phase in {"decide", "model_decision"}:
         assert "Champion changed" in visible and "v2" in visible and "v3" in visible
 
 
-@pytest.mark.parametrize("phase", ["decide", "compare_decide"])
+@pytest.mark.parametrize("phase", ["decide", "model_decision"])
 def test_manual_review_report_does_not_imply_promotion(phase):
     """A candidate awaiting human approval must not look like a successful champion change."""
     from skyulf.integrations.databricks.jobs.shared.job_output import render_lifecycle_output
@@ -330,7 +332,7 @@ def test_prepare_freezes_project_code_only_for_training(
         "job_run_id": "20",
         "repair_count": "0",
         "execution_count": "1",
-        "workflow_contract": "2",
+        "workflow_contract": "3",
         "deployed_score_handoff": workflow_config["score_handoff"],
         "config_path": str(path),
         "lifecycle_action": action,
@@ -369,7 +371,11 @@ def test_prepare_freezes_project_code_only_for_training(
         widgets=SimpleNamespace(getAll=lambda: values), jobs=SimpleNamespace(taskValues=task_values)
     )
     job_runtime.run_lifecycle_notebook(
-        None, dbutils, phase="prepare", preprocessing_path="preprocessing.py", exit_notebook=False
+        None,
+        dbutils,
+        phase="initialize",
+        preprocessing_path="preprocessing.py",
+        exit_notebook=False,
     )
     prepared = execute.call_args.kwargs["config"]
     assert ("project_python_source" in prepared["pipeline"]) == (action == "train")
@@ -435,12 +441,13 @@ def test_report_reads_predecessor_values_at_run_time():
     assert values["decision_result_state"] == "success"
 
 
-def test_report_keeps_values_passed_by_older_job_definitions():
-    """Jobs deployed before this change still pass both values as notebook parameters."""
+def test_report_ignores_reference_widgets():
+    """Only initialize_run's task values identify the run; a stale widget must not stand in."""
     from skyulf.integrations.databricks.jobs.shared.job_runtime import report_values
 
     passed = {"reference_json": '{"run_id": "old"}', "tracking_uri": "uri"}
-    assert report_values(_report_dbutils(dict(passed), {})) == passed
+    with pytest.raises(ValueError, match="initialize_run did not finish"):
+        report_values(_report_dbutils(dict(passed), {}))
 
 
 def test_report_names_initialize_run_when_it_never_finished():

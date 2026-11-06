@@ -78,7 +78,11 @@ from ...observability.reports.explanations import (
 )
 from ...scoring.batch.frame_batch import fit_workflow
 from ...shared._contracts import column_name, table_name
-from ..shared.holdout_evidence import load_frame_artifact, save_holdout_reference
+from ..shared.holdout_evidence import (
+    load_frame_artifact,
+    save_frame_artifact,
+    save_holdout_reference,
+)
 from ..shared.preprocessing_checks import (
     log_partition_probe,
     log_preprocessing_probe,
@@ -170,17 +174,20 @@ class TrainingSpec:
         """Restore a saved spec without mutating its JSON or interpreting engine metadata.
 
         Callers load verified custom source before construction so custom steps
-        are registered. Older evidence may omit the empty pre-split recipe.
+        are registered.
         """
         values = dict(payload)
         values.pop("engine", None)
         for field in ("start", "holdout_start", "cutoff", "result_cutoff"):
             value = values[field]
             values[field] = None if value is None else datetime.fromisoformat(value)
-        for field in ("record_key_columns", "input_columns"):
+        for field in (
+            "record_key_columns",
+            "input_columns",
+            "reserved_weight_columns",
+            "pre_split_steps",
+        ):
             values[field] = tuple(values[field])
-        values["reserved_weight_columns"] = tuple(values.get("reserved_weight_columns", ()))
-        values["pre_split_steps"] = tuple(values.get("pre_split_steps", ()))
         for field in ("event_time_parsing", "result_time_parsing"):
             values[field] = training_date_spec(values[field])
         return cls(**values)
@@ -587,12 +594,19 @@ class CandidateResult:
 PREFILTERED_ROWS = "prefiltered_unavailable_rows"
 
 
+# Every training run saves the rows it reads; replay never re-reads the source.
+RETRAIN_MESSAGE = (
+    "This model has no training rows saved in its MLflow run: it was trained before 0.9.7 "
+    "or outside the generated job graph; retrain it with the current project."
+)
+
+
 def read_training_snapshot(spark: Any, spec: TrainingSpec) -> pd.DataFrame:
-    """Replay the source rows saved at training when the spec locates them, else read live."""
+    """Replay the source rows the training run saved; a spec without them must be retrained."""
     if not isinstance(spec, TrainingSpec):
         raise TypeError("spec must be TrainingSpec.")
     if spec.source_snapshot_json is None:
-        return read_live_snapshot(spark, spec)
+        raise ValueError(RETRAIN_MESSAGE)
     from ....mlflow.shared._client import make_tracking_client  # noqa: PLC0415 - optional MLflow
 
     try:
@@ -605,12 +619,30 @@ def read_training_snapshot(spark: Any, spec: TrainingSpec) -> pd.DataFrame:
         raise ValueError("Saved source snapshot locator is malformed.") from exc
 
 
+def save_training_rows(spark: Any, spec: TrainingSpec, run: Any, tracking_uri: str) -> TrainingSpec:
+    """Read the source once, save the rows with ``run`` and point the spec at them.
+
+    A spec that already locates saved rows (a branch task replaying its parent's
+    read) keeps them, so the source is never read twice for one training.
+    """
+    if spec.source_snapshot_json is not None:
+        return spec
+    receipt = save_frame_artifact(run.client, run.run_id, "source", read_live_snapshot(spark, spec))
+    locator = {
+        "run_id": run.run_id,
+        "path": "lifecycle/data/source.parquet",
+        "tracking_uri": tracking_uri,
+        "receipt": receipt,
+    }
+    return replace(spec, source_snapshot_json=json.dumps(locator, sort_keys=True))
+
+
 def read_live_snapshot(spark: Any, spec: TrainingSpec) -> pd.DataFrame:
     """Project and cap a pinned source read before materializing driver rows.
 
     Delta sources are read at their pinned version. Streaming tables, materialized views
-    and views have no history to pin, so they are read as they are now; training saves
-    those rows and every later step replays them through ``read_training_snapshot``.
+    and views have no history to pin, so they are read as they are now. Training saves
+    the rows it reads and every later step replays them through ``read_training_snapshot``.
     """
     if not isinstance(spec, TrainingSpec):
         raise TypeError("spec must be TrainingSpec.")
@@ -1216,7 +1248,6 @@ def fit_candidate(
 ) -> _FittedCandidate:
     """Fit CV and final training rows, persisting selection and provenance evidence."""
     spec = pin_training_labels(spark, pin_fit_lookup(spark, spec, engine))
-    _require_saved_unversioned_rows(spec, prepared_data)
     run.log_config(pipeline_config, artifact_file="pipeline_config.json")
     run.client.log_dict(run.run_id, config, "training_pipeline_config.json")
     run.log_params({key: getattr(cv, field) for key, field in CV_FIELDS.items()})
@@ -1300,21 +1331,10 @@ def fit_candidate(
     )
 
 
-def _require_saved_unversioned_rows(spec: TrainingSpec, prepared_data: Any) -> None:
-    """Refuse a live fit of an unversioned source whose rows no later step could replay."""
-    kind = spec.source_kind or spec.training_label_kind
-    if kind is not None and prepared_data is None and spec.source_snapshot_json is None:
-        raise ValueError(
-            f"A training source is a {kind}, which has no Delta history, so only the generated "
-            "job graph (workflow_contract: 3) can train from it: it saves the rows it reads. "
-            "Regenerate the project with the current Skyulf version and redeploy."
-        )
-
-
 def read_training_partitions(
     spark: Any, spec: TrainingSpec, *, temporal_cv: bool, engine: str
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, int]:
-    """Retain the sequential SDK read/split path alongside prepared lifecycle data."""
+    """Replay the saved source rows and split them like the generated job graph does."""
     frame = read_training_snapshot(spark, spec)
     train, holdout, unavailable = split_labeled_snapshot(
         frame, spec, keep_training_event=temporal_cv, engine=engine
@@ -1628,6 +1648,11 @@ def train_candidate(
         if run.run_id is None:
             raise RuntimeError("MLflow did not provide a run ID.")
         run.set_tags(run_tags or {})
+        # Record the selected snapshot before the source read, so a failed read keeps it.
+        run.client.log_dict(
+            run.run_id, training_spec_payload(spec, engine), "training_snapshot.json"
+        )
+        spec = save_training_rows(spark, spec, run, tracking_uri)
         fitted = fit_candidate(
             spark,
             spec,

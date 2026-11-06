@@ -321,17 +321,11 @@ def _activate(
 
 
 def _approval_holdout(client: Any, spark: Any, report: Any, spec: Any, engine: str) -> Any:
-    """Use comparison-bound rows or retain the strict reconstruction path for legacy evidence."""
+    """Use comparison-bound rows, else split the training run's saved source rows."""
     if getattr(report, "holdout_reference", None) is not None:
         return load_saved_holdout(client, spark, report, spec)
-    try:
-        frame = candidate.read_training_snapshot(spark, spec)
-        _, heldout, _ = candidate.split_labeled_snapshot(frame, spec, engine=engine)
-    except ValueError as exc:
-        raise ValueError(
-            f"Legacy candidate has no saved holdout; strict reconstruction failed: {exc}"
-        ) from exc
-    return heldout
+    frame = candidate.read_training_snapshot(spark, spec)
+    return candidate.split_labeled_snapshot(frame, spec, engine=engine)[1]
 
 
 def _comparison_receipt_digest(event: Any, action: str, replay: bool) -> str:

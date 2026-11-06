@@ -100,12 +100,16 @@ def test_branch_failure_finalizes_parent_without_partial_set(workflow_config, tr
         "job_run_id": "20",
         "repair_count": "0",
         "execution_count": "1",
-        "tracking_uri": uri,
-        "reference_json": json.dumps(initialized.reference),
         "decision_result_state": "upstream_failed",
     }
+    saved = {"tracking_uri": uri, "reference_json": json.dumps(initialized.reference)}
+    task_values = SimpleNamespace(get=lambda *, key, **kwargs: saved[key])
+    dbutils = SimpleNamespace(
+        widgets=SimpleNamespace(getAll=lambda: values),
+        jobs=SimpleNamespace(taskValues=task_values),
+    )
     with pytest.raises(ValueError, match="failed"):
-        run_models_report_notebook(SimpleNamespace(widgets=SimpleNamespace(getAll=lambda: values)))
+        run_models_report_notebook(dbutils)
     assert client.get_run(initialized.reference["run_id"]).info.status == "FAILED"
     assert not client.search_registered_models()
 

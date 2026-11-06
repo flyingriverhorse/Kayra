@@ -216,7 +216,7 @@ def test_real_candidates_keep_independent_labels_and_replay_plan(
         reads.append((spec.version, spec.target_column))
         return _data().loc[:, list(spec.source_columns)].copy()
 
-    monkeypatch.setattr(training, "read_training_snapshot", read)
+    monkeypatch.setattr(training, "read_live_snapshot", read)
     prepared = branches.prepare_training_branches(None, configs)
     plan = branches.branch_training_payload(prepared)
     results = []
@@ -299,7 +299,7 @@ def test_partial_failure_preserves_candidates_and_stops_later_branches(
             raise RuntimeError("branch source failed")
         return _data().loc[:, list(spec.source_columns)].copy()
 
-    monkeypatch.setattr(training, "read_training_snapshot", read)
+    monkeypatch.setattr(training, "read_live_snapshot", read)
     with pytest.raises(RuntimeError, match="branch source failed"):
         branches.train_branches(
             None,
@@ -360,6 +360,7 @@ def test_train_validates_later_branch_before_parent_or_reads(
     read = MagicMock()
     monkeypatch.setattr(branches, "track_run", run)
     monkeypatch.setattr(training, "read_training_snapshot", read)
+    monkeypatch.setattr(training, "read_live_snapshot", read)
     with pytest.raises(ValueError):
         branches.train_branches(
             None,
@@ -463,6 +464,11 @@ def test_post_fit_comparison_failure_marks_parent_failed(
     monkeypatch.setattr(
         training,
         "read_training_snapshot",
+        lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
+    )
+    monkeypatch.setattr(
+        training,
+        "read_live_snapshot",
         lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
     )
     original = training.compare_candidate

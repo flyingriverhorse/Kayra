@@ -37,7 +37,7 @@ def test_monitor_report_has_safe_dashboard_link_and_preserves_plain_text():
 def test_drift_report_reads_only_the_completed_batch_and_does_not_recompute():
     """A delayed report task must display the same scoring commit, not the newest model batch."""
     from skyulf.integrations.databricks.observability.monitoring.monitoring_output import (
-        run_drift_report_notebook,
+        run_monitoring_report_notebook,
     )
 
     dbutils, spark, display = Mock(), Mock(), Mock()
@@ -75,12 +75,17 @@ def test_drift_report_reads_only_the_completed_batch_and_does_not_recompute():
         ),
     }
     spark.table.return_value.where.return_value.orderBy.return_value.limit.return_value.first.return_value.asDict.return_value = row
-    result = run_drift_report_notebook(spark, dbutils, display_html=display)
+    result = run_monitoring_report_notebook(spark, dbutils, display_html=display)
     predicate = spark.table.return_value.where.call_args.args[0]
     assert "window_start" in predicate and "config_digest" in predicate
     assert "status <> 'failed'" in predicate
     assert "0.4 / 0.2" in display.call_args.args[0]
-    assert result == {"report_id": "report", "status": "drift", "drifted_columns": 1}
+    assert (result["report_id"], result["status"], result["drifted_columns"]) == (
+        "report",
+        "drift",
+        1,
+    )
+    assert result["drift_status"] == "detected"
 
 
 def test_drift_report_displays_each_model_set_component(monkeypatch):
@@ -89,8 +94,13 @@ def test_drift_report_displays_each_model_set_component(monkeypatch):
 
     references = [{"monitor_id": "revenue"}, {"monitor_id": "risk"}]
     rows = [
-        {"report_id": "revenue_report", "status": "healthy", "drifted_columns": 0},
-        {"report_id": "risk_report", "status": "drift", "drifted_columns": 1},
+        {
+            "report_id": "revenue_report",
+            "status": "healthy",
+            "drifted_columns": 0,
+            "report_json": "{}",
+        },
+        {"report_id": "risk_report", "status": "drift", "drifted_columns": 1, "report_json": "{}"},
     ]
     load = Mock(side_effect=rows)
     monkeypatch.setattr(output, "load_observation", load)
@@ -98,8 +108,8 @@ def test_drift_report_displays_each_model_set_component(monkeypatch):
     dbutils, display = Mock(), Mock()
     dbutils.jobs.taskValues.get.return_value = {"status": "ready", "observations": references}
     dbutils.widgets.getAll.return_value = {}
-    result = output.run_drift_report_notebook(Mock(), dbutils, display_html=display)
-    assert result == {"results": rows}
+    result = output.run_monitoring_report_notebook(Mock(), dbutils, display_html=display)
+    assert [item["report_id"] for item in result["results"]] == ["revenue_report", "risk_report"]
     assert [call.args[1] for call in load.call_args_list] == references
     assert display.call_args.args[0] == "revenue_reportrisk_report"
 
@@ -108,13 +118,13 @@ def test_drift_report_displays_each_model_set_component(monkeypatch):
 def test_drift_report_skips_without_a_saved_batch(status):
     """An opted-out or empty scoring run must not display an unrelated historical report."""
     from skyulf.integrations.databricks.observability.monitoring.monitoring_output import (
-        run_drift_report_notebook,
+        run_monitoring_report_notebook,
     )
 
     spark, dbutils = Mock(), Mock()
     dbutils.widgets.getAll.return_value = {}
     dbutils.jobs.taskValues.get.return_value = {"status": status}
-    assert run_drift_report_notebook(spark, dbutils) == {"status": status}
+    assert run_monitoring_report_notebook(spark, dbutils) == {"status": status}
     spark.table.assert_not_called()
 
 

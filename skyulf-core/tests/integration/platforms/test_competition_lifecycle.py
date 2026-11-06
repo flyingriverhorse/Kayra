@@ -10,7 +10,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_databricks_lifecycle_tasks import _call, staged  # noqa: F401 - shared registry fixture
+from test_databricks_lifecycle_tasks import (  # noqa: F401 - shared registry fixture
+    _call,
+    _decide,
+    staged,
+)
 
 
 def _competition(config, engine="pandas"):
@@ -127,7 +131,7 @@ def test_failed_candidate_prevents_registration(staged, monkeypatch):
         return fit(*args, **kwargs)
 
     monkeypatch.setattr(candidate, "fit_candidate", fail_one)
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     with pytest.raises(ValueError, match="deliberate candidate failure"):
         _call(staged, "train", prepared.reference)
     assert not client.search_registered_models()
@@ -145,7 +149,7 @@ def test_shap_competition_preserves_winner_and_child_reports(staged):
             "max_samples": 3,
             "max_display_samples": 1,
         }
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="shap")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="shap")
     trained = _call(staged, "train", prepared.reference)
     assert trained.output["explanations"]["status"] == "completed"
     parent = prepared.reference["run_id"]
@@ -201,7 +205,7 @@ def test_cv_required_before_reading_source(staged, monkeypatch):
         workflow, "prepare_training", lambda *a, **kw: pytest.fail("remote preparation")
     )
     with pytest.raises(ValueError, match="cv_enabled"):
-        _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+        _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     assert not client.search_registered_models()
 
 
@@ -279,7 +283,7 @@ def test_mixed_model_families_and_search_strategies_register_one_winner(
         pytest.importorskip("optuna_integration.sklearn")
     _, client, config, _, frame = staged
     _mixed_candidates(config, frame, engine, task, strategy, nested)
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     selection = trained.output["competition"]
     if task == "regression":
@@ -317,11 +321,11 @@ def test_winner_quality_failure_never_evaluates_runner_up(staged, monkeypatch):
         return evaluate(artifact, *args, **kwargs)
 
     monkeypatch.setattr(candidate, "evaluate_candidate", record_evaluation)
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     assert evaluated == []
     registered = _call(staged, "evaluate_register", trained.reference)
-    decision = _call(staged, "compare_decide", registered.reference)
+    decision = _decide(staged, registered.reference)
     assert decision.output["alias_change"] is None
     assert evaluated and set(evaluated) == {trained.output["model_digest"]}
     assert len(client.search_model_versions(f"name='{config['model_name']}'")) == 1
@@ -332,7 +336,7 @@ def test_modified_selection_receipt_blocks_registration(staged):
     """Saved winner evidence cannot be edited between training and registry publication."""
     _, client, config, _, _ = staged
     _competition(config)
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     run_id = prepared.reference["run_id"]
     path = "competition/selection.json"
@@ -400,14 +404,17 @@ def test_winner_scores_with_captured_custom_recipe_after_project_edit(staged, tm
         encoding="utf-8",
     )
     resolved = load_project_workflow(config, features)
-    prepared = _call(staged, "prepare", config=resolved, action="train", experiment_name="staged")
+    prepared = _call(
+        staged, "initialize", config=resolved, action="train", experiment_name="staged"
+    )
     trained = _call(staged, "train", prepared.reference)
     assert trained.output["competition"]["winner"] == "strong"
     features.joinpath("__init__.py").write_text("raise RuntimeError('edited')\n", encoding="utf-8")
     modeling.joinpath("candidates.py").write_text(
         "raise RuntimeError('edited')\n", encoding="utf-8"
     )
-    registered = _register_in_fresh_process(tmp_path, config, frame, trained.reference)
+    selected = _call(staged, "select_best_model", trained.reference)
+    registered = _register_in_fresh_process(tmp_path, config, frame, selected.reference)
     artifact = load_run_pipeline(
         trained.output["model_uri"],
         digest=registered["model_digest"],

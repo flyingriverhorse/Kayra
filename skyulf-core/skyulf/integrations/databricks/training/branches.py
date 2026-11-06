@@ -369,7 +369,7 @@ def _restore_branch(payload: Any) -> TrainingBranch:
 
 
 def _restore_spec_fields(value: Any) -> dict[str, Any]:
-    """Accept absent optional label/source metadata in older plans; require concrete label pins."""
+    """Fill optional label/source fields the payload omits while None; require label pins."""
     if isinstance(value, dict):
         value = dict.fromkeys((*LABEL_FIELDS, *OPTIONAL_SOURCE_FIELDS)) | value
     _exact_fields(value, {field.name for field in fields(TrainingSpec)}, "branch spec")

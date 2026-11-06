@@ -75,6 +75,7 @@ def test_candidate_training_filters_before_split_and_model_fit(
     spec = _spec(steps=steps)
     observed = {}
     monkeypatch.setattr(training, "read_training_snapshot", lambda spark, request: _frame())
+    monkeypatch.setattr(training, "read_live_snapshot", lambda spark, request: _frame())
 
     def capture_fit(config, dataset, **kwargs):
         """Capture the actual fit input while allowing the holdout path to run."""
@@ -870,6 +871,7 @@ def test_cv_receives_raw_values_with_fixed_prefix_before_learned_suffix(
         "modeling": {"type": "linear_regression"},
     }
     monkeypatch.setattr(training, "read_training_snapshot", lambda spark, request: frame)
+    monkeypatch.setattr(training, "read_live_snapshot", lambda spark, request: frame)
     observed = {}
     original_cv = training.evaluate_training_cv
 
@@ -1024,6 +1026,7 @@ def test_saved_pipeline_replays_fixed_features_once_from_raw_values(
     spec = _spec(steps=steps, max_rows=20)
     config = {"preprocessing": [], "modeling": {"type": "linear_regression"}}
     monkeypatch.setattr(training, "read_training_snapshot", lambda spark, request: frame)
+    monkeypatch.setattr(training, "read_live_snapshot", lambda spark, request: frame)
     captured = {}
 
     def stop_at_scoring(artifact, heldout, **kwargs):

@@ -11,6 +11,18 @@ projects** for every intervening release in the
 [0.9.x changelog](https://github.com/flyingriverhorse/Kayra/blob/master/changelog/0.9.x.md). Keep
 the project pin and release-specific contracts together.
 
+## 0.9.7 is a clean break
+
+Skyulf 0.9.7 keeps no compatibility paths for projects, job definitions or models from
+earlier releases. To upgrade, regenerate the project, redeploy the Bundle and retrain.
+
+- Job definitions must use graph contract 3 (`workflow_contract: "3"`). Older job
+  graphs stop with "regenerate the project with Skyulf 0.9.7 and redeploy the Bundle".
+- Every training run saves the rows it reads. Registration, comparison, approval and
+  monitoring replay only those rows; a model without them stops with "trained before
+  0.9.7 or outside the generated job graph; retrain it with the current project".
+- A model loads only with the Core release that trained it.
+
 ## What to edit
 
 Keep bundle identity, target resource keys, workspace root, output/state paths and edited recipes

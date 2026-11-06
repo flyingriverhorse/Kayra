@@ -375,6 +375,7 @@ def test_registered_custom_recipe_reloads_from_saved_source_in_fresh_process(tmp
     workflow = _project(tmp_path)
     spec = _spec(steps=tuple(workflow["pre_split_steps"]))
     monkeypatch.setattr(training, "read_training_snapshot", lambda spark, request: _frame())
+    monkeypatch.setattr(training, "read_live_snapshot", lambda spark, request: _frame())
     uri = f"sqlite:///{(tmp_path / 'tracking.db').as_posix()}"
     candidate = training.train_candidate(
         object(),

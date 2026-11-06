@@ -51,15 +51,13 @@ def phase_reference_mutation(spark: Any, store: PhaseStore, phase: str) -> Abstr
         else monitoring_destination(values)
     )
     host = store.request.get("workspace_host", values.get("workspace_host"))
-    task = phase
-    if store.request.get("graph_version") == 3 or values:
-        task = {
-            "evaluate_register": "register_model",
-            "compare": "evaluate_model",
-            "decide": "model_decision",
-            "operator": "model_decision",
-            "finalize": "training_report",
-        }.get(phase, phase)
+    task = {
+        "evaluate_register": "register_model",
+        "compare": "evaluate_model",
+        "decide": "model_decision",
+        "operator": "model_decision",
+        "finalize": "training_report",
+    }.get(phase, phase)
     return reference_mutation_scope(
         spark,
         namespace,
@@ -95,5 +93,5 @@ def enrollment_reference_holder(store: PhaseStore, values: dict, task_key: str) 
 
 
 def notebook_reference_holder(values: dict) -> dict:
-    """Preserve legacy manual recovery until all generated owner widgets are available."""
+    """Bind a notebook run to its job-run provenance; without it recovery stays manual."""
     return monitoring_reference_holder(values)

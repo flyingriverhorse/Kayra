@@ -63,7 +63,7 @@ def monitoring_destination(values: dict[str, str]) -> str | None:
 
 
 def monitoring_reference_holder(values: dict) -> dict:
-    """Use complete generated provenance; legacy jobs retain explicit manual recovery."""
+    """Use complete job-run provenance; without it, reference recovery stays manual."""
     fields = {"job_run_id", "task_key", "workspace_host"}
     if not fields.issubset(values):
         return {}

@@ -54,7 +54,6 @@ def test_saved_spec_roundtrip_preserves_identity_and_input(temporal, engine):
     """Both replay adapters need identical dates, tuples and defaults from immutable JSON."""
     spec = _spec(temporal)
     payload = json.loads(json.dumps(training.training_spec_payload(spec, engine)))
-    payload.pop("pre_split_steps")  # Existing approval evidence permits this absent field.
     original = deepcopy(payload)
     restored = training.TrainingSpec.from_payload(payload)
     assert restored == spec and restored.dataset_id == spec.dataset_id

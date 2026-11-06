@@ -13,7 +13,7 @@ def test_single_model_registers_with_observed_source_conversions(staged, convers
     _, client, config, _, frame = staged
     frame["x"] = frame["x"].astype("float64")  # what the Spark read's DOUBLE cast produces
     frame.attrs["source_column_conversions"] = conversions
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     registered = _call(staged, "evaluate_register", trained.reference)
     assert registered.output["candidate_version"] == "1"
@@ -36,7 +36,7 @@ def test_tampered_conversion_evidence_still_blocks_registration(staged, monkeypa
         return {**result, "source_column_conversions": []}
 
     monkeypatch.setattr(candidate, "_fit_data_config", forged)
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     with pytest.raises(ValueError, match="differs from invocation"):
         _call(staged, "evaluate_register", trained.reference)

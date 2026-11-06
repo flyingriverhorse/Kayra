@@ -53,9 +53,7 @@ def load_source(spark: Any, store: PhaseStore, spec: training.TrainingSpec) -> d
 
 
 def snapshot_spec(store: PhaseStore, spec: training.TrainingSpec) -> training.TrainingSpec:
-    """Point a readable-graph spec at this run's saved source rows for every later replay."""
-    if store.request.get("graph_version", 2) != 3:
-        return spec
+    """Point the spec at this run's saved source rows for every later replay."""
     locator = {
         "run_id": store.run_id,
         "path": "lifecycle/data/source.parquet",

@@ -43,11 +43,6 @@ from ..shared.reference_mutations import phase_reference_mutation, prepare_refer
 
 __all__ = ["LifecycleContext", "LifecyclePhaseResult", "run_lifecycle_phase"]
 
-_GROUPED_PHASES = {
-    "train_register": ("train", "evaluate_register"),
-    "compare_decide": ("compare", "decide"),
-}
-
 
 @dataclass(frozen=True)
 class _ReplayEvidence:
@@ -158,7 +153,6 @@ def _prepare(
     operator_options: dict[str, Any],
     now: datetime | None,
     *,
-    graph_version: int = 2,
     monitoring_namespace: str | None = None,
     workspace_host: str | None = None,
 ) -> LifecyclePhaseResult:
@@ -178,9 +172,8 @@ def _prepare(
         "operator_options": options,
         "monitoring_namespace": monitoring_namespace,
         "workspace_host": workspace_host,
+        "graph_version": 3,
     }
-    if graph_version == 3:
-        request["graph_version"] = 3
     if action == "train":
         _prepare_training_request(spark, request, config, options, policy, now)
     prepare_reference_mutations(spark, monitoring_namespace)
@@ -291,10 +284,8 @@ def _fit_single_candidate(spark: Any, store: PhaseStore, spec: Any, path: Path) 
 
 
 def _prepared_fit_options(store: PhaseStore) -> dict[str, Any]:
-    """Use staged partitions only for invocations pinned to the readable graph."""
-    if store.request.get("graph_version", 2) == 3:
-        return {"prepared_data": data_stages.training_partitions(store)}
-    return {}
+    """Fit from the partitions saved by the data-preparation stages."""
+    return {"prepared_data": data_stages.training_partitions(store)}
 
 
 def _load_data(spark: Any, store: PhaseStore) -> dict[str, Any]:
@@ -674,14 +665,7 @@ def _complete_invocation(
             tracking_uri=tracking_uri,
             reference=reference,
         )
-    expected_states = (
-        {"training": "success", "operator": "excluded"}
-        if training_action
-        else {"training": "excluded", "operator": "success"}
-    )
-    if store.request.get("graph_version", 2) == 3:
-        expected_states = {"decision": "success"}
-    if task_states != expected_states:
+    if task_states != {"decision": "success"}:
         raise ValueError("Lifecycle task outcomes do not allow publishing a result.")
     return run_lifecycle_phase(
         spark,
@@ -792,18 +776,11 @@ def _validate_phase_inputs(
     workspace_host: str | None,
 ) -> None:
     """Reject inputs that do not belong to the selected fixed phase."""
-    if phase not in {
-        "prepare",
-        "initialize",
-        "model_decision",
-        "complete",
-        *PHASE_PREDECESSORS,
-        *_GROUPED_PHASES,
-    }:
+    if phase not in {"initialize", "model_decision", "complete", *PHASE_PREDECESSORS}:
         raise ValueError("Unsupported fixed lifecycle phase.")
     if phase != "complete" and task_states is not None:
         raise ValueError("Task states are accepted only by complete.")
-    if phase not in {"prepare", "initialize"} and any(
+    if phase != "initialize" and any(
         value is not None
         for value in (
             config,
@@ -828,7 +805,6 @@ def _run_prepare_phase(
     operator_options: dict[str, Any] | None,
     now: datetime | None,
     tracking_uri: str,
-    graph_version: int = 2,
     monitoring_namespace: str | None = None,
     workspace_host: str | None = None,
 ) -> LifecyclePhaseResult:
@@ -845,7 +821,6 @@ def _run_prepare_phase(
         experiment_name,
         operator_options or {},
         now,
-        graph_version=graph_version,
         monitoring_namespace=monitoring_namespace,
         workspace_host=workspace_host,
     )
@@ -869,9 +844,8 @@ def run_lifecycle_phase(
 ) -> LifecyclePhaseResult:
     """Run fixed notebook phases with durable references and no cross-task local state.
 
-    Prepare (legacy) and initialize accept configuration and operator inputs.
-    Initialize pins graph 3 with saved data preparation stages. Groups retain
-    each internal phase's receipts and return the last phase's reference. Complete
+    Initialize accepts configuration and operator inputs and pins graph contract 3
+    with saved data preparation stages. Complete
     takes the prepare reference, finalizes training when requested, then requires
     successful selected-branch task outcomes before publishing the result.
     Model_decision routes the prepared action to policy or operator handling.
@@ -891,19 +865,8 @@ def run_lifecycle_phase(
         monitoring_namespace,
         workspace_host,
     )
-    if phase in _GROUPED_PHASES:
-        for internal_phase in _GROUPED_PHASES[phase]:
-            completed = run_lifecycle_phase(
-                spark,
-                phase=internal_phase,
-                context=context,
-                tracking_uri=tracking_uri,
-                reference=reference,
-            )
-            reference = completed.reference
-        return completed
     store = PhaseStore(tracking_uri, context)
-    if phase in {"prepare", "initialize"}:
+    if phase == "initialize":
         return _run_prepare_phase(
             spark,
             store,
@@ -914,7 +877,6 @@ def run_lifecycle_phase(
             operator_options,
             now,
             tracking_uri,
-            graph_version=3 if phase == "initialize" else 2,
             monitoring_namespace=monitoring_namespace,
             workspace_host=workspace_host,
         )

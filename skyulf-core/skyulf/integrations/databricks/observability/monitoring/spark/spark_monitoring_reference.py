@@ -11,18 +11,17 @@ import pandas as pd
 from .....mlflow.shared._client import make_registry_client, require_mlflow
 from ....jobs.shared.notebook_diagnostics import notebook_task
 from ....shared._contracts import column_name
-from ....training.fitting.candidate import read_training_snapshot, split_labeled_snapshot
+from ....training.fitting.candidate import (
+    RETRAIN_MESSAGE,
+    read_training_snapshot,
+    split_labeled_snapshot,
+)
 from ....training.shared.training_evidence import validate_training_evidence
 from ..monitoring_config import MonitorConfig
 from ..monitoring_performance import measure_holdout_values, performance_contract
 from ..monitoring_reference import load_monitoring_artifact, reference_document
 from ..monitoring_source_evidence import validate_source_evidence
 from ..reference_layout import combine_reference_population
-
-RETRAIN_MESSAGE = (
-    "Model {model} has no training rows saved in its MLflow run: this model was trained "
-    "before 0.9.7 or outside the generated job graph; retrain it with the current project."
-)
 
 
 def _membership_rows(frame: Any, membership: str, *, train_only: bool) -> Any:
@@ -89,7 +88,7 @@ def _artifact_reference(
     """Rebuild the reference from the model's saved training rows."""
     artifact, spec, _, evidence = loaded
     if spec.source_snapshot_json is None:
-        raise ValueError(RETRAIN_MESSAGE.format(model=config.model_name))
+        raise ValueError(f"Model {config.model_name}: {RETRAIN_MESSAGE}")
     identity = f"{config.model_name}/{config.model_version or config.model_alias}"
     rows = _verified_rows(spark, loaded, identity, tracking_uri, registry_uri)
     population = _prepared_frame(spark, rows["population"], rows["schema"], spec)

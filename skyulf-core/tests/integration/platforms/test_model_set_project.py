@@ -454,6 +454,11 @@ def test_completed_training_packages_original_registered_components(
         "read_training_snapshot",
         lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
     )
+    monkeypatch.setattr(
+        candidate,
+        "read_live_snapshot",
+        lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
+    )
     branches = local_branches.prepare_training_branches(None, configs)
     outcome = local_branches.train_branches(
         None,

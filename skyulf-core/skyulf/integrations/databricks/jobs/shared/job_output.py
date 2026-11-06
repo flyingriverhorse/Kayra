@@ -152,10 +152,8 @@ def render_lifecycle_output(phase: str, payload: dict[str, Any]) -> str:
         "model_decision": "Model decision completed",
         "train": "Candidate pipeline trained",
         "evaluate_register": "Candidate evaluated and registered",
-        "train_register": "Candidate trained, evaluated and registered",
         "compare": "Candidate comparison completed",
         "decide": "Promotion policy evaluated",
-        "compare_decide": "Candidate compared and promotion policy evaluated",
         "operator": "Operator action completed",
         "finalize": "Training status recorded",
     }
@@ -300,7 +298,7 @@ def _append_training_output(sections: list[str], payload: dict[str, Any]) -> Non
 def _append_lifecycle_actions(sections: list[str], phase: str, payload: dict[str, Any]) -> None:
     """Explain unchanged aliases and point operators to the final report."""
     if (
-        phase in {"decide", "compare_decide", "model_decision"}
+        phase in {"decide", "model_decision"}
         and "promotion_policy" in payload
         and not payload.get("alias_change")
     ):
@@ -309,10 +307,10 @@ def _append_lifecycle_actions(sections: list[str], phase: str, payload: dict[str
             if payload.get("promotion_policy") == "manual_approval"
             else "<p>Champion is unchanged. The candidate did not pass promotion gates.</p>"
         )
-    if phase in {"decide", "compare_decide", "operator", "model_decision"}:
-        report = "training_report" if phase == "model_decision" else "finalize_and_report"
+    if phase in {"decide", "operator", "model_decision"}:
         sections.append(
-            f"<p>Open <strong>{report}</strong> for the final decision and operator actions.</p>"
+            "<p>Open <strong>training_report</strong> for the final decision "
+            "and operator actions.</p>"
         )
 
 

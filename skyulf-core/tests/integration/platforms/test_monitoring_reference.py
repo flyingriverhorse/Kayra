@@ -4,7 +4,11 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-from test_databricks_lifecycle_tasks import _call, staged  # noqa: F401 - shared real-store fixture
+from test_databricks_lifecycle_tasks import (  # noqa: F401 - shared real-store fixture
+    _call,
+    _register,
+    staged,
+)
 
 
 def test_optional_training_metadata_permission_failure_is_explicit():
@@ -40,8 +44,8 @@ def test_registered_reference_replays_training_membership(staged, monkeypatch, e
 
     _, _, config, _, frame = staged
     config["engine"] = engine
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    _call(staged, "train_register", prepared.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    _register(staged, prepared.reference)
     monitor = MonitorConfig(
         environment="test",
         project="reference",
@@ -126,8 +130,8 @@ def test_holdout_performance_baseline_uses_saved_model_and_verified_membership(
 
     _, _, config, _, frame = staged
     config["engine"] = engine
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    _call(staged, "train_register", prepared.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    _register(staged, prepared.reference)
     monitor = MonitorConfig(
         environment="test",
         project="reference",
@@ -153,3 +157,45 @@ def test_holdout_performance_baseline_uses_saved_model_and_verified_membership(
     ).mean()
     assert evidence["performance_baseline"]["value"] == pytest.approx(expected)
     assert evidence["performance_baseline"]["labeled_rows"] == len(heldout)
+
+
+def test_local_reference_without_saved_rows_says_to_retrain(monkeypatch):
+    """The pandas reference must refuse a model without saved rows, like the Spark path."""
+    from datetime import UTC, datetime
+
+    from skyulf.integrations.databricks.observability.monitoring import monitoring_reference
+    from skyulf.integrations.databricks.observability.monitoring.monitoring_config import (
+        MonitorConfig,
+    )
+    from skyulf.integrations.databricks.training.fitting import candidate
+
+    spec = candidate.TrainingSpec(
+        table="workspace.test.labels",
+        version=4,
+        start=datetime(2026, 1, 1, tzinfo=UTC),
+        holdout_start=datetime(2026, 2, 1, tzinfo=UTC),
+        cutoff=datetime(2026, 3, 1, tzinfo=UTC),
+        split_strategy="temporal",
+        event_column="event_time",
+        record_key_columns=("id",),
+        input_columns=("x",),
+        target_column="target",
+        max_rows=10,
+        max_bytes=10000,
+    )
+    monkeypatch.setattr(
+        monitoring_reference, "load_monitoring_artifact", lambda *a, **k: (None, spec, {}, {})
+    )
+    monkeypatch.setattr(candidate, "read_live_snapshot", Mock(side_effect=AssertionError))
+    monitor = MonitorConfig(
+        environment="test",
+        project="reference",
+        model_name="workspace.test.model",
+        model_version="1",
+        source_table="workspace.test.labels",
+        prediction_table="workspace.test.predictions",
+    )
+    with pytest.raises(ValueError, match="trained before 0.9.7"):
+        monitoring_reference.load_monitoring_reference(
+            None, monitor, tracking_uri="databricks", registry_uri="databricks-uc"
+        )

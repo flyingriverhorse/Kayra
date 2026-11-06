@@ -36,7 +36,7 @@ def test_notebook_rejects_invalid_project_before_registry_or_writes(
         "output_schema": "test",
         "metadata_schema": "test",
         "resource_suffix": "",
-        "workflow_contract": "2",
+        "workflow_contract": "3",
         "deployed_score_handoff": "after_alias_change",
     }
     execute = Mock()
@@ -98,7 +98,7 @@ def test_notebook_delegates_bound_target_and_selected_action(
     )
     values = {
         "config_path": str(config_path),
-        "workflow_contract": "2",
+        "workflow_contract": "3",
         "deployed_score_handoff": "disabled",
         "experiment_name": "/test/experiment",
         "catalog": "workspace",
@@ -224,7 +224,7 @@ def test_score_notebook_retains_override_guards_when_removing_parent_evidence(
     )
     values = {
         "config_path": str(config_path),
-        "workflow_contract": "2",
+        "workflow_contract": "3",
         "deployed_score_handoff": "after_alias_change",
         "catalog": "workspace",
         "input_schema": "test",

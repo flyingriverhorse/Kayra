@@ -143,7 +143,7 @@ def test_decimal_candidate_and_model_set_keep_numeric_contract(tmp_path, monkeyp
     spark = _spark(_source(_decimal_rows(), types))
     spark.sql.return_value.first.return_value = {"format": "delta", "id": "decimal-source"}
     spec = _spec()
-    frame = candidate.read_training_snapshot(spark, spec)
+    frame = candidate.read_live_snapshot(spark, spec)
     assert [str(frame[column].dtype) for column in spec.input_columns] == ["float64"] * 2
     conversions = list(frame.attrs["source_column_conversions"])
     train, _, _ = candidate.split_labeled_snapshot(frame, spec, engine=engine)

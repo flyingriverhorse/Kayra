@@ -44,6 +44,7 @@ def test_manual_approval_reuses_registered_versions_and_replays_receipt(
     frame["label_at"] = frame["label_at"].dt.strftime("%Y-%m-%dT%H:%M:%S%z")
     read_snapshot = Mock(return_value=frame)
     monkeypatch.setattr(candidate, "read_training_snapshot", read_snapshot)
+    monkeypatch.setattr(candidate, "read_live_snapshot", Mock(return_value=frame))
     monkeypatch.setattr(workflow, "read_training_snapshot", Mock(return_value=frame))
     uri = f"sqlite:///{(tmp_path / 'registry.db').as_posix()}"
     client = mlflow.MlflowClient(tracking_uri=uri, registry_uri=uri)
@@ -240,6 +241,11 @@ def test_manual_approval_reuses_registered_versions_and_replays_receipt(
         no_training.setattr(
             candidate,
             "read_training_snapshot",
+            Mock(side_effect=AssertionError("data read")),
+        )
+        no_training.setattr(
+            candidate,
+            "read_live_snapshot",
             Mock(side_effect=AssertionError("data read")),
         )
         marker = client.get_registered_model(config["model_name"]).tags["champion_current_event"]

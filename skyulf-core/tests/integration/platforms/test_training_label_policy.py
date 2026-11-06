@@ -119,6 +119,7 @@ def test_candidate_tags_survive_fit_failure(monkeypatch, tmp_path):
 
     monkeypatch.setattr(retraining, "track_run", tracked)
     monkeypatch.setattr(retraining, "fit_candidate", fail_fit)
+    monkeypatch.setattr(retraining, "save_training_rows", lambda spark, spec, *args: spec)
     with pytest.raises(RuntimeError, match="fit failed"):
         retraining.train_candidate(
             None,

@@ -116,7 +116,7 @@ def test_reader_pins_projects_and_limits_before_collecting(monkeypatch, native):
     else:
         monkeypatch.delenv("DATABRICKS_RUNTIME_VERSION", raising=False)
     monkeypatch.setattr(retraining, "normalize_training_dates", lambda frame, **kwargs: frame)
-    frame = retraining.read_training_snapshot(source, _spec())
+    frame = retraining.read_live_snapshot(source, _spec())
     source.read.option.assert_called_once_with("versionAsOf", 4)
     source.where.assert_called()
     source.select.assert_called_once_with("id", "event_time", "label_at", "x", "target")
@@ -189,7 +189,11 @@ def test_failed_candidate_never_mutates_champion(monkeypatch, tmp_path):
     from sklearn.linear_model import LinearRegression
 
     spec = _spec()
-    monkeypatch.setattr(retraining, "read_training_snapshot", lambda spark, request: _frame())
+    from skyulf.integrations.mlflow.shared import _client
+
+    artifacts = _ArtifactClient(tmp_path)
+    monkeypatch.setattr(_client, "make_tracking_client", lambda uri: artifacts)
+    monkeypatch.setattr(retraining, "read_live_snapshot", lambda spark, request: _frame())
     monkeypatch.setattr(
         retraining,
         "fit_workflow",
@@ -221,7 +225,10 @@ def test_failed_candidate_never_mutates_champion(monkeypatch, tmp_path):
         """Let publication fail after recording without contacting MLflow."""
         yield SimpleNamespace(
             run_id="run",
-            client=SimpleNamespace(log_dict=lambda *args, **kwargs: None),
+            client=SimpleNamespace(
+                log_dict=lambda *args, **kwargs: None,
+                log_artifact=artifacts.log_artifact,
+            ),
             log_config=lambda *args, **kwargs: None,
             log_params=lambda *args, **kwargs: None,
             set_tags=lambda *args, **kwargs: None,
@@ -300,7 +307,7 @@ def test_candidate_workflow_logs_and_registers_without_alias(monkeypatch, tmp_pa
             "target": pd.Series([2 * value for value in x], dtype="float64"),
         }
     )
-    monkeypatch.setattr(retraining, "read_training_snapshot", lambda spark, request: frame)
+    monkeypatch.setattr(retraining, "read_live_snapshot", lambda spark, request: frame)
     store = f"sqlite:///{(tmp_path / 'registry.db').as_posix()}"
     client = mlflow.MlflowClient(tracking_uri=store, registry_uri=store)
     client.create_experiment("candidate_test", artifact_location=(tmp_path / "mlruns").as_uri())
@@ -409,7 +416,7 @@ def test_saved_filter_evidence_replays_after_project_file_changes(monkeypatch, t
             "target": pd.Series([2 * value for value in range(20)], dtype="float64"),
         }
     )
-    monkeypatch.setattr(retraining, "read_training_snapshot", lambda spark, request: frame)
+    monkeypatch.setattr(retraining, "read_live_snapshot", lambda spark, request: frame)
     store = f"sqlite:///{(tmp_path / 'registry.db').as_posix()}"
     client = mlflow.MlflowClient(tracking_uri=store, registry_uri=store)
     client.create_experiment("filter_evidence", artifact_location=(tmp_path / "mlruns").as_uri())
@@ -572,7 +579,7 @@ def test_failed_training_retains_pin_before_risky_work(monkeypatch, tmp_path, en
         source.write_text("def build_preprocessing():\n    return ['changed']\n", encoding="utf-8")
         raise failure
 
-    monkeypatch.setattr(retraining, "read_training_snapshot", lambda *args: _frame())
+    monkeypatch.setattr(retraining, "read_live_snapshot", lambda *args: _frame())
     monkeypatch.setattr(retraining, operation, fail)
     publish = MagicMock(side_effect=AssertionError("failure must not publish"))
     callback = MagicMock(side_effect=AssertionError("failure must not nominate an alias"))
@@ -613,6 +620,7 @@ def test_failed_training_retains_pin_before_risky_work(monkeypatch, tmp_path, en
         "training_snapshot.json",
         "pipeline_config.json",
         "training_pipeline_config.json",
+        "lifecycle",
     }
     assert not client.search_registered_models()
     publish.assert_not_called()
@@ -678,7 +686,7 @@ def test_snapshot_replay_uses_original_config_without_duplicate_fixed_steps(
             },
         )
     )
-    monkeypatch.setattr(retraining, "read_training_snapshot", lambda *args: _frame())
+    monkeypatch.setattr(retraining, "read_live_snapshot", lambda *args: _frame())
     store = f"sqlite:///{(tmp_path / 'registry.db').as_posix()}"
     client = mlflow.MlflowClient(tracking_uri=store, registry_uri=store)
     client.create_experiment("manual_replay", artifact_location=(tmp_path / "runs").as_uri())
@@ -860,6 +868,12 @@ class _ArtifactClient:
         target.mkdir(parents=True, exist_ok=True)
         (target / Path(path).name).write_bytes(Path(path).read_bytes())
 
+    def log_dict(self, run_id, dictionary, artifact_file):
+        """Save one JSON document at its artifact path."""
+        target = self.root / run_id / artifact_file
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(dictionary), encoding="utf-8")
+
     def download_artifacts(self, run_id, path, directory):
         """Return a downloaded copy of one saved file."""
         self.downloads += 1
@@ -911,27 +925,52 @@ def test_saved_snapshot_rejects_tampering_and_over_budget_receipts(tmp_path, mon
         retraining.read_training_snapshot(object(), located)
 
 
-def test_spec_without_locator_reads_live(monkeypatch):
-    """Legacy and Delta specs without a saved snapshot keep the live versioned read."""
-    live = MagicMock(return_value=_frame())
-    monkeypatch.setattr(retraining, "read_live_snapshot", live)
-    retraining.read_training_snapshot("spark", _spec())
-    live.assert_called_once_with("spark", _spec())
+def test_spec_without_saved_rows_is_refused(monkeypatch):
+    """Replay never re-reads the source: a spec without saved rows must say to retrain."""
+    monkeypatch.setattr(retraining, "read_live_snapshot", MagicMock(side_effect=AssertionError))
+    with pytest.raises(
+        ValueError, match="trained before 0.9.7 or outside the generated job graph; retrain it"
+    ):
+        retraining.read_training_snapshot("spark", _spec())
 
 
-def test_fit_rejects_unversioned_source_without_saved_snapshot():
-    """Outside the generated job graph nothing saves the rows read, so replays would drift."""
-    from skyulf.integrations.databricks.training.tuning.cv import CVSpec
+def test_sdk_training_saves_rows_and_fits_from_them(tmp_path, monkeypatch):
+    """train_candidate must save its rows so approval and promotion can replay them later."""
+    from skyulf.integrations.mlflow.shared import _client
 
-    with pytest.raises(ValueError, match="workflow_contract: 3"):
-        retraining.fit_candidate(
-            MagicMock(),
-            _spec(version=0, source_kind="MATERIALIZED_VIEW"),
-            {},
-            run=MagicMock(),
-            pipeline_config={},
-            artifact_path="unused",
-            engine="pandas",
-            cv=CVSpec(),
-            risk_category=None,
+    client = _ArtifactClient(tmp_path)
+    monkeypatch.setattr(_client, "make_tracking_client", lambda uri: client)
+    monkeypatch.setattr(retraining, "read_live_snapshot", lambda spark, spec: _frame())
+    seen = {}
+
+    def fit(spark, spec, *args, **kwargs):
+        """Capture the fitted spec, then stop before any model work."""
+        seen["spec"] = spec
+        raise RuntimeError("stop")
+
+    @contextmanager
+    def fake_run(*args, **kwargs):
+        """Expose only the artifact store the save step needs."""
+        yield SimpleNamespace(run_id="run-1", client=client, set_tags=lambda tags: None)
+
+    monkeypatch.setattr(retraining, "fit_candidate", fit)
+    monkeypatch.setattr(retraining, "track_run", fake_run)
+    with pytest.raises(RuntimeError, match="stop"):
+        retraining.train_candidate(
+            "spark",
+            _spec(),
+            {"preprocessing": [], "modeling": {"type": "linear_regression"}},
+            model_name="workspace.test.model",
+            tracking_uri="file:unused",
+            registry_uri="file:unused",
+            experiment_name="test",
+            run_name="candidate",
+            artifact_path=tmp_path / "artifact",
+            metric="heldout_rmse",
+            min_improvement=0,
         )
+    locator = json.loads(seen["spec"].source_snapshot_json)
+    assert (locator["run_id"], locator["tracking_uri"]) == ("run-1", "file:unused")
+    monkeypatch.setattr(retraining, "read_live_snapshot", MagicMock(side_effect=AssertionError))
+    replayed = retraining.read_training_snapshot(object(), seen["spec"])
+    pd.testing.assert_frame_equal(replayed, _frame())

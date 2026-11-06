@@ -286,6 +286,11 @@ def test_real_training_artifacts_populate_summary(workflow_config, tracked, monk
         "read_training_snapshot",
         lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
     )
+    monkeypatch.setattr(
+        training,
+        "read_live_snapshot",
+        lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
+    )
     branch = branches.prepare_training_branches(None, configs)[0]
     experiment = client.get_experiment_by_name("branches")
     parent = client.create_run(experiment.experiment_id)
