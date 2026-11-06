@@ -35,7 +35,7 @@ no longer run. Retain the normal test, complexity, Docker smoke, frontend
 build/E2E and static-analysis requirements. Repository rules are not changed
 by editing these workflow files.
 
-Other workflows (Spark/Delta, security scans, docs, releases and demo promotion)
+Other workflows (Spark/Delta, security scans, docs and releases)
 retain their own triggers.
 
 CodeQL analyzes Python and JavaScript/TypeScript with `build-mode: none`;
