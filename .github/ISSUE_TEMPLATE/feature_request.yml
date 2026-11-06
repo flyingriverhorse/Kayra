@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for suggesting a new feature!
-        Please search [existing issues](https://github.com/flyingriverhorse/Skyulf/issues) and [GitHub Discussions](https://github.com/flyingriverhorse/Skyulf/discussions) before submitting.
+        Please search [existing issues](https://github.com/flyingriverhorse/Kayra/issues) and [GitHub Discussions](https://github.com/flyingriverhorse/Kayra/discussions) before submitting.
 
   - type: input
     id: summary

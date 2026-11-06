@@ -181,7 +181,7 @@ A row rejected by eligibility is not deleted. It stays in the result with
 `scoring_status: excluded`, its `exclusion_reason` and an empty prediction.
 Outputs run only on predicted rows and keep the raw prediction unchanged.
 
-The [bike demand example](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/real_data/bike_demand_set)
+The [bike demand example](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/real_data/bike_demand_set)
 uses all three:
 
 1. Eligibility: a row without `hr` is excluded with the reason `missing_hour`.

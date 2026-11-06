@@ -234,7 +234,7 @@ chmod +x .git/hooks/prepare-commit-msg
 git commit --allow-empty -m "ci: trigger docs redeploy after gh-pages branch switch"
 git push
 
-gh api repos/flyingriverhorse/Skyulf/pages --jq '{status: .status, url: .html_url, source: .source, custom_domain: .custom_domain, https_enforced: .https_enforced}'
+gh api repos/flyingriverhorse/Kayra/pages --jq '{status: .status, url: .html_url, source: .source, custom_domain: .custom_domain, https_enforced: .https_enforced}'
 ```
 
 ---

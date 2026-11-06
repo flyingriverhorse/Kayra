@@ -118,7 +118,7 @@ def test_template_public_links_resolve_to_documented_pages_and_anchors():
     checked = []
     for source in sources:
         for url in re.findall(
-            r'https://www\.skyulf\.com/manual/[^\s)>"\]]+', source.read_text(encoding="utf-8")
+            r'https://kayra\.skyulf\.com/manual/[^\s)>"\]]+', source.read_text(encoding="utf-8")
         ):
             parsed = urlsplit(url)
             relative = unquote(parsed.path).removeprefix("/manual/")

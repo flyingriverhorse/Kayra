@@ -32,14 +32,14 @@ Node.js stays optional for all paths—it's only necessary if you plan to build 
 ```powershell
 # Windows PowerShell
 cd C:\path\to\projects
-git clone https://github.com/flyingriverhorse/skyulf.git
+git clone https://github.com/flyingriverhorse/Kayra.git
 cd skyulf
 ```
 
 ```bash
 # macOS / Linux
 cd ~/projects
-git clone https://github.com/flyingriverhorse/skyulf.git
+git clone https://github.com/flyingriverhorse/Kayra.git
 cd skyulf
 ```
 
@@ -147,6 +147,6 @@ Follow progress in the jobs panel; once trained, compare runs on the **Experimen
 
 - Explore the `/docs` OpenAPI schema to wire up your own clients.
 - Peek at `skyulf-core/skyulf/preprocessing/` for custom node examples.
-- Join the [GitHub Discussions](https://github.com/flyingriverhorse/skyulf/discussions) to propose new nodes.
+- Join the [GitHub Discussions](https://github.com/flyingriverhorse/Kayra/discussions) to propose new nodes.
 
 Need help? Open an issue or ping the team on Discussions — we respond fast during the alpha phase.

@@ -219,7 +219,7 @@ replaces them. A table with the snapshot name that Skyulf did not create is neve
 replaced or dropped. `source_snapshot_schema: catalog.schema` chooses where the
 copies go (default: the output schema); `source_snapshot: fail` turns copying off.
 
-The prepared [`lakeflow/bronze_observations`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/lakeflow)
+The prepared [`lakeflow/bronze_observations`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/lakeflow)
 example runs this end to end, with a `setup.sql` that creates the streaming table.
 
 Training can also read a streaming table, materialized view or view directly as

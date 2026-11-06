@@ -8,7 +8,7 @@ same lifecycle. The [glossary](databricks_glossary.md) defines the terms; the
 [troubleshooting guide](databricks_troubleshooting.md) starts from error messages.
 
 Four finished projects built from this template on `samples.nyctaxi.trips` are in the
-[NYC taxi examples](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi):
+[NYC taxi examples](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi):
 a single model with Spark scoring, a single model served online with feature lookups,
 a model competition, and a model set with combined scoring. Each has its setup answers,
 and one SQL file creates their tables. To copy the closest one instead of following

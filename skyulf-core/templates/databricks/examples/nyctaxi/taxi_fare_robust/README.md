@@ -20,7 +20,7 @@ check that the data exists before you deploy:
 | `deployment/targets.yml` | `host` under `test`: replace `https://replace-test.example.invalid` with your workspace URL. |
 | `deployment/variables.yml` | `test_catalog`, `test_input_schema`, `test_output_schema` and `test_metadata_schema` (`REPLACE_TEST_*`). |
 | Commands below | `YOUR_PROFILE`: an authenticated Databricks CLI profile for that workspace. |
-| Unity Catalog grants | The job identity reads the inputs, writes the output schema and registers models in the metadata schema; see [required access](https://www.skyulf.com/manual/user_guide/databricks_deployment.html#data-model-and-experiment-access). |
+| Unity Catalog grants | The job identity reads the inputs, writes the output schema and registers models in the metadata schema; see [required access](https://kayra.skyulf.com/manual/user_guide/databricks_deployment.html#data-model-and-experiment-access). |
 | Unity Catalog | The catalog, schemas and source table must exist. The table needs the record key, input and target columns from setup, and Change Data Feed on before the first score. |
 | `config/training.yml` | A numeric `quality_threshold`, if you will approve the first champion or promote automatically. Set it before training; a trained version keeps its policy. |
 | `deployment/variables.yml` and `deployment/targets.yml` (optional) | Monitoring runs only when `monitoring_enabled` is `"true"`. It writes to `monitoring_catalog`.`monitoring_schema` (variables.yml); the catalog defaults to each target's own catalog and the schema to `skyulf_monitoring`. Use the same schema in every project so all models appear in one dashboard. `deployment/targets.yml` holds each target's dashboard and the development targets' monitoring settings; only one project creates a dashboard, the others connect to it there. |
@@ -73,7 +73,7 @@ Replace `YOUR_PROFILE` in every command.
 5. **Approve.** This project promotes automatically when the quality gates pass; the
    report shows the decision. To roll back, copy the **If rollback is needed** block
    into the train job's **Run now with different parameters**; see
-   [operator actions](https://www.skyulf.com/manual/user_guide/databricks_lifecycle.html#operator-actions-through-run-now).
+   [operator actions](https://kayra.skyulf.com/manual/user_guide/databricks_lifecycle.html#operator-actions-through-run-now).
 
 6. **Score:**
 
@@ -120,7 +120,7 @@ After the first successful run, change one setting and compare two fits of the s
    performance using [monitoring](GUIDE.md#monitoring).
 
 Use the [reference guide](GUIDE.md) for the next setting you need. The
-[worked walkthrough](https://www.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html)
+[worked walkthrough](https://kayra.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html)
 provides a small practice dataset.
 
 ## If something fails
@@ -128,17 +128,17 @@ provides a small practice dataset.
 Start with the first failing task and record its run ID, target and
 model version. A monitoring failure does not undo committed predictions.
 
-- [Exact validation errors and fixes](https://www.skyulf.com/manual/user_guide/databricks_troubleshooting.html)
-- [Create and preview a project](https://www.skyulf.com/manual/user_guide/databricks_project_setup.html)
-- [Complete worked project](https://www.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html)
+- [Exact validation errors and fixes](https://kayra.skyulf.com/manual/user_guide/databricks_troubleshooting.html)
+- [Create and preview a project](https://kayra.skyulf.com/manual/user_guide/databricks_project_setup.html)
+- [Complete worked project](https://kayra.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html)
 
 ## Upgrading this project
 
 This template pins `skyulf-core[mlflow]==0.9.7` in `deployment/requirements.txt`;
 public guides describe the current revision. Before changing the pin, follow
-[Upgrade an existing project](https://www.skyulf.com/manual/user_guide/databricks_project_upgrade.html)
+[Upgrade an existing project](https://kayra.skyulf.com/manual/user_guide/databricks_project_upgrade.html)
 and **Upgrade steps for generated Databricks projects** in the
-[release notes](https://github.com/flyingriverhorse/Skyulf/blob/master/changelog/0.9.x.md).
+[release notes](https://github.com/flyingriverhorse/Kayra/blob/master/changelog/0.9.x.md).
 
 ## Report WAPE performance changes
 

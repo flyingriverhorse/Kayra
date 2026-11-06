@@ -2,9 +2,9 @@ site_name: Skyulf
 site_description: >-
   Skyulf documentation: Kayra, the self-hosted visual MLOps app, and skyulf-core,
   the Python ML library with Spark, MLflow and Databricks integrations.
-site_url: https://www.skyulf.com/manual/
-repo_url: https://github.com/flyingriverhorse/Skyulf
-repo_name: flyingriverhorse/Skyulf
+site_url: https://kayra.skyulf.com/manual/
+repo_url: https://github.com/flyingriverhorse/Kayra
+repo_name: flyingriverhorse/Kayra
 
 # Make the generated site usable when opening HTML files directly
 # (e.g., double-clicking site/index.html on Windows).

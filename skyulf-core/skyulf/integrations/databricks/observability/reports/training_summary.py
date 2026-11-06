@@ -10,7 +10,7 @@ from .training_node_output import training_report_document
 
 _UNAVAILABLE = "Unavailable; inspect the fitting run artifacts"
 _SHAP_HELP = (
-    '<a href="https://www.skyulf.com/manual/user_guide/databricks_explanations.html">'
+    '<a href="https://kayra.skyulf.com/manual/user_guide/databricks_explanations.html">'
     "Enable config/training.yml defaults.explainability and the SHAP report task</a>"
 )
 

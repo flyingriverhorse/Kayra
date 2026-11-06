@@ -38,7 +38,7 @@ no aggregates across rows, ranks, groupby or batch-size-dependent values.
 learn() may aggregate training rows and save the results for apply(). Row-wise
 calculations across columns are allowed. Calculator/Applier pairs registered by
 custom_step remain local-only; declaring a row context does not admit them.
-See https://www.skyulf.com/manual/user_guide/databricks_spark_scoring.html#when-the-probe-fails.
+See https://kayra.skyulf.com/manual/user_guide/databricks_spark_scoring.html#when-the-probe-fails.
 
 Add your own factories here, or in another module under src/features selected as
 <file>.<factory>. The public custom-steps guide shows rare_categories written as

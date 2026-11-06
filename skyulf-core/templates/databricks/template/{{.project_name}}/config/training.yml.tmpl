@@ -63,7 +63,7 @@ defaults:
   save_preprocessing_diagnostics: {{.save_preprocessing_diagnostics}} # Optional preprocessing diagnostics; first 256 holdout rows, 8 MiB. See GUIDE.md#preprocessing-and-custom-code.
   # Spark and online-feature projects check admission automatically, even when false below.
   # Set true to check preprocessing during training and save the results needed for endpoint deployment.
-  # Details: https://www.skyulf.com/manual/user_guide/databricks_spark_scoring.html
+  # Details: https://kayra.skyulf.com/manual/user_guide/databricks_spark_scoring.html
   probe_pipeline_for_serving: {{if ne .prediction_delivery "batch"}}true{{else}}false{{end}}
   training_table: "{catalog}.{input_schema}.{{if .source_table_name}}{{.source_table_name}}{{else}}{{.project_name}}_source{{end}}"
 {{if eq .source_layout "separate_outcomes"}}  training_label_table: "{{if not ((regexp "\\.").MatchString .label_table_name)}}{catalog}.{input_schema}.{{end}}{{.label_table_name}}"

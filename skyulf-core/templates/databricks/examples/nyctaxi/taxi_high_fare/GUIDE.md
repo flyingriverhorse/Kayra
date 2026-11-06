@@ -46,7 +46,7 @@ This reference covers settings, saved model behavior and operational results.
 - **CDF** (Change Data Feed): Delta's log of row changes; incremental scoring uses it
   to score only new rows.
 
-More terms: [glossary](https://www.skyulf.com/manual/user_guide/databricks_glossary.html).
+More terms: [glossary](https://kayra.skyulf.com/manual/user_guide/databricks_glossary.html).
 
 ## File map
 
@@ -78,7 +78,7 @@ Do not edit `src/jobs/*.py`: they are thin entry points that a template upgrade
 replaces, and the job logic ships in the Core wheel. Model code belongs in
 `src/features/`, job settings in `deployment/`, and a private package index or
 bundled wheels for logged models in the `SKYULF_MODEL_PIP_*` job variables; see
-[serving packages](https://www.skyulf.com/manual/user_guide/databricks_serving.html).
+[serving packages](https://kayra.skyulf.com/manual/user_guide/databricks_serving.html).
 
 ## Source data
 
@@ -125,7 +125,7 @@ profile's access, not another run identity or future data. Add the target's
 
 No DDL starter was selected. If needed, generate a separate project with
 `include_source_sql: "true"` and adapt its SQL without overwriting this project.
-See [source contracts and time windows](https://www.skyulf.com/manual/user_guide/databricks_training_data.html).
+See [source contracts and time windows](https://kayra.skyulf.com/manual/user_guide/databricks_training_data.html).
 
 ## Preprocessing and custom code
 
@@ -164,7 +164,7 @@ recipes:
 
 Run `python src/tools/preview.py --action train` to see the resolved steps in order.
 Every built-in step and its parameters are in the
-[preprocessing catalog](https://www.skyulf.com/manual/user_guide/preprocessing_recipes.html).
+[preprocessing catalog](https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes.html).
 
 ### Your own step in Python
 
@@ -232,10 +232,10 @@ training admission checks; Spark/online-feature routes already require them.
 and 8 MiB, logging `preprocessing_probe.json` in the fitting run. Preview does not
 run it; passing does not prove quality or admission. History-dependent local
 prediction needs the explicit history API and coordinated state writes.
-See [recipes](https://www.skyulf.com/manual/user_guide/preprocessing_recipes.html),
-[custom factories and assets](https://www.skyulf.com/manual/user_guide/databricks_custom_steps.html),
-[diagnostics/history](https://www.skyulf.com/manual/user_guide/preprocessing_context.html),
-and [Spark admission](https://www.skyulf.com/manual/user_guide/databricks_spark_scoring.html).
+See [recipes](https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes.html),
+[custom factories and assets](https://kayra.skyulf.com/manual/user_guide/databricks_custom_steps.html),
+[diagnostics/history](https://kayra.skyulf.com/manual/user_guide/preprocessing_context.html),
+and [Spark admission](https://kayra.skyulf.com/manual/user_guide/databricks_spark_scoring.html).
 
 ## Training and model decisions
 
@@ -263,7 +263,7 @@ models:
 The threshold is compared with the `metric` in the same `defaults` block (here
 `heldout_f1`): error metrics such as RMSE must stay at or below it, scores such as
 accuracy must reach it. Choose it from what the business needs, before training. The
-[training field reference](https://www.skyulf.com/manual/user_guide/databricks_training_config.html)
+[training field reference](https://kayra.skyulf.com/manual/user_guide/databricks_training_config.html)
 lists every model, its parameters and the tuning options.
 
 Training fits **polars** in one process. `max_rows`/`max_input_mb` bound input,
@@ -291,9 +291,9 @@ Read **training_report > Output > Where to look** for version, fitting run,
 holdout evidence and decision. Inspect the outcome: a report can finalize failure.
 Copy **Available action** parameters into a train job run for
 approve/reject/rollback; first approval expects champion `none`. Keep receipts.
-Child score/serving completion is separate. See [training fields](https://www.skyulf.com/manual/user_guide/databricks_training_config.html),
-[reports](https://www.skyulf.com/manual/user_guide/databricks_training_reports.html),
-and [model lifecycle](https://www.skyulf.com/manual/user_guide/databricks_lifecycle.html).
+Child score/serving completion is separate. See [training fields](https://kayra.skyulf.com/manual/user_guide/databricks_training_config.html),
+[reports](https://kayra.skyulf.com/manual/user_guide/databricks_training_reports.html),
+and [model lifecycle](https://kayra.skyulf.com/manual/user_guide/databricks_lifecycle.html).
 
 ## Batch predictions
 
@@ -352,7 +352,7 @@ eligibility:
 ```
 
 `value_range` bounds are inclusive. A failing row is not deleted: it stays in the output with `scoring_status: excluded`,
-its `exclusion_reason` and an empty prediction. See [scoring and publication](https://www.skyulf.com/manual/user_guide/databricks_scoring.html).
+its `exclusion_reason` and an empty prediction. See [scoring and publication](https://kayra.skyulf.com/manual/user_guide/databricks_scoring.html).
 
 ## Serving requests
 
@@ -362,7 +362,7 @@ This batch project has no `serving_endpoint` job. To add an endpoint:
    `prediction_delivery: "both"`:
 
    ```powershell
-   git clone https://github.com/flyingriverhorse/Skyulf
+   git clone https://github.com/flyingriverhorse/Kayra
    cd Skyulf
    databricks bundle init skyulf-core/templates/databricks --output-dir ../serving_copy
    ```
@@ -401,9 +401,9 @@ For serving monitoring, enable the target's monitoring, choose `telemetry` or
 verification enrolls the version; actual requests and delivered logs are still
 needed for observations, and real matched outcomes for performance. Use the
 separate monitoring job after requests arrive. Learn rollout only after one
-version works. See [serving and caller examples](https://www.skyulf.com/manual/user_guide/databricks_serving.html),
-[serving monitoring](https://www.skyulf.com/manual/user_guide/databricks_serving_monitoring.html),
-and [traffic rollout](https://www.skyulf.com/manual/user_guide/databricks_serving_rollout.html).
+version works. See [serving and caller examples](https://kayra.skyulf.com/manual/user_guide/databricks_serving.html),
+[serving monitoring](https://kayra.skyulf.com/manual/user_guide/databricks_serving_monitoring.html),
+and [traffic rollout](https://kayra.skyulf.com/manual/user_guide/databricks_serving_rollout.html).
 
 Endpoint labels: `monitoring_label_table` can be the table that already holds the
 record keys and targets (a Streaming Table works); the latest request per key is
@@ -439,8 +439,8 @@ recomputes all; an empty selection reuses existing outputs and only merges.
 freshness bound. Upserts do not propagate deletes or evolve schemas. Repair only
 with unchanged code/config and original pinned inputs; otherwise start anew.
 Groups are excluded from model code. Native UC lookup/online publication is separate.
-See [feature production, joins and repair](https://www.skyulf.com/manual/user_guide/databricks_features.html)
-and [online features](https://www.skyulf.com/manual/user_guide/databricks_online_features.html).
+See [feature production, joins and repair](https://kayra.skyulf.com/manual/user_guide/databricks_features.html)
+and [online features](https://kayra.skyulf.com/manual/user_guide/databricks_online_features.html).
 
 ## Monitoring
 
@@ -483,11 +483,11 @@ Drift is distribution change; performance metrics need real matched labels.
 Performance policies additionally need mature windows and enough eligible labels.
 Missing outcomes are not zero accuracy. Retraining opts in via `on_drift: retrain`
 or policy `mode: retrain`, retaining freshness/cooldown/request guards. Dashboard
-refresh reads results. See [monitoring setup](https://www.skyulf.com/manual/user_guide/databricks_monitoring_setup.html),
-[enrollment](https://www.skyulf.com/manual/user_guide/databricks_monitoring_enrollment.html),
-[labels](https://www.skyulf.com/manual/user_guide/databricks_monitoring_labels.html),
-[performance policies](https://www.skyulf.com/manual/user_guide/databricks_performance.html),
-and [retraining](https://www.skyulf.com/manual/user_guide/databricks_retraining.html).
+refresh reads results. See [monitoring setup](https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_setup.html),
+[enrollment](https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_enrollment.html),
+[labels](https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_labels.html),
+[performance policies](https://kayra.skyulf.com/manual/user_guide/databricks_performance.html),
+and [retraining](https://kayra.skyulf.com/manual/user_guide/databricks_retraining.html).
 
 ## Permissions and identities
 
@@ -514,7 +514,7 @@ filters or column masks.
 Jobs that run as different identities (separate service principals, or a central
 monitoring principal) each need read access to the training experiment, because
 monitoring, approval and retraining read the saved rows; without it those steps fail
-when they read the run. See [required access](https://www.skyulf.com/manual/user_guide/databricks_deployment.html#data-model-and-experiment-access).
+when they read the run. See [required access](https://kayra.skyulf.com/manual/user_guide/databricks_deployment.html#data-model-and-experiment-access).
 
 ## Deployment and schedules
 
@@ -530,7 +530,7 @@ Train/score/monitoring clocks are independent of data windows. `PAUSED` stops
 schedule triggers, not manual/already queued runs. A scheduled `fixed_window`
 keeps selecting the same interval; use rolling selection when it should advance.
 Keep Core, generated graph and entrypoints aligned; preserve stable Bundle/root
-and job identities on upgrade. See [deployment and operational controls](https://www.skyulf.com/manual/user_guide/databricks_deployment.html).
+and job identities on upgrade. See [deployment and operational controls](https://kayra.skyulf.com/manual/user_guide/databricks_deployment.html).
 
 ## Local tools
 
@@ -550,7 +550,7 @@ Run beside `databricks.yml` with matching dependencies. Smoke/preview accept
 `--catalog`, `--input-schema`, `--output-schema`, `--metadata-schema`,
 `--resource-suffix`; they do not resolve the target file. Preview errors exit 2.
 Local probe samples need actual inputs/target and adequate rows; real holdout
-and remote checks remain necessary. See [tool details](https://www.skyulf.com/manual/user_guide/databricks_project_setup.html#local-tools-and-preview).
+and remote checks remain necessary. See [tool details](https://kayra.skyulf.com/manual/user_guide/databricks_project_setup.html#local-tools-and-preview).
 
 ## Failures and upgrades
 
@@ -567,9 +567,9 @@ Start from the first failed task and record its run ID.
 **Upgrading Core** (`deployment/requirements.txt`): a model loads only with the
 library versions that trained it. After raising the pin, train a new version; to
 use an older one again you need its old environment. Keep the old working project
-and its versions until the new one is checked. Follow [ordered upgrades](https://www.skyulf.com/manual/user_guide/databricks_project_upgrade.html),
-[alias recovery](https://www.skyulf.com/manual/user_guide/databricks_lifecycle_recovery.html),
-and [troubleshooting](https://www.skyulf.com/manual/user_guide/databricks_troubleshooting.html).
+and its versions until the new one is checked. Follow [ordered upgrades](https://kayra.skyulf.com/manual/user_guide/databricks_project_upgrade.html),
+[alias recovery](https://kayra.skyulf.com/manual/user_guide/databricks_lifecycle_recovery.html),
+and [troubleshooting](https://kayra.skyulf.com/manual/user_guide/databricks_troubleshooting.html).
 These local instructions match the generated revision; public guides may be newer.
 
 **Core from a Unity Catalog Volume** (no package index for jobs): upload the wheel

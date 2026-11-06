@@ -14,14 +14,14 @@ Six NYC taxi projects on `samples.nyctaxi.trips` cover the main shapes:
 | Your project | Copy | Notes |
 | --- | --- | --- |
 | One model, scored on Spark workers | `taxi_fare` | Promotes automatically and scores after promotion |
-| REST/SQL serving and monitoring without batch output | [taxi_fare_endpoint](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint) | Automatic endpoint after promotion, `ai_query` and captured-request monitoring; no score job or prediction table |
+| REST/SQL serving and monitoring without batch output | [taxi_fare_endpoint](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint) | Automatic endpoint after promotion, `ai_query` and captured-request monitoring; no score job or prediction table |
 | Preprocessing exclusions with Spark and raw-input serving | `taxi_fare_robust` | Reuses pre-split preparation; IQR, PowerTransformer and imputer handling; REST/`ai_query` examples and labels for monitoring |
 | One model behind an online endpoint | `taxi_fare_online` | Needs a billable Lakebase online store; batch scoring runs on its own, not after approval |
 | One target, several candidate algorithms | `taxi_high_fare` | Competition with custom steps and manual approval |
 | Several targets approved together | `taxi_trips` | Model set with a combined scoring rule |
 
 1. Copy the project folder out of
-   [`examples/nyctaxi`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi).
+   [`examples/nyctaxi`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi).
 2. Run `load_nyctaxi.sql` in the Databricks SQL editor with `catalog` set to
    `workspace` (or yours) and `schema` set to the project name. It creates the
    source tables and never overwrites one.
@@ -32,7 +32,7 @@ Six NYC taxi projects on `samples.nyctaxi.trips` cover the main shapes:
    `databricks bundle run train -t test --profile <profile>`.
 
 Three more projects in
-[`examples/real_data`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/real_data)
+[`examples/real_data`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/real_data)
 use public UCI data, loaded by its `load_data.py` notebook with pinned archive
 hashes. `air_quality_no2` is the most complete one: built-in and custom
 pre-split filters, custom and built-in preprocessing (missing-value markers, IQR
@@ -41,7 +41,7 @@ evaluation charts and monitoring on a later season with real drift and a
 report-only WAPE policy. `diagnostic_single` and `bike_demand_set` add serving
 endpoints and a model set.
 
-[`examples/lakeflow`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/lakeflow)
+[`examples/lakeflow`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/lakeflow)
 trains from a Lakeflow streaming table: the features job copies and pins it, and
 a `base_transform` derives the target and a text date key, so no separate
 preparation job is needed. Without a `base_transform`, `training_table` can name

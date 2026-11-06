@@ -8,7 +8,7 @@ an in-place upgrade.
 
 Public documentation describes the current revision. Read **Upgrade steps for generated Databricks
 projects** for every intervening release in the
-[0.9.x changelog](https://github.com/flyingriverhorse/Skyulf/blob/master/changelog/0.9.x.md). Keep
+[0.9.x changelog](https://github.com/flyingriverhorse/Kayra/blob/master/changelog/0.9.x.md). Keep
 the project pin and release-specific contracts together.
 
 ## What to edit

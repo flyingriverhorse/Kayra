@@ -31,7 +31,7 @@ pip install skyulf-core
 ### Kayra (backend + frontend)
 
 ```bash
-git clone https://github.com/flyingriverhorse/Skyulf.git
+git clone https://github.com/flyingriverhorse/Kayra.git
 cd Skyulf
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
@@ -110,6 +110,6 @@ order, preprocessing recipes, training, scoring, serving and monitoring.
 
 ## Links
 
-- **GitHub**: [github.com/flyingriverhorse/Skyulf](https://github.com/flyingriverhorse/Skyulf)
+- **GitHub**: [github.com/flyingriverhorse/Kayra](https://github.com/flyingriverhorse/Kayra)
 - **PyPI**: [pypi.org/project/skyulf-core](https://pypi.org/project/skyulf-core/)
-- **Changelog**: [CHANGELOG.md](https://github.com/flyingriverhorse/Skyulf/blob/master/CHANGELOG.md)
+- **Changelog**: [CHANGELOG.md](https://github.com/flyingriverhorse/Kayra/blob/master/CHANGELOG.md)

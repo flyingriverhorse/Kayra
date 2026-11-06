@@ -100,7 +100,7 @@ training-run metrics are not rewritten. Use a compatible prepared reference or s
 explicit supported production-window baseline before expecting a verdict.
 
 To disable the policy, set that model's entry to `{"mode":"off"}`. Use the
-[performance policy guide](https://www.skyulf.com/manual/user_guide/databricks_performance.html)
+[performance policy guide](https://kayra.skyulf.com/manual/user_guide/databricks_performance.html)
 for the full configuration and other baseline choices.
 
 ### Create the endpoint explicitly

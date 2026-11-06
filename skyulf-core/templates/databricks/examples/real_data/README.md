@@ -182,7 +182,7 @@ Missing or immature labels must remain unavailable evidence.
 Endpoint telemetry is a separate source. Enroll the endpoint's actual
 `serving_vN_payload` table through the generated monitoring job's serving
 enrollment parameter as described in
-[Serving monitoring](https://www.skyulf.com/manual/user_guide/databricks_serving_monitoring.html).
+[Serving monitoring](https://kayra.skyulf.com/manual/user_guide/databricks_serving_monitoring.html).
 Databricks ingests telemetry asynchronously; successful REST calls alone do not
 prove a saved serving observation exists. Check the persisted monitoring report.
 
@@ -326,7 +326,7 @@ Monitoring reads the raw scoring inputs, before the model's preprocessing. The
 missing fraction of 0, and its drift statistics include the marker. Monitoring can
 count it as missing with `missing_markers` in `monitoring_drift_thresholds`, for
 example `{"missing_markers": {"co_gt": [-200]}}`; see
-[drift settings](https://www.skyulf.com/manual/user_guide/databricks_drift.html#configure-thresholds-and-measurement-limits).
+[drift settings](https://kayra.skyulf.com/manual/user_guide/databricks_drift.html#configure-thresholds-and-measurement-limits).
 This example leaves it off. A missing value on an excluded row is a quality issue,
 so markers on the six sensor columns would report the 218 `sensors_online`
 exclusions as quality issues, and a `co_gt` marker would flag excluded rows whose

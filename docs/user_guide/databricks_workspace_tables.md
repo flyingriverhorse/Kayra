@@ -143,7 +143,7 @@ four project tables: `observations_train`, `observations_score`, `labels` and
 are in `workspace.skyulf_monitoring`. The other two `real_data` examples keep
 their independent stores in their project schemas.
 
-The [single-table air-quality walkthrough](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/templates/databricks/examples/real_data/air_quality_single_table.md)
+The [single-table air-quality walkthrough](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/templates/databricks/examples/real_data/air_quality_single_table.md)
 uses three project tables: `observations` for both training and scoring,
 `labels` for outcomes, and `predictions`. Daily input inserts do not update old
 rows. It uses the same shared monitoring schema.

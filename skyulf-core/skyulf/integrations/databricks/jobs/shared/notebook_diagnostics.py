@@ -8,7 +8,7 @@ from typing import Any
 
 _CONTEXT_FIELDS = ("job_id", "job_run_id", "task_key", "model_key", "bundle_target")
 _DETAIL_FIELDS = {"reference", "reference_json", "config", "pipeline", "request"}
-_DOCS = "https://www.skyulf.com/manual/user_guide/databricks_troubleshooting.html#"
+_DOCS = "https://kayra.skyulf.com/manual/user_guide/databricks_troubleshooting.html#"
 # (exception type name, message substring, fix, docs anchor); the first match wins, so
 # specific messages precede bare error codes that can appear inside their log tails.
 _KNOWN_FAILURES: tuple[tuple[str | None, str | None, str, str], ...] = (

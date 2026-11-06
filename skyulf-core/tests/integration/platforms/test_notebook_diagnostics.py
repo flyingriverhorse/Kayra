@@ -229,7 +229,7 @@ def test_known_failure_prints_fix_and_docs_link(error, anchor, capsys):
         raise error
     visible = capsys.readouterr().out
     docs = (
-        f"Docs: https://www.skyulf.com/manual/user_guide/databricks_troubleshooting.html#{anchor}"
+        f"Docs: https://kayra.skyulf.com/manual/user_guide/databricks_troubleshooting.html#{anchor}"
     )
     assert caught.value is error
     assert "Fix: " in visible and docs in visible

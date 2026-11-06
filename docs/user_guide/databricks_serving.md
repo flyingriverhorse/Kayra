@@ -16,10 +16,10 @@ Quick setup defaults to `batch`. REST serving works independently of the SQL fun
 The [notebook API](#the-command) remains available for explicit, create-only setup.
 
 For a complete endpoint-only project, copy
-[taxi_fare_endpoint](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint).
+[taxi_fare_endpoint](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint).
 It uses the built-in NYC taxi data, automatically updates serving after champion
 promotion, and demonstrates SQL requests plus telemetry monitoring. Its
-[serving walkthrough](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint/GUIDE.md#call-the-taxi-endpoint-and-monitor-its-requests)
+[serving walkthrough](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint/GUIDE.md#call-the-taxi-endpoint-and-monitor-its-requests)
 ends at the **Online serving** dashboard; no batch prediction table is created.
 
 ### Choose how predictions are produced

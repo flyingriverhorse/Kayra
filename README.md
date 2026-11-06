@@ -10,10 +10,10 @@
   <a href="https://api.skyulf.com">
     <img src="https://img.shields.io/badge/Try_Live_Demo-api.skyulf.com-3b82f6?style=for-the-badge&logo=rocket&logoColor=white" alt="Live Demo">
   </a>
-  <a href="https://www.skyulf.com">
+  <a href="https://kayra.skyulf.com">
     <img src="https://img.shields.io/badge/Website-skyulf.com-f2c025?style=for-the-badge&logo=globe&logoColor=white" alt="Website">
   </a>
-  <a href="https://www.skyulf.com/manual/">
+  <a href="https://kayra.skyulf.com/manual/">
     <img src="https://img.shields.io/badge/Docs-manual-8b5cf6?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation">
   </a>
   <br/>
@@ -21,9 +21,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/flyingriverhorse/Skyulf/actions/workflows/pr_check.yml"><img src="https://github.com/flyingriverhorse/Skyulf/actions/workflows/pr_check.yml/badge.svg" alt="CI"></a>
-  <a href="https://codecov.io/github/flyingriverhorse/Skyulf"><img src="https://codecov.io/github/flyingriverhorse/Skyulf/graph/badge.svg?token=47ED2R6ZHC" alt="codecov"></a>
-  <a href="https://app.codacy.com/gh/flyingriverhorse/Skyulf/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/51e3ad3ce18e41b2922cf62a6dd6ce99" alt="Codacy Badge"></a>
+  <a href="https://github.com/flyingriverhorse/Kayra/actions/workflows/pr_check.yml"><img src="https://github.com/flyingriverhorse/Kayra/actions/workflows/pr_check.yml/badge.svg?branch=master" alt="CI"></a>
+  <a href="https://codecov.io/github/flyingriverhorse/Kayra"><img src="https://codecov.io/github/flyingriverhorse/Kayra/graph/badge.svg?token=47ED2R6ZHC" alt="codecov"></a>
+  <a href="https://app.codacy.com/gh/flyingriverhorse/Kayra/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/51e3ad3ce18e41b2922cf62a6dd6ce99" alt="Codacy Badge"></a>
   <a href="#quick-start"><img src="https://img.shields.io/badge/python-3.12-blue" alt="Python 3.12"></a>
   <a href="https://pepy.tech/projects/skyulf-core"><img src="https://img.shields.io/pepy/dt/skyulf-core?label=skyulf-core%20downloads&color=green" alt="PyPI downloads"></a>
   <a href="#license"><img src="https://img.shields.io/badge/license-AGPLv3%20%2B%20Apache--2.0-blue" alt="License"></a>
@@ -294,7 +294,7 @@ Time-series, geospatial and causal examples are in the [EDA guide](docs/user_gui
 
 ## Documentation
 
-The full manual is at **[skyulf.com/manual](https://www.skyulf.com/manual/)**. Good starting points:
+The full manual is at **[kayra.skyulf.com/manual](https://kayra.skyulf.com/manual/)**. Good starting points:
 
 | Topic | Guide |
 | --- | --- |
