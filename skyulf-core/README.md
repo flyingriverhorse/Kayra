@@ -299,8 +299,8 @@ warnings = SkyulfPipeline(config).validate_leakage_safety()
 Users can pass `polars.DataFrame` inputs directly. `PolarsEngine` and
 `SklearnBridge` convert Polars straight to NumPy at the sklearn boundary—there
 is no user-facing pandas round trip. Arrow integrations use the explicit
-`to_arrow()` path (and therefore `pyarrow`). Every notebook in
-[`examples/`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/examples) uses Polars + NumPy only — no pandas import appears
+`to_arrow()` path (and therefore `pyarrow`). Notebooks 00-08 in
+[`examples/`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/examples) use Polars + NumPy only — no pandas import appears
 anywhere in the example code.
 
 ## Examples
@@ -322,6 +322,7 @@ per-notebook breakdown of what's demonstrated.
 | 06 | [`06_credit_card_fraud_extreme_imbalance.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/06_credit_card_fraud_extreme_imbalance.ipynb) | Credit Card Fraud | Extreme imbalance | PR-AUC focus, precision/recall tradeoffs |
 | 07 | [`07_spaceship_titanic_classification.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/07_spaceship_titanic_classification.ipynb) | Spaceship Titanic | Classification | Structured-string feature parsing, feature generation (interactions + polynomial), Grid vs. Random Search tuning, voting + stacking ensembles |
 | 08 | [`08_online_retail_customer_segmentation.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/08_online_retail_customer_segmentation.ipynb) | UCI Online Retail | Clustering (RFM segmentation) | Raw-transaction-to-RFM feature engineering, 4-algorithm comparison, business-named segments, bonus time-series features (`DateFeatures`/`LagFeatures`/`RollingAggregate`) |
+| 10 | [`10_leakage_score_gap.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/10_leakage_score_gap.ipynb) | Synthetic | Classification | Measured leakage cost: feature selection before vs. after the split, reported vs. fresh-data accuracy |
 
 ## Automated EDA
 
