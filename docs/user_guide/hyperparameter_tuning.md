@@ -219,6 +219,17 @@ Grid, random, and halving strategies work out of the box (scikit-learn only).
 
 ## What happens under the hood
 
+![Tuning inside fit(): search, fold refit, final refit](../assets/diagrams/core/tuning_flow.svg)
+
+[Editable draw.io source](../assets/diagrams/core/tuning_flow.drawio)
+
+Each candidate is scored on CV folds of the training rows or, for ordinary CV types, on the
+validation split when one exists; the post-split preprocessing is refit on each fold's training
+rows (nested CV and explicit group or gapped temporal policies keep training-only CV, as
+described above). The winner is refit once on the full training split, and that chain is what
+`predict()` and `save()` use. Test rows take no part in the search: the final chain transforms
+them and they are scored once at the end.
+
 1. `SkyulfPipeline` detects `"type": "hyperparameter_tuner"` and creates a `TuningCalculator` wrapping the base model.
 2. During `fit()`, the `TuningCalculator.tune()` method runs the chosen search strategy.
 3. The best parameters are used to refit the model on the full training set.

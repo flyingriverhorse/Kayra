@@ -33,6 +33,18 @@ paused, to revisit delayed outcomes without a new score. Monitoring runs only in
 shared production-mode targets; personal development targets skip it unless they
 opt in to their own separate store.
 
+## What monitoring reads and writes
+
+![Monitoring inputs, checks and retraining](../assets/diagrams/databricks/monitoring_loop.svg)
+
+[Editable draw.io source](../assets/diagrams/databricks/monitoring_loop.drawio)
+
+Monitoring compares production inputs with the training rows saved in the model's MLflow run,
+and measures performance once delayed labels arrive. Every result goes to the shared monitoring
+store that the dashboard reads; the Bundle does not create a SQL alert. Retraining is requested
+only for drift with `on_drift=retrain` or a performance policy in `retrain` mode, and only when
+the cooldown and new-data guards pass.
+
 ## Read in this order
 
 1. [Set up the monitoring store](databricks_monitoring_setup.md): destination,

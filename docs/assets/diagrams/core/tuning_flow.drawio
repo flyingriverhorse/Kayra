@@ -1,0 +1,122 @@
+<mxfile host="drawio" version="24.7.17">
+  <diagram id="core-tuning-flow" name="Tuning flow">
+    <mxGraphModel dx="1200" dy="1060" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="0" page="0" pageScale="1" pageWidth="1000" pageHeight="1060" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Hyperparameter tuning inside SkyulfPipeline.fit()" style="text;html=0;fontSize=20;fontStyle=1;fontColor=#1A1A19;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="0" width="900" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="b_cfg" value="modeling config&#xa;type: hyperparameter_tuner&#xa;base_model, strategy,&#xa;search_space, metric, cv_*" style="rounded=1;html=0;arcSize=10;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="a_prefix" value="1. Steps up to the split run once&#xa;raw train / test / optional validation rows;&#xa;later steps become a recipe refit per fold" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="55" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="s_test" value="Test rows&#xa;kept aside; never used&#xa;to pick parameters" style="rounded=1;html=0;arcSize=10;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="55" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_strategy" value="2. The search strategy proposes candidates&#xa;grid, random: Skyulf's own fold loop&#xa;halving_grid, halving_random: sklearn halving&#xa;optuna: OptunaSearchCV (tuning extra)" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="190" width="420" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="d_val" value="Validation&#xa;split present?" style="rhombus;html=0;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="400" y="330" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="a_holdout" value="Holdout scoring&#xa;fit on the train rows,&#xa;score on the validation rows" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="335" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="a_cv" value="CV folds by cv_type&#xa;k_fold, stratified_k_fold,&#xa;shuffle_split,&#xa;time_series_split, group folds;&#xa;cv_enabled=False: 20% holdout" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="330" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c_fold" value="3. Inside every fold&#xa;the post-split steps are refit on the fold's train rows&#xa;and applied to its held-out rows; the model with&#xa;the candidate params is fit and scored" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="480" width="420" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="c_best" value="4. Best params&#xa;the candidate with the best score (TuningResult)" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="614" width="420" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n_nested" value="cv_type = nested_cv&#xa;outer folds only evaluate:&#xa;each runs its own inner search;&#xa;a separate search over all&#xa;training rows picks the model" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="600" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c_refit" value="5. Final refit on the full training split&#xa;preprocessing fit once on all training rows,&#xa;then the model with the best params;&#xa;this chain is what predict() uses" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="724" width="420" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="a_eval" value="6. Evaluation&#xa;test rows (and validation rows) are transformed&#xa;by the final chain and scored once" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="858" width="420" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="o_metrics" value="Metrics per split + tuning result&#xa;(best params, best score, every trial)" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="978" width="420" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="k_title" value="Colour key" style="text;html=0;fontSize=12;fontStyle=1;fontColor=#1A1A19;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="760" width="220" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="k0" value="Input" style="rounded=1;html=0;arcSize=10;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="784" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k1" value="Step / call" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="135" y="784" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k2" value="Learned state" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="816" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k3" value="File / held data" style="rounded=1;html=0;arcSize=10;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="135" y="816" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k4" value="Output" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="848" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cfg" value="fit()" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_cfg" target="a_prefix">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_test" value="test" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_prefix" target="s_test">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_strat" value="train rows" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_prefix" target="a_strategy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cand" value="each candidate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_strategy" target="d_val">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_yes" value="yes (ordinary&#xa;CV types)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="d_val" target="a_holdout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_no" value="no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="d_val" target="a_cv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_h" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_holdout" target="c_fold">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_c" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_cv" target="c_fold">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="870" y="522" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_best" value="scores" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_fold" target="c_best">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_refit" value="best params" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_best" target="c_refit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_eval" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_refit" target="a_eval">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_heldtest" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;dashed=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_test" target="a_eval">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="990" y="95" />
+              <mxPoint x="990" y="893" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_out" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_eval" target="o_metrics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

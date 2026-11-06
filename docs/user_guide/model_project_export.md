@@ -13,6 +13,15 @@ New to project export? Start with the step-by-step
 [project export quickstart](model_project_export_quickstart.md). This page is the
 complete reference.
 
+![Exported model project: ZIP contents and how it runs](../assets/diagrams/app/project_export.svg)
+
+[Editable draw.io source](../assets/diagrams/app/project_export.drawio)
+
+The export mode decides whether the ZIP contains `app.py`, `batch.py` or both. Each entry point
+uses the same `Predictor` in `scoring.py`, which checks `model.pkl` against the checksum in
+`manifest.json` before loading it. After installing `requirements.txt`, the project runs with no
+connection to the Kayra server.
+
 ## Download from Kayra
 
 1. Open **Model Registry** and select a model.

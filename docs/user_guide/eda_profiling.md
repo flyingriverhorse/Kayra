@@ -74,6 +74,15 @@ for alert in profile.alerts:
 
 ## Features
 
+![EDAAnalyzer: from a Polars DataFrame to a DatasetProfile](../assets/diagrams/core/eda_flow.svg)
+
+[Editable draw.io source](../assets/diagrams/core/eda_flow.drawio)
+
+`analyze()` returns one `DatasetProfile`; alerts and recommendations are fields of it. Target
+analysis and decision-tree rules run only when `target_col` is set. Geospatial and time-series
+results need latitude/longitude or date columns. The causal graph and text sentiment need the
+`eda` extra (causal-learn and vaderSentiment).
+
 ### 1. Comprehensive Profiling
 The analyzer automatically detects column types (Numeric, Categorical, Date, Text, Boolean) and computes relevant statistics:
 *   **Numeric:** Mean, Median, Std Dev, Quantiles, Skewness, Kurtosis, Histogram.

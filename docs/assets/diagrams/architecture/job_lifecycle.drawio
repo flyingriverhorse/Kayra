@@ -1,0 +1,160 @@
+<mxfile host="drawio" version="24.7.17">
+  <diagram id="job-lifecycle" name="Training job lifecycle">
+    <mxGraphModel dx="1200" dy="1400" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="0" page="0" pageScale="1" pageWidth="1000" pageHeight="1400" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Kayra: from an uploaded file to a deployable model" style="text;html=0;fontSize=20;fontStyle=1;fontColor=#1A1A19;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="0" width="700" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="b_upload" value="1. Upload a data file,&#xa;or add an S3 source" style="rounded=1;html=0;arcSize=10;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_ingest" value="2. Ingestion API  (POST /api/ingestion/...)&#xa;/upload saves the file as &lt;uuid&gt;.&lt;ext&gt; in UPLOAD_DIR;&#xa;/database registers an S3 path instead.&#xa;Adds a data_sources row, ingestion pending" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="50" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="s_files" value="Dataset files&#xa;uploads: UPLOAD_DIR folder&#xa;S3 sources: read in place" style="rounded=1;html=0;arcSize=10;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="50" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_ingtask" value="3. ingest_data_task  (Celery worker or in-process)&#xa;Polars connector reads the file or S3 object;&#xa;DataProfiler stores schema, row count and profile;&#xa;ingestion completed, or failed with the error" style="rounded=1;html=0;arcSize=10;fillColor=#FFE9C7;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="180" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="s_db" value="SQL database&#xa;SQLite (default) or PostgreSQL" style="shape=cylinder3;html=0;boundedLbl=1;size=8;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="185" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="b_canvas" value="4. Build the pipeline on&#xa;the canvas, then Run&#xa;(nodes, params, inputs)" style="rounded=1;html=0;arcSize=10;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="330" width="220" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="a_run" value="5. Run endpoint  POST /api/pipeline/run&#xa;resolves each dataset id to a file path or S3 options;&#xa;leakage check (on_leakage is raise by default)" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="330" width="420" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="f_reject" value="Rejected (HTTP 400 or 404)&#xa;leakage found, bad graph&#xa;or unknown dataset;&#xa;no job is created" style="rounded=1;html=0;arcSize=10;fillColor=#FDECEC;strokeColor=#B85450;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="330" width="220" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="a_jobs" value="6. Jobs created  (JobManager)&#xa;graph split into branches, one training_jobs row each:&#xa;status queued, next version number per dataset + model;&#xa;a repeated click gets the already active job back" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="456" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_runner" value="7. Job runner&#xa;in-process threads via BackgroundTasks (default)&#xa;or a Celery worker through Redis (USE_CELERY=true)" style="rounded=1;html=0;arcSize=10;fillColor=#FFE9C7;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="586" width="420" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="a_exec" value="8. execute_pipeline  (run_pipeline_task)&#xa;job status running; artifact store: local folder or S3;&#xa;builds the data catalog: Polars frames by default&#xa;(SKYULF_ENGINE=pandas switches the engine)" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="700" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b_ws" value="Realtime job events&#xa;WebSocket /ws/jobs to the canvas&#xa;(Redis pub/sub with Celery,&#xa;in-process bus without)" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="700" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_engine" value="9. PipelineEngine.run&#xa;cycle check, then the leakage check again;&#xa;runs nodes in topological order;&#xa;stops at the first failed node" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="830" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="c_core" value="skyulf-core&#xa;FeatureEngineer (preprocessing)&#xa;StatefulEstimator, tuning&#xa;SklearnBridge" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="830" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="o_art" value="Artifacts&#xa;bundle under the job id:&#xa;feature_engineer + model;&#xa;reference data for drift" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="830" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="f_failed" value="Job failed&#xa;status failed and an&#xa;error_message on the row&#xa;(node error or exception)" style="rounded=1;html=0;arcSize=10;fillColor=#FDECEC;strokeColor=#B85450;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="970" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="o_done" value="10. Job completed&#xa;training_jobs row: status completed, progress 100,&#xa;metrics and artifact_uri" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="970" width="420" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="a_registry" value="11. Model registry  GET /api/registry/models&#xa;lists every completed job as a version" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="1084" width="420" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="a_deploy" value="12. Deploy  POST /api/deployment/deploy/{job_id}&#xa;completed jobs only; the bundle must load;&#xa;the new deployments row becomes active and&#xa;the previous one is switched off (one active)" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="1190" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="o_predict" value="13. Prediction API  POST /api/deployment/predict&#xa;the active bundle: feature_engineer transforms&#xa;the rows, then the model predicts" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="1320" width="420" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="k_title" value="Colour key" style="text;html=0;fontSize=12;fontStyle=1;fontColor=#1A1A19;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="1100" width="220" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="k1" value="Browser (canvas)" style="rounded=1;html=0;arcSize=10;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="1124" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k2" value="Backend (FastAPI)" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="135" y="1124" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k3" value="Background task" style="rounded=1;html=0;arcSize=10;fillColor=#FFE9C7;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="1156" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k4" value="skyulf-core" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="135" y="1156" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k5" value="Storage" style="rounded=1;html=0;arcSize=10;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="1188" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k6" value="Results" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="135" y="1188" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k7" value="Failure" style="rounded=1;html=0;arcSize=10;fillColor=#FDECEC;strokeColor=#B85450;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="1220" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e_upload" value="POST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_upload" target="a_ingest">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_files" value="upload" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_ingest" target="s_files">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_starts" value="starts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_ingest" target="a_ingtask">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_profile" value="profile" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_ingtask" target="s_db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_picker" value="completed sources&#xa;fill the dataset picker" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;dashed=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_ingtask" target="b_canvas">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_run" value="POST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_canvas" target="a_run">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reject" value="fails" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B85450;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_run" target="f_reject">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_jobs" value="passes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_run" target="a_jobs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_created" value="created" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_jobs" target="b_ws">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dispatch" value="dispatch" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_jobs" target="a_runner">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exec" value="runs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_runner" target="a_exec">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ws" value="updates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_exec" target="b_ws">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_engine" value="run" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_exec" target="a_engine">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_core" value="calls" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_engine" target="c_core">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_art" value="saves" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_engine" target="o_art">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_done" value="success" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_engine" target="o_done">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_failed" value="fails" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B85450;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_engine" target="f_failed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_registry" value="listed" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;dashed=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="o_done" target="a_registry">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_deploy" value="pick a version" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_registry" target="a_deploy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_bundle" value="bundle loaded&#xa;on deploy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;dashed=1;strokeColor=#9673A6;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="o_art" target="a_deploy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_predict" value="serves" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_deploy" target="o_predict">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
