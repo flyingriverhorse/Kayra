@@ -7,10 +7,10 @@ from coverage import Coverage, CoverageData
 
 def combine_core_coverage() -> float:
     """Reject unusable shards before merging data and preserve source-relative XML paths."""
-    expected = [Path(f".coverage.shard-{index}") for index in (0, 1, 2, 3, "spark", "delta")]
+    expected = [Path(f".coverage.shard-{index}") for index in (*range(8), "spark", "delta")]
     if set(Path(".").glob(".coverage.shard-*")) != set(expected):
         raise ValueError(
-            "Exactly six Core coverage shards are required: 0 through 3, spark, and delta."
+            "Exactly ten Core coverage shards are required: 0 through 7, spark, and delta."
         )
 
     # Coverage.combine warns and skips corrupt inputs. Read and merge explicitly

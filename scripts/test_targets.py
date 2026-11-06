@@ -54,7 +54,7 @@ FULL_COMMANDS = (
     "ruff check . && ruff format --check backend skyulf-core tests run_skyulf.py celery_worker.py",
     "ty check backend skyulf-core/skyulf skyulf-core/tests run_skyulf.py celery_worker.py",
     "pytest tests  # backend, once per SKYULF_ENGINE=polars|pandas",
-    "python .github/scripts/run_core_shard.py --shard-index N --shard-count 4 skyulf-core/tests",
+    "python .github/scripts/run_core_shard.py --shard-index N --shard-count 8 skyulf-core/tests",
     "pytest skyulf-core/tests/spark -o addopts=  # with requirements-spark.txt",
     "python skyulf-core/templates/databricks/build_example_project.py --check",
     f"SKYULF_BUNDLE_OFFLINE_CLI=1 pytest {SNAPSHOTS}",
