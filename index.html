@@ -698,7 +698,7 @@ pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitte
   lb.addEventListener('click', unzoom);
   window.addEventListener('keydown', function (e) { if (e.key === 'Escape') unzoom(); });
   document.querySelectorAll('[data-zoom]').forEach(function (b) {
-    b.addEventListener('click', function () { zoom(b.getAttribute('data-zoom'), b.querySelector('img').alt); });
+    b.addEventListener('click', function () { var im = b.querySelector('img'); zoom(im.src, im.alt); });
   });
 
   // pip copy
