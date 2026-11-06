@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/guides/backend_configuration.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/guides/backend_configuration.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -734,6 +734,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Application (Core)
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public-demo-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Public Demo Mode
       </span>
     </span>
   </a>
@@ -6122,6 +6133,11 @@ They are case-sensitive. Start by copying the example:</p>
 <td><em>(unset)</em></td>
 <td>Sentry error tracking DSN — leave unset to disable</td>
 </tr>
+<tr>
+<td><code>DEMO_MODE</code></td>
+<td><code>false</code></td>
+<td>Run as the public demo: Iris only, no uploads (see below)</td>
+</tr>
 </tbody>
 </table>
 <blockquote>
@@ -6130,6 +6146,29 @@ The value may come from the process environment or from <code>.env</code>, and c
 normalized (<code>PRODUCTION</code> and <code>"production "</code> both work). Anything else raises at startup rather than
 falling back to development — a typo used to boot the development security posture silently.</p>
 </blockquote>
+<hr />
+<h2 id="public-demo-mode">Public Demo Mode</h2>
+<p><code>DEMO_MODE=true</code> turns a normal deployment into the public demo. It is off by
+default, and with it off nothing below applies.</p>
+<ul>
+<li>At startup the server writes the Iris dataset (150 rows, 3 species) to
+  <code>UPLOAD_DIR</code> and creates or refreshes its data source, <code>iris-demo</code>. This runs
+  on every start, so a host that wipes its disk on redeploy still works.</li>
+<li>Uploads, new S3 sources and data source deletion return <code>403</code> with a message
+  that points to Iris.</li>
+<li>Every other data source behaves as if it did not exist: lists show only
+  Iris, and reading, sampling, exporting, profiling or running a pipeline on
+  another source returns <code>404</code>.</li>
+<li>Lists of jobs, models, deployments and EDA reports, and the dashboard counts,
+  include only rows for Iris.</li>
+<li><code>GET /api/config</code> returns <code>demo_mode: true</code>, and the frontend hides its
+  upload, Add Source and delete controls.</li>
+</ul>
+<p>Training, tuning, deployment, prediction, drift checks and project export
+still work, on Iris.</p>
+<p>The demo at <code>api.skyulf.com</code> runs on Render from the <code>master</code> branch with
+<code>DEMO_MODE=true</code> set in the service's environment. There is no separate
+demo branch.</p>
 <hr />
 <h2 id="security-auth">Security &amp; Auth</h2>
 <table>

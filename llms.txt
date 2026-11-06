@@ -1,12 +1,12 @@
-# Skyulf
+# Kayra
 
-> Skyulf is an open-source, self-hosted visual MLOps platform and Python library (skyulf-core, Apache-2.0) for building scikit-learn pipelines you can trust: automated EDA, data-leakage checks, background training and tuning, experiment comparison, model registry, deployment and drift monitoring.
+> Kayra (by Skyulf) is an open-source, self-hosted platform and Python library (skyulf-core, Apache-2.0) for building machine learning pipelines you can verify: automated EDA, data-leakage checks, background training and tuning, experiment comparison, model registry, deployment and drift monitoring.
 
-- Website: https://www.skyulf.com/
+- Website: https://kayra.skyulf.com/
 - Live demo (no signup): https://api.skyulf.com/
-- Source: https://github.com/flyingriverhorse/Skyulf
+- Source: https://github.com/flyingriverhorse/Kayra
 - Library on PyPI: https://pypi.org/project/skyulf-core/  (`pip install skyulf-core`)
-- Docs: https://www.skyulf.com/manual/index.html
+- Docs: https://kayra.skyulf.com/manual/index.html
 
 ## Key facts
 - Platform (backend + canvas): AGPLv3. Library (skyulf-core): Apache 2.0.

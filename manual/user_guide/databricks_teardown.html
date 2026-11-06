@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_teardown.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_teardown.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -2710,6 +2710,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         What you should see
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#personal-development-targets-cleanup_dev-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Personal development targets: cleanup_dev job
       </span>
     </span>
   </a>
@@ -6008,7 +6019,8 @@
 finished <code>test</code> trial or a personal development target. <code>databricks bundle
 destroy</code> removes what the Bundle deployed. Data, models and monitoring evidence
 are Unity Catalog or workspace objects that the Bundle never managed, so they
-stay.</p>
+stay. A personal <code>*_development</code> target can remove them first with its
+<a href="#personal-development-targets-cleanup_dev-job"><code>cleanup_dev</code> job</a>.</p>
 <pre class="mermaid"><code>flowchart LR
     A["Pause monitoring enrollment"] --&gt; B["Stop continuous publication"]
     B --&gt; C["bundle destroy -t target"]
@@ -6043,7 +6055,7 @@ longer run them.</p>
 </tr>
 <tr>
 <td>Keep training evidence you still need</td>
-<td>Approval, rollback and monitoring reference preparation read saved candidate runs. Export or keep them before removing the folder that holds the experiment (see below).</td>
+<td>Approval, rollback and monitoring read saved candidate runs; monitoring rebuilds its reference from the training run's saved rows. Export or keep them before removing the folder that holds the experiment (see below).</td>
 </tr>
 </tbody>
 </table>
@@ -6127,7 +6139,7 @@ those runs no longer open.</p>
 </tr>
 <tr>
 <td>Monitoring store tables and views</td>
-<td><code>model_inventory</code>, <code>monitoring_results</code>, <code>performance_actions</code>, <code>retraining_requests</code>, the views, <code>reference_cleanup_audit</code>, <code>monitor_ref_*</code> references and shared <code>monitor_src_*</code> populations; shared with other projects</td>
+<td><code>model_inventory</code>, <code>monitoring_results</code>, <code>performance_actions</code>, <code>retraining_requests</code>, the views, <code>reference_cleanup_audit</code>; shared with other projects</td>
 </tr>
 <tr>
 <td>Monitoring enrollment rows</td>
@@ -6157,6 +6169,58 @@ those runs no longer open.</p>
 </table>
 <p><a href="databricks_workspace_tables.html">Tables in your workspace</a> explains what each of
 these objects holds and which ones grow over time.</p>
+<h2 id="personal-development-targets-cleanup_dev-job">Personal development targets: cleanup_dev job</h2>
+<p>Each personal <code>*_development</code> target has a <code>cleanup_dev</code> job; <code>test</code>, <code>syst</code> and
+<code>prod</code> do not, and the job refuses to run unless the Bundle mode is
+<code>development</code> and <code>resource_suffix</code> is set. It removes only what this
+deployment created, so a fresh deploy and train start clean, for example after
+a Core upgrade instead of approving with <code>allow_unloadable_champion</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">databricks</span> <span class="n">bundle</span> <span class="n">run</span> <span class="n">cleanup_dev</span> <span class="n">-t</span> <span class="n">test_development</span> <span class="p">-</span><span class="n">-params</span> <span class="n">dry_run</span><span class="p">=</span><span class="n">true</span> <span class="p">-</span><span class="n">-profile</span> <span class="n">YOUR_PROFILE</span>
+<span class="c"># Read the list in the run output, then:</span>
+<span class="n">databricks</span> <span class="n">bundle</span> <span class="n">run</span> <span class="n">cleanup_dev</span> <span class="n">-t</span> <span class="n">test_development</span> <span class="p">-</span><span class="n">-params</span> <span class="n">dry_run</span><span class="p">=</span><span class="n">false</span> <span class="p">-</span><span class="n">-profile</span> <span class="n">YOUR_PROFILE</span>
+<span class="n">databricks</span> <span class="n">bundle</span> <span class="n">destroy</span> <span class="n">-t</span> <span class="n">test_development</span> <span class="p">-</span><span class="n">-profile</span> <span class="n">YOUR_PROFILE</span>
+</code></pre></div>
+<p>Every name comes from the project's configuration bound to this target, the
+same way the jobs bind it; nothing is found by scanning a schema.</p>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Deleted when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Serving endpoint and its UC SQL function</td>
+<td>They carry this deployment's owner tags (project, target, suffix)</td>
+</tr>
+<tr>
+<td>Registered models (model set first, then its component models)</td>
+<td>The name carries <code>resource_suffix</code>; Unity Catalog removes the versions and aliases with the model</td>
+</tr>
+<tr>
+<td>Monitoring rows in <code>development_monitoring_schema</code></td>
+<td>Only this deployment's models, project and target in <code>model_inventory</code>, <code>monitoring_results</code> and <code>performance_actions</code>; other developers' rows and the store tables stay</td>
+</tr>
+<tr>
+<td>Prediction tables, full-rebuild generations and model-set views</td>
+<td>The name carries <code>resource_suffix</code>; a generation also needs this deployment's model in its <code>skyulf.model_name</code> property</td>
+</tr>
+<tr>
+<td>Endpoint payload view and telemetry tables</td>
+<td>The logging prefix carries <code>resource_suffix</code></td>
+</tr>
+</tbody>
+</table>
+<p>Never touched: source, label, training and feature tables, and the shared
+monitoring store tables and views. Monitoring references are the rows saved in
+each training run, so they go with the MLflow experiment. The MLflow experiment is
+inside the target's folder and goes with <code>bundle destroy</code>.</p>
+<p>Each line of the run output has a status: <code>would_delete</code> (dry run),
+<code>deleted</code>, <code>already_absent</code>, <code>skipped</code> (with the reason) or <code>failed</code>. The run
+continues after a failure and then fails the job. Fix the cause, usually a
+missing permission, and run it again: finished objects report
+<code>already_absent</code>.</p>
 <h2 id="common-errors-and-fixes">Common errors and fixes</h2>
 <p>Check ownership before deleting anything by hand. The monitoring store, the
 dashboard, feature tables and online stores are often shared with other

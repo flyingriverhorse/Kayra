@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_monitoring_labels.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_labels.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -6073,20 +6073,32 @@ is outcome availability, not the prediction time or the job execution time.</p>
 <td>The model's saved <code>record_key_columns</code>, including every component of a composite key.</td>
 </tr>
 <tr>
-<td>Serving predictions</td>
-<td><code>databricks_request_id</code> plus zero-based <code>request_row_index</code>, distinguishing multiple rows in one request.</td>
+<td>Endpoint predictions</td>
+<td>The training record keys (for example a silver table), when callers send them; or <code>databricks_request_id</code> plus zero-based <code>request_row_index</code> (a request-outcomes table).</td>
 </tr>
 </tbody>
 </table>
-<p>Both need the saved target column and a valid UTC availability timestamp (or an aware ISO timestamp
-string). Eligible label keys must be unique. Actuals must use the saved classification classes or
-finite numeric regression targets.</p>
-<p>For endpoint-only projects, <code>monitoring_label_table</code> is a request-outcomes table:
-<code>databricks_request_id</code> must be a string and <code>request_row_index</code> an integer.
-The endpoint job checks these columns before creating or updating serving resources.
-Keep the request ID returned by serving and the position of each input row when
-recording its eventual outcome. Two requests for the same business record remain
-two observations; Skyulf does not guess that relationship from a customer or transaction ID.</p>
+<p>All need the saved target column and a valid availability value: a UTC timestamp, an aware ISO
+timestamp string, or a DATE (00:00 UTC that day). Eligible label keys must be unique. Actuals must
+use the saved classification classes or finite numeric regression targets.</p>
+<p>For endpoints, Skyulf picks the join from the label table's columns. A table with
+<code>databricks_request_id</code> (string) and <code>request_row_index</code> (integer) is a request-outcomes
+table: keep the request ID returned by serving and the position of each input row when
+recording the outcome, and two requests for the same record stay two observations.
+Otherwise the label table can be the table that already holds the record keys and
+targets: the latest request per key is matched and the older rows are counted as
+<code>duplicate_key_rows</code>. A model-set endpoint receives its keys in every request; a
+single-model endpoint receives them when callers pass them (the Skyulf SQL function takes
+them as optional arguments). Requests without keys are counted as <code>unkeyed_requests</code>. See
+<a href="databricks_serving_monitoring.html#how-labels-join-an-endpoint">how labels join an endpoint</a>.</p>
+<p>The endpoint job checks these columns before creating or updating serving resources. For an
+endpoint, a label table that does not exist yet in an existing schema only produces a warning;
+monitoring then reports performance as <code>unavailable</code> with reason
+<code>awaiting_labels: &lt;table&gt; does not exist yet</code> and drift runs normally. A missing schema fails,
+and batch monitors still fail on a missing label table. Key types are checked again once the
+table exists. A Streaming Table,
+materialized view or view is read without a Delta version pin; the availability column decides
+which labels a run may use, so a corrected label is read with its latest value.</p>
 <p>The table used by <code>training_label_table</code> still joins by the training record keys.
 It can be a different table. If one automatically configured monitoring label table
 serves both batch and endpoint observations, it must satisfy both key contracts.
@@ -6140,8 +6152,8 @@ its observation cutoff.</p>
 <span class="n">databricks</span> <span class="n">bundle</span> <span class="n">deploy</span> <span class="n">-t</span> <span class="n">test</span> <span class="p">-</span><span class="n">-profile</span> <span class="n">YOUR_PROFILE</span>
 <span class="n">databricks</span> <span class="n">bundle</span> <span class="n">run</span> <span class="n">monitoring</span> <span class="n">-t</span> <span class="n">test</span> <span class="p">-</span><span class="n">-profile</span> <span class="n">YOUR_PROFILE</span>
 </code></pre></div>
-<p>Unpause the monitoring schedule after
-<a href="databricks_monitoring_enrollment.html#the-command">reference preparation</a>. Revisited windows can
+<p>Unpause the monitoring schedule after a first observation succeeds
+(<a href="databricks_monitoring_enrollment.html#verify-training-references">training references</a>). Revisited windows can
 acquire late outcomes even without another scoring batch. A historical backfill updates evidence but
 cannot independently submit training.</p>
 <h2 id="what-you-should-see">What you should see</h2>

@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_serving.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_serving.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -6306,10 +6306,10 @@ target, then checks real REST and SQL predictions against the saved model.
 Quick setup defaults to <code>batch</code>. REST serving works independently of the SQL function.
 The <a href="#the-command">notebook API</a> remains available for explicit, create-only setup.</p>
 <p>For a complete endpoint-only project, copy
-<a href="https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint">taxi_fare_endpoint</a>.
+<a href="https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint">taxi_fare_endpoint</a>.
 It uses the built-in NYC taxi data, automatically updates serving after champion
 promotion, and demonstrates SQL requests plus telemetry monitoring. Its
-<a href="https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint/GUIDE.md#call-the-taxi-endpoint-and-monitor-its-requests">serving walkthrough</a>
+<a href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint/GUIDE.md#call-the-taxi-endpoint-and-monitor-its-requests">serving walkthrough</a>
 ends at the <strong>Online serving</strong> dashboard; no batch prediction table is created.</p>
 <h3 id="choose-how-predictions-are-produced">Choose how predictions are produced</h3>
 <table>
@@ -6512,6 +6512,11 @@ copy the job's generated examples with every required field.</p>
 </code></pre></div>
 <p>The job adds endpoint <code>CAN_QUERY</code> and function <code>EXECUTE</code>. Callers also need
 <code>USE CATALOG</code> and <code>USE SCHEMA</code>, which the job does not grant.</p>
+<p>Leave <code>permissions</code> empty to use the target's access groups from
+<code>deployment/targets.yml</code> instead: <code>access_serving_callers</code> gets <code>CAN_QUERY</code> and
+<code>EXECUTE</code>, <code>access_viewers</code> gets <code>CAN_VIEW</code> (see
+<a href="databricks_deployment.html#access-groups">access groups</a>). Entries in <code>serving.yml</code>
+replace those groups for that target; they do not add to them.</p>
 <p><code>permissions</code> get both grants by default. Unity Catalog rejects workspace-local
 groups such as <code>users</code> in <code>GRANT</code>, while the endpoint accepts them. In that case,
 list the UC grantees separately in <code>function_permissions</code> (same format, a list or
@@ -6524,6 +6529,14 @@ a per-target mapping). An empty list grants no <code>EXECUTE</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">main</span><span class="p">.</span><span class="n">ml</span><span class="p">.</span><span class="n">risk_score</span><span class="p">(</span><span class="o">`</span><span class="n">amount</span><span class="o">`</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="o">`</span><span class="n">amount</span><span class="o">`</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">result</span>
 <span class="k">FROM</span><span class="w"> </span><span class="n">main</span><span class="p">.</span><span class="k">source</span><span class="p">.</span><span class="n">customers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">s</span><span class="p">;</span>
 </code></pre></div>
+<p>For a single-model endpoint the function also takes the training record keys as
+optional arguments after the inputs, typed from the scoring source and
+<code>DEFAULT NULL</code>, for example <code>`customer_id` =&gt; s.`customer_id`</code>. They are sent
+as text and the model ignores them; endpoint monitoring uses them to
+<a href="databricks_serving_monitoring.html#how-labels-join-an-endpoint">join delayed labels on record keys</a>.
+Calls without them return the same predictions. The job's printed SQL example
+includes them. The first serving run after upgrading replaces an existing
+single-model function once to add these arguments.</p>
 <h4 id="rest-for-applications">REST for applications</h4>
 <div class="highlight"><pre><span></span><code><span class="nt">serving_endpoint</span><span class="p">:</span>
 <span class="w">  </span><span class="c1"># Replace the application ID with your service principal's ID.</span>
@@ -6628,7 +6641,7 @@ keys below before creating the endpoint. Credentials stay in the environment:</p
 <tr>
 <td><code>permissions</code></td>
 <td><code>[]</code></td>
-<td>Additive caller grants; one user, group or service principal per entry. A list applies to every target; a mapping keyed by target (<code>test:</code>, <code>prod:</code> ...) grants each target its own principals, and an unlisted target grants nothing</td>
+<td>Additive caller grants; one user, group or service principal per entry. A list applies to every target; a mapping keyed by target (<code>test:</code>, <code>prod:</code> ...) grants each target its own principals. An empty list or unlisted target uses the target's access groups (blank on personal targets)</td>
 </tr>
 <tr>
 <td><code>verification.sample_rows</code></td>
@@ -6670,6 +6683,8 @@ file. The endpoint job's existing dispatch tasks remain in place in either mode.
 <div class="highlight"><pre><span></span><code><span class="nt">permissions</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">test</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">group_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test-callers</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">group_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test-viewers</span>
+<span class="w">      </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CAN_VIEW</span>
 <span class="w">  </span><span class="nt">prod</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">group_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prod-callers</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">service_principal_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;application-id&gt;</span>
@@ -6678,6 +6693,13 @@ file. The endpoint job's existing dispatch tasks remain in place in either mode.
   a key that is not a target in <code>deployment/targets.yml</code>. SQL callers also need
   <code>USE CATALOG</code>/<code>USE SCHEMA</code> on the function's schema and a SQL warehouse; the job
   grants only <code>EXECUTE</code> and endpoint <code>CAN_QUERY</code>.
+  An entry with <code>level: CAN_VIEW</code> gets only endpoint <code>CAN_VIEW</code>, never <code>CAN_QUERY</code>
+  or <code>EXECUTE</code>. It is granted right after the endpoint is created or updated, before
+  the readiness wait, so the team can see a deployment that fails; <code>CAN_QUERY</code> and
+  <code>EXECUTE</code> still wait for verification. When the endpoint is first created, the
+  <code>CAN_QUERY</code> entries also get <code>CAN_VIEW</code> at that point; on an existing endpoint
+  they do not, since it would lower their <code>CAN_QUERY</code> until verification ends.
+  One principal cannot be listed at both levels.
 - <strong>Compute and cost:</strong> job compute follows serverless/<code>policy_cluster</code> settings.
   Set <code>cost_tag_value</code> before serving, including serverless targets; its placeholder
   is rejected. Do not use an ownership key as <code>cost_tag_key</code>. Set Bundle

@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_performance.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_performance.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -6064,7 +6064,7 @@ least 0.05 across three distinct, completed windows for version 2.</p>
 <span class="w">  </span><span class="nt">"performance_classification_metric"</span><span class="p">:</span><span class="w"> </span><span class="s2">"accuracy"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"performance_tolerance_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"relative"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"performance_tolerance"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0.2"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"performance_baseline_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span>
+<span class="w">  </span><span class="nt">"performance_baseline_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>The default is <code>off</code>. Enabling <code>report</code> or <code>retrain</code> requires both an outcome
@@ -6075,11 +6075,13 @@ components use their respective metric answer and the correct loss direction.
 The initial policy uses 24-hour windows, a six-hour label delay, at least 20
 labeled rows, 80% coverage and two consecutive failing windows for retraining.
 These are editable policy fields, not additional hidden runtime rules.</p>
-<p>Verify the concrete baseline version before activation. Different model-set
-components may need different versions: edit their JSON entries independently.
-Changing the baseline is an explicit policy change; promoting a new champion
-does not automatically advance the baseline. <code>report</code> can show a degraded
-first window but never requests training.</p>
+<p>A <code>training_holdout</code> baseline without <code>model_version</code> (the default) compares each
+enrolled version with its own training holdout, so a new champion needs no policy
+edit. Set <code>performance_baseline_version</code> (or <code>baseline.model_version</code> in the JSON) to
+pin one version instead; pinning is an explicit policy change, and a pinned baseline
+does not advance when a new champion is promoted. Different model-set components may
+need different pinned versions: edit their JSON entries independently. <code>report</code> can
+show a degraded first window but never requests training.</p>
 <p>For a more specific classification policy, set a target override:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">monitoring_label_table</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">labels.production.outcomes</span>
 <span class="nt">monitoring_result_available_at_column</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">available_at</span>
@@ -6205,8 +6207,10 @@ or <code>{"mode":"off"}</code> for an explicitly disabled model. An active polic
 the label table and UTC availability column shown above. Select a
 <code>training_holdout</code> baseline or pin an existing production observation with
 <code>{"kind":"production_window","model_version":"2","report_id":"&lt;64 hex characters&gt;"}</code>.
+<code>model_version</code> is required for <code>production_window</code> and optional for <code>training_holdout</code>,
+where it defaults to the enrolled version (enrollment by alias must set it).
 The baseline version must match the observed version; a mismatch is unavailable
-and cannot request training. No metric, direction, tolerance or baseline is
+and cannot request training. No metric, direction, tolerance or baseline kind is
 inferred. Fixed UTC windows wait <code>label_delay_hours</code> after their end, then count
 only labels available at the cutoff. A 00:00–24:00 UTC window with a six-hour
 delay can first be evaluated at 06:00 UTC the next day. Replays do not advance
@@ -6271,10 +6275,8 @@ table/availability settings from the complete example above. With baseline WAPE
 0.05, the limit is 0.06: this is a 20% relative increase, not 20 percentage points.
 WAPE suits this example when actual values can be zero because it uses the whole
 population's absolute actual total; MAPE divides by each individual actual.
-<code>report</code> never requests training. Spark monitoring reads cached holdout metrics
-from its prepared reference; an older cache without WAPE produces unavailable
-policy evidence until a compatible reference exists. The in-memory path measures
-the verified holdout with the fitted model. Neither path rewrites historical
+<code>report</code> never requests training. Spark and in-memory monitoring both measure the
+verified holdout from the training run's saved rows with the fitted model. Neither path rewrites historical
 training-run metrics.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>

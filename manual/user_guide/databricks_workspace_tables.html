@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_workspace_tables.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_workspace_tables.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -2654,10 +2654,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#reference-populations-per-monitored-model-version" class="md-nav__link">
+  <a href="#training-references-live-in-mlflow-not-in-the-store" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Reference populations per monitored model version
+        Training references live in MLflow, not in the store
       </span>
     </span>
   </a>
@@ -6096,14 +6096,12 @@ data tables; the jobs create everything else when they first need it.</p>
     subgraph MON["monitoring_catalog.monitoring_schema: shared by all projects"]
         D["4 Delta tables"]
         V["8 views"]
-        R["4 reference tables per monitored model version"]
     end
     T --&gt; TR["train job"] --&gt; M
     S --&gt; SC["score job"] --&gt; P
     M --&gt; SC
     P --&gt; MO["monitoring job"]
     L --&gt; MO
-    TR -. "enrollment" .-&gt; R
     MO --&gt; D
     D --&gt; V</code></pre>
 <p>The four locations come from <code>deployment/variables.yml</code>: <code>input_schema</code>,
@@ -6259,50 +6257,14 @@ queries.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="reference-populations-per-monitored-model-version">Reference populations per monitored model version</h3>
+<h3 id="training-references-live-in-mlflow-not-in-the-store">Training references live in MLflow, not in the store</h3>
 <p>Drift and retraining checks compare new data with what the model was trained on.
-Rereading the training table on every run would be slow and could see changed
-data, so enrollment copies the needed populations into immutable Delta tables.
-New format-2 references use two tables per identity and a source table that can
-be shared. The identity binds the monitored model, version and verified training
-evidence; source sharing additionally binds its physical Delta ID/version,
-selected columns, exact schema and row values, including duplicate counts.</p>
-<table>
-<thead>
-<tr>
-<th>Part</th>
-<th>What it holds</th>
-<th>Used for</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>monitor_ref_&lt;identity&gt;_population</code></td>
-<td>The seen rows plus a recorded boolean training-membership column. Temporal splits keep training rows; random splits also retain holdout rows.</td>
-<td>Drift selects training members; freshness checks use the complete seen population. The marker is removed before model/metric use and its name avoids feature collisions.</td>
-</tr>
-<tr>
-<td><code>monitor_src_&lt;identity&gt;</code></td>
-<td>The verified, selected training source population, including the target.</td>
-<td>Historical reconstruction; shared only when content and schema match exactly.</td>
-</tr>
-<tr>
-<td><code>_receipt</code></td>
-<td>One JSON record: the evidence these tables belong to, their table identities, the source table identity and the holdout metric values.</td>
-<td>Verifying the tables before use, and the <code>training_holdout</code> baseline of performance policies.</td>
-</tr>
-</tbody>
-</table>
-<p>For <code>N</code> references with <code>U</code> distinct source populations, format 2 needs
-<code>2 * N + U</code> tables. Two references using the same population need five tables.
-Four branches with four different target projections need twelve, even when
-their source table and Delta version are the same. A shared source table name
-alone never proves that its data can be reused.</p>
-<p>Existing format-1 references still use <code>_train</code>, <code>_seen</code>, <code>_source</code>, <code>_receipt</code>.
-They remain readable and eligible for guarded cleanup; upgrades do not migrate
-or delete them. Both formats hold copies bounded by training limits. New projects
-with monitoring include a weekly cleanup job; protected references remain until
-unused and old enough. See <a href="databricks_monitoring_setup.html#retain-or-clean-old-spark-references">retention and recovery</a>.</p>
+That data is the <code>source.parquet</code> artifact the training run saved (model sets:
+<code>source_&lt;branch&gt;.parquet</code> on the parent run), checked by SHA-256 on every read, so
+the store holds no reference tables. The monitoring job identity needs read access
+to the training experiment. <code>monitor_ref_*</code> and <code>monitor_src_*</code> tables left by
+releases before 0.9.7 are unused; see
+<a href="databricks_monitoring_setup.html#reference-tables-from-before-097">reference tables from before 0.9.7</a>.</p>
 <h2 id="recommended-layout">Recommended layout</h2>
 <p>Give every project the same monitoring schema reserved for the store (for
 example <code>workspace.skyulf_monitoring</code>), and keep each project's data, predictions
@@ -6331,7 +6293,7 @@ four project tables: <code>observations_train</code>, <code>observations_score</
 <code>predictions</code>. The store's four tables, eight views and per-version references
 are in <code>workspace.skyulf_monitoring</code>. The other two <code>real_data</code> examples keep
 their independent stores in their project schemas.</p>
-<p>The <a href="https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/templates/databricks/examples/real_data/air_quality_single_table.md">single-table air-quality walkthrough</a>
+<p>The <a href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/templates/databricks/examples/real_data/air_quality_single_table.md">single-table air-quality walkthrough</a>
 uses three project tables: <code>observations</code> for both training and scoring,
 <code>labels</code> for outcomes, and <code>predictions</code>. Daily input inserts do not update old
 rows. It uses the same shared monitoring schema.</p>
@@ -6361,11 +6323,6 @@ stay in that old store; they are not automatically copied to the new one.</p>
 <td><code>monitoring_results</code>, <code>performance_actions</code>, <code>retraining_requests</code></td>
 <td>Monitoring runs and decisions</td>
 <td>Keep observation/action evidence for audit. Request status, job cooldown gates and the reserved reference-admission row also receive guarded updates.</td>
-</tr>
-<tr>
-<td>Reference tables</td>
-<td>New monitored identities and distinct source populations</td>
-<td>Use <a href="databricks_monitoring_setup.html#retain-or-clean-old-spark-references">guarded reference cleanup</a>; retained aliases, monitors, policy baselines and unfinished retraining protect references. Shared sources remain while another receipt needs them.</td>
 </tr>
 <tr>
 <td><code>_v&lt;version&gt;</code> prediction generations</td>

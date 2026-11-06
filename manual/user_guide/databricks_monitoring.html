@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_monitoring.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_monitoring.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -3859,6 +3859,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-monitoring-reads-and-writes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What monitoring reads and writes
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#read-in-this-order" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -6017,12 +6028,20 @@ you configure it. The monitoring job also has its own schedule, which starts
 paused, to revisit delayed outcomes without a new score. Monitoring runs only in
 shared production-mode targets; personal development targets skip it unless they
 opt in to their own separate store.</p>
+<h2 id="what-monitoring-reads-and-writes">What monitoring reads and writes</h2>
+<p><img alt="Monitoring inputs, checks and retraining" src="../assets/diagrams/databricks/monitoring_loop.svg" /></p>
+<p><a href="../assets/diagrams/databricks/monitoring_loop.drawio">Editable draw.io source</a></p>
+<p>Monitoring compares production inputs with the training rows saved in the model's MLflow run,
+and measures performance once delayed labels arrive. Every result goes to the shared monitoring
+store that the dashboard reads; the Bundle does not create a SQL alert. Retraining is requested
+only for drift with <code>on_drift=retrain</code> or a performance policy in <code>retrain</code> mode, and only when
+the cooldown and new-data guards pass.</p>
 <h2 id="read-in-this-order">Read in this order</h2>
 <ol>
 <li><a href="databricks_monitoring_setup.html">Set up the monitoring store</a>: destination,
    owned tables and views, permissions.</li>
 <li><a href="databricks_monitoring_enrollment.html">Enroll models and run monitoring</a>:
-   automatic enrollment, reference preparation, the schedule.</li>
+   automatic enrollment, training references, the schedule.</li>
 <li><a href="databricks_monitoring_labels.html">Match delayed labels</a>: the label table
    needed for performance.</li>
 <li><a href="databricks_drift.html">Drift and data quality</a>: thresholds, statuses, charts.</li>

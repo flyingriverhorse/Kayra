@@ -1,435 +1,435 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
-        <loc>https://www.skyulf.com/manual/architecture.html</loc>
+        <loc>https://kayra.skyulf.com/manual/architecture.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/contributing/preprocessing_inference_coverage.html</loc>
+        <loc>https://kayra.skyulf.com/manual/contributing/preprocessing_inference_coverage.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/contributing/writing_docs.html</loc>
+        <loc>https://kayra.skyulf.com/manual/contributing/writing_docs.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/data_architecture.html</loc>
+        <loc>https://kayra.skyulf.com/manual/data_architecture.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/examples/leakage_proof_pandas.html</loc>
+        <loc>https://kayra.skyulf.com/manual/examples/leakage_proof_pandas.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/examples/leakage_proof_polars.html</loc>
+        <loc>https://kayra.skyulf.com/manual/examples/leakage_proof_polars.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/examples/quickstart.html</loc>
+        <loc>https://kayra.skyulf.com/manual/examples/quickstart.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/adding_new_engine.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/adding_new_engine.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/backend_api.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/backend_api.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/backend_configuration.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/backend_configuration.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/core-release.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/core-release.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/data_drift_roadmap.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/data_drift_roadmap.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/engine_data_paths.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/engine_data_paths.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/engine_mechanics.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/engine_mechanics.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/faq.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/faq.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/getting_started.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/getting_started.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/job_idempotency.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/job_idempotency.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/multi_path_pipelines.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/multi_path_pipelines.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/platform_setup.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/platform_setup.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/platform_walkthrough.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/platform_walkthrough.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/profiling_comparison.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/profiling_comparison.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/recipes.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/recipes.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/guides/sklearn_migration.html</loc>
+        <loc>https://kayra.skyulf.com/manual/guides/sklearn_migration.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/index.html</loc>
+        <loc>https://kayra.skyulf.com/manual/index.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/performance.html</loc>
+        <loc>https://kayra.skyulf.com/manual/performance.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/data/dataset.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/data/dataset.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/modeling/base.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/modeling/base.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/modeling/classification.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/modeling/classification.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/modeling/cross_validation.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/modeling/cross_validation.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/modeling/index.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/modeling/index.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/modeling/regression.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/modeling/regression.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/modeling/sklearn_wrapper.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/modeling/sklearn_wrapper.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/modeling/tuning_engine.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/modeling/tuning_engine.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/pipeline.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/pipeline.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/base.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/base.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/bucketing.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/bucketing.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/casting.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/casting.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/cleaning.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/cleaning.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/drop_and_missing.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/drop_and_missing.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/encoding.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/encoding.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/feature_generation.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/feature_generation.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/feature_selection.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/feature_selection.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/imputation.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/imputation.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/index.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/index.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/inspection.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/inspection.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/outliers.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/outliers.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/pipeline.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/pipeline.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/resampling.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/resampling.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/scaling.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/scaling.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/split.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/split.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/api/preprocessing/transformations.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/api/preprocessing/transformations.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/data_validation.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/data_validation.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/deprecation.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/deprecation.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/modeling_nodes.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/modeling_nodes.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/reference/preprocessing_nodes.html</loc>
+        <loc>https://kayra.skyulf.com/manual/reference/preprocessing_nodes.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/configuration.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/configuration.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/cross_validation.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/cross_validation.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_artifacts.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_artifacts.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_batch.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_batch.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_bundle.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_bundle.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_choose.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_choose.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_custom_pre_split.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_custom_pre_split.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_custom_steps.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_custom_steps.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_decision_thresholds.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_decision_thresholds.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_deployment.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_deployment.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_drift.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_drift.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_ensembles.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_ensembles.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_explanations.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_explanations.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_features.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_features.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_glossary.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_glossary.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_lifecycle.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_lifecycle.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_lifecycle_recovery.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_lifecycle_recovery.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_model_catalog.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_model_catalog.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_model_sets.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_model_sets.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_monitoring.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_monitoring.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_monitoring_dashboard.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_dashboard.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_monitoring_enrollment.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_enrollment.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_monitoring_labels.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_labels.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_monitoring_setup.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_setup.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_online_features.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_online_features.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_performance.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_performance.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_project_setup.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_project_setup.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_project_upgrade.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_project_upgrade.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_retraining.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_retraining.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_scoring.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_scoring.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_sdk.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_sdk.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_serving.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_serving.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_serving_monitoring.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_serving_monitoring.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_serving_rollout.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_serving_rollout.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_source_tables.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_source_tables.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_spark_scoring.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_spark_scoring.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_teardown.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_teardown.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_training_config.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_training_config.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_training_data.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_training_data.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_training_reports.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_training_reports.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_troubleshooting.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_troubleshooting.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_tuning.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_tuning.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/databricks_workspace_tables.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/databricks_workspace_tables.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/drift_monitoring.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/drift_monitoring.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/eda_profiling.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/eda_profiling.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/extending_custom_nodes.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/extending_custom_nodes.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/hyperparameter_tuning.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/hyperparameter_tuning.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/inference_bundles.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/inference_bundles.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/inference_flow.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/inference_flow.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/installation.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/installation.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/integrations.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/integrations.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/leakage_core_backend.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/leakage_core_backend.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/mlflow_models.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/mlflow_models.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/mlflow_registry.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/mlflow_registry.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/mlflow_tracking.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/mlflow_tracking.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/model_project_export.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/model_project_export.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/model_project_export_quickstart.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/model_project_export_quickstart.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/overview.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/overview.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/pii_detection.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/pii_detection.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/pipeline_quickstart.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/pipeline_quickstart.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_context.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_context.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_leakage_audit.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_leakage_audit.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_placement.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_placement.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_binning.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_binning.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_cleaning.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_cleaning.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_custom.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_custom.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_encoding.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_encoding.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_features.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_features.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_outliers.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_outliers.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_sampling.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_sampling.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_scaling.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_scaling.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_text.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_text.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_recipes_time_geo.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_recipes_time_geo.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/preprocessing_yaml_walkthrough.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/preprocessing_yaml_walkthrough.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/sampling_weight_acceptance.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/sampling_weight_acceptance.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/segmentation.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/segmentation.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/serialization.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/serialization.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/shap_explainability.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/shap_explainability.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/spark.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/spark.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/spark_benchmark.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/spark_benchmark.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/splitdataset_and_leakage.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/splitdataset_and_leakage.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/step_by_step_no_config.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/step_by_step_no_config.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/text_nlp.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/text_nlp.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/threshold_tuning.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/threshold_tuning.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/troubleshooting.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/troubleshooting.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/validation_vs_sklearn.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/validation_vs_sklearn.html</loc>
       </url>
       <url>
-        <loc>https://www.skyulf.com/manual/user_guide/weighted_training.html</loc>
+        <loc>https://kayra.skyulf.com/manual/user_guide/weighted_training.html</loc>
       </url>
 </urlset>

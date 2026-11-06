@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/data_architecture.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/data_architecture.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -5813,15 +5813,26 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-future-architecture-the-ai-hub" class="md-nav__link">
+  <a href="#2-training-job-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        2. Future Architecture: The AI Hub
+        2. Training Job Lifecycle
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Future Architecture: The AI Hub">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-future-architecture-the-ai-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Future Architecture: The AI Hub
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Future Architecture: The AI Hub">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -6066,7 +6077,19 @@
 <li><strong>Benefit:</strong> Instead of rigidly forcing one DataFrame type everywhere, the engine is dual-lane. If a Data Scientist passes Pandas, the <code>SklearnBridge</code> converts <code>Pandas -&gt; Numpy</code>. If the ML Canvas uses Polars, the bridge converts <code>Polars -&gt; Numpy</code>. Neither format wastes time converting into the other just to reach Scikit-Learn!</li>
 </ul>
 <hr />
-<h2 id="2-future-architecture-the-ai-hub">2. Future Architecture: The AI Hub</h2>
+<h2 id="2-training-job-lifecycle">2. Training Job Lifecycle</h2>
+<p><img alt="Training job lifecycle" src="assets/diagrams/architecture/job_lifecycle.svg" /></p>
+<p><a href="assets/diagrams/architecture/job_lifecycle.drawio">Editable draw.io source</a></p>
+<p>An upload is saved and registered first; a background ingestion task then profiles it with
+Polars, and only completed sources appear in the canvas dataset picker.
+Run sends the canvas graph to <code>POST /api/pipeline/run</code>, which checks for leakage before any job
+exists, then creates one queued <code>training_jobs</code> row per branch.
+Jobs run on in-process threads by default, or on a Celery worker through Redis when
+<code>USE_CELERY=true</code>; either way <code>execute_pipeline</code> drives the engine, which calls skyulf-core.
+A completed job shows up in the model registry as a version, and deploying it makes it the one
+active deployment that the prediction API serves.</p>
+<hr />
+<h2 id="3-future-architecture-the-ai-hub">3. Future Architecture: The AI Hub</h2>
 <p>Skyulf is evolving from a Tabular ML tool into a multi-modal AI Hub.</p>
 <h3 id="the-node-abstraction">The "Node" Abstraction</h3>
 <p>The core architecture (Graph -&gt; Nodes -&gt; Artifacts) is agnostic to the data type.

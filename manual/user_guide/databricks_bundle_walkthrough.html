@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -6943,7 +6943,7 @@ Optional chapters explain how feature tables, serving and rollout attach to this
 same lifecycle. The <a href="databricks_glossary.html">glossary</a> defines the terms; the
 <a href="databricks_troubleshooting.html">troubleshooting guide</a> starts from error messages.</p>
 <p>Four finished projects built from this template on <code>samples.nyctaxi.trips</code> are in the
-<a href="https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi">NYC taxi examples</a>:
+<a href="https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi">NYC taxi examples</a>:
 a single model with Spark scoring, a single model served online with feature lookups,
 a model competition, and a model set with combined scoring. Each has its setup answers,
 and one SQL file creates their tables. To copy the closest one instead of following
@@ -7430,23 +7430,24 @@ for the detailed contract.</p>
 <p>After scoring has committed, or when delayed labels make a later observation useful.</p>
 <h3 id="what-to-edit_9">What to edit</h3>
 <p>Configure the shared monitoring catalog/schema and optional label source in
-deployment variables. Keep schedules paused until references are prepared. The
-<a href="databricks_monitoring.html">monitoring overview</a> covers store setup, reference
-preparation, label joins, drift/performance policies and the dashboard. A first
-pinned candidate that was never activated can need reference preparation after
-scoring enrollment.</p>
+deployment variables. Keep schedules paused until a first observation succeeds. The
+<a href="databricks_monitoring.html">monitoring overview</a> covers store setup, training
+references, label joins, drift/performance policies and the dashboard. Monitoring
+rebuilds each model's reference from its training run's saved rows, so the
+monitoring job identity needs read access to the training experiment.</p>
 <h3 id="the-command_9">The command</h3>
-<p>When an enrolled identity lacks its reference, prepare it explicitly:</p>
+<p>To check that monitoring can read every enrolled model's saved training rows:</p>
 <div class="highlight"><pre><span></span><code><span class="n">databricks</span> <span class="n">bundle</span> <span class="n">run</span> <span class="n">monitoring</span> <span class="n">-t</span> <span class="n">test</span> <span class="p">-</span><span class="n">-profile</span> <span class="n">YOUR_PROFILE</span> <span class="p">-</span><span class="n">-params</span> <span class="n">monitoring_action</span><span class="p">=</span><span class="n">prepare_references</span>
 </code></pre></div>
-<p>Then retry the same score run to finish its monitoring handoff, or run the separate
-monitoring job with its ordinary observe action. Do not delete committed predictions.</p>
+<p>After fixing a failure, retry the same score run to finish its monitoring handoff, or
+run the separate monitoring job with its ordinary observe action. Do not delete committed
+predictions.</p>
 <h3 id="what-you-should-see_9">What you should see</h3>
 <h4 id="inspect-the-separate-monitoring-run">Inspect the separate monitoring run</h4>
 <p>Open the score run's <code>monitor_model</code> child link when monitoring is enabled. In
 the separate monitoring job, inspect <code>monitor_model</code>, <code>monitoring_report</code> and
 <code>evaluate_retraining</code>. The last task can legitimately decide not to retrain.
-An initial inventory needs the project's central store and reference setup;
+An initial inventory needs the project's central store;
 follow <a href="databricks_monitoring_setup.html">store setup</a> before unpausing its schedule.</p>
 <p>Without a label source, drift may be available while observed performance is
 unavailable. Without configured performance policies there is no policy decision.
@@ -7454,8 +7455,9 @@ Dashboard refresh reads stored observations; it does not create measurements.
 Use model/version/context filters to inspect the newly enrolled identity.</p>
 <h3 id="common-errors-and-fixes_9">Common errors and fixes</h3>
 <p>If scoring committed but the monitoring child failed, inspect both stages.
-<code>Spark reference is not prepared; run prepare_spark_monitoring_reference first.</code>
-means the reference setup above is missing, not that the predictions disappeared.
+<code>Monitoring cannot read training rows saved at runs:/...</code> means the monitoring
+identity lacks read access to the training experiment, not that the predictions
+disappeared; a model trained before 0.9.7 must be retrained.
 Retries must retain the saved source/model identity and receipt. No labels means
 performance is unavailable. Dashboard refresh rereads stored observations and cannot
 create absent measurements. Retraining needs its explicit policy and freshness,

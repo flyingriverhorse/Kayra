@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_monitoring_setup.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_monitoring_setup.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -3925,15 +3925,26 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#retain-or-clean-old-spark-references" class="md-nav__link">
+  <a href="#reference-tables-from-before-097" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Retain or clean old Spark references
+        Reference tables from before 0.9.7
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Retain or clean old Spark references">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#store-writer-admission" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Store writer admission
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Store writer admission">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -6080,10 +6091,6 @@ one configured store and display their evidence in one shared dashboard.</p>
 <td>Unpause the monitoring job's schedule after setup. The generated schedule starts paused.</td>
 </tr>
 <tr>
-<td>Clean old references</td>
-<td>Projects initialized with monitoring include a separate weekly cleanup job, enabled on shared targets and paused in personal development. Review the retention and writer controls below before deployment.</td>
-</tr>
-<tr>
 <td>Refresh dashboard results</td>
 <td>The configured native Dashboard task reruns published datasets after monitoring completes. It does not calculate new monitoring metrics.</td>
 </tr>
@@ -6241,18 +6248,20 @@ creates the missing views. There is no fallback to partially initialized storage
 </tbody>
 </table>
 <p><a href="databricks_workspace_tables.html#the-shared-monitoring-store">Tables in your workspace</a>
-explains each of these objects and the reference tables in plain terms.
+explains each of these objects in plain terms.
 One store serves all enrolled models; inventory, observations and action history
-are shared rather than recreated per model or score run. Spark reference
-preparation writes a population and receipt per verified model/training identity,
-plus an immutable <code>monitor_src_&lt;identity&gt;</code> table shared only by references with
-identical source content and schema. The population has a recorded boolean
-membership column so readers recover the original training and seen rows without
-duplicating tables. Existing format-1 train/source/seen/receipt tables remain
-readable and are not migrated. See the workspace-tables guide for examples.
-References are prepared once for their identity and reused; a new
-model/training identity can require new reference tables. Ordinary monitoring
-observations append to the shared results table, not to new per-run tables.
+are shared rather than recreated per model or score run.</p>
+<p>Monitoring needs no reference tables. Each model's training
+run saved its source rows as an MLflow artifact (<code>lifecycle/data/source.parquet</code>;
+a model set saves <code>source_&lt;branch&gt;.parquet</code> on its parent run), and monitoring
+rebuilds the training and seen populations from those rows after checking their
+SHA-256 and the saved training evidence. The monitoring job identity therefore
+needs read access to the training experiment (<code>CAN_READ</code>, plus <code>READ VOLUME</code> when
+the experiment stores artifacts in a Unity Catalog volume); it already reads
+<code>candidate_training_spec.json</code> from the same run.</p>
+<p>A model without saved source rows (trained before 0.9.7 or outside the generated
+job graph) fails with a message to retrain it with the current project. Ordinary
+monitoring observations append to the shared results table, not to new per-run tables.
 Existing foreign objects or incompatible table schemas are rejected.
 Store initialization sets inventory and retraining-request isolation to Serializable. Producer
 registrations make at most three attempts (two retries) on optimistic Delta
@@ -6319,71 +6328,24 @@ labels, plus the monitoring MLflow experiment. These table grants assume trusted
 producer repositories; they do not provide per-row tenant isolation.</p>
 <p>Configure <a href="databricks_monitoring_dashboard.html">the shared dashboard</a> after the store exists. Its
 training tables also require <code>training_summary_json</code> in the owned <code>model_version_details</code> view.</p>
-<h2 id="retain-or-clean-old-spark-references">Retain or clean old Spark references</h2>
-<p>Prepared Spark monitoring references are stored snapshots of training and source
-populations. They are separate from source tables and historical monitoring
-reports. The optional cleanup action considers only references whose saved
-receipt proves they belong to this project and environment in the configured
-monitoring store. Nothing is cleaned during ordinary observation.</p>
-<p>Projects initialized with a monitoring catalog include a separate
-<code>monitoring_cleanup</code> job. It runs Sundays at 04:00 UTC with confirmation enabled
-and a 90-day minimum reference age. This schedule is independent of monitoring
-and retraining; personal development targets keep it paused. A run before the
-monitoring store exists (no model enrolled yet on that target) finishes with status
-<code>store_not_initialized</code> and changes nothing, so the schedule can stay on from the first
-deploy. Override these variables in <code>deployment/targets.yml</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">monitoring_cleanup_cron</span><span class="p">:</span><span class="w"> </span><span class="s">"0</span><span class="nv"> </span><span class="s">0</span><span class="nv"> </span><span class="s">4</span><span class="nv"> </span><span class="s">?</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">SUN"</span>
-<span class="nt">monitoring_cleanup_confirm</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span><span class="w"> </span><span class="c1"># false reports candidates without deleting</span>
-<span class="nt">monitoring_cleanup_pause_status</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UNPAUSED</span><span class="w"> </span><span class="c1"># PAUSED stops the cleanup schedule</span>
-<span class="nt">monitoring_reference_retention_days</span><span class="p">:</span><span class="w"> </span><span class="s">"90"</span>
+<h2 id="reference-tables-from-before-097">Reference tables from before 0.9.7</h2>
+<p>0.9.7 is a clean break: projects generated before it are regenerated and their
+models retrained. Monitoring no longer reads or creates <code>monitor_ref_*</code> and
+<code>monitor_src_*</code> tables, and the scheduled <code>monitoring_cleanup</code> job is gone. An
+existing store can keep its old reference tables harmlessly, or drop them once:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SHOW</span><span class="w"> </span><span class="n">TABLES</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="n">workspace</span><span class="p">.</span><span class="n">skyulf_monitoring</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">'monitor_ref_*'</span><span class="p">;</span>
+<span class="k">SHOW</span><span class="w"> </span><span class="n">TABLES</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="n">workspace</span><span class="p">.</span><span class="n">skyulf_monitoring</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">'monitor_src_*'</span><span class="p">;</span>
+<span class="c1">-- For each listed name:</span>
+<span class="k">DROP</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">workspace</span><span class="p">.</span><span class="n">skyulf_monitoring</span><span class="p">.</span><span class="o">&lt;</span><span class="k">table_name</span><span class="o">&gt;</span><span class="p">;</span>
 </code></pre></div>
-<p>Setting <code>monitoring_enabled: "false"</code> does not pause cleanup in a configured
-shared target. Use <code>monitoring_cleanup_pause_status: PAUSED</code> to stop its schedule,
-or <code>monitoring_cleanup_confirm: "false"</code> to keep reporting candidates without
-deletion.</p>
-<p>The job uses the same monitoring identity, permissions, notifications and
-serverless environment as observation. It only runs <code>cleanup_references</code>;
-it does not measure drift or request training. Projects initialized with
-monitoring off have no cleanup resource. Enable their monitoring destination
-and use the manual action below, or regenerate with monitoring on to
-obtain <code>resources/monitoring_cleanup.job.yml</code> and its target settings.</p>
-<p>Before deploying an enabled cleanup schedule, meet the lifecycle-writer
-requirements below. Existing corporate tables are not relocated or removed by
-changing these defaults.</p>
-<pre class="mermaid"><code>flowchart TD
-    A["Reference receipt in the store"] --&gt; B{"Identity recomputed from this project's inventory matches?"}
-    B -- "no" --&gt; K1["Another project's: ignored"]
-    B -- "yes" --&gt; C{"Owned, unchanged since creation, same table ids?"}
-    C -- "no" --&gt; K2["Skipped with a reason"]
-    C -- "yes" --&gt; D{"Still needed? Enrolled anywhere, alias, policy baseline or unfinished retraining"}
-    D -- "yes" --&gt; K3["Preserved with a reason"]
-    D -- "no" --&gt; E{"Older than reference_retention_days?"}
-    E -- "no" --&gt; K3
-    E -- "yes" --&gt; F["Deletable"]
-    F --&gt; G{"cleanup_confirm=true?"}
-    G -- "no" --&gt; L["Dry run: listed with its size"]
-    G -- "yes" --&gt; H["Recheck everything; drop only what is still deletable"]
-    H --&gt; I["Audit intent; drop retired populations and unused shared source; receipt last; audit result"]</code></pre>
-<p>If the inventory, registry aliases or retraining state cannot be read, the run
-stops before any change.</p>
-<p>Start with a dry run from the deployed project:</p>
-<div class="highlight"><pre><span></span><code><span class="n">databricks</span> <span class="n">bundle</span> <span class="n">run</span> <span class="n">monitoring</span> <span class="n">-t</span> <span class="n">test</span> <span class="p">-</span><span class="n">-profile</span> <span class="n">YOUR_PROFILE</span> <span class="p">-</span><span class="n">-params</span> <span class="n">monitoring_action</span><span class="p">=</span><span class="n">cleanup_references</span><span class="p">,</span><span class="n">reference_retention_days</span><span class="p">=</span><span class="n">90</span><span class="p">,</span><span class="n">cleanup_confirm</span><span class="p">=</span><span class="n">false</span>
-</code></pre></div>
-<p>Inspect the <code>monitor_model</code> output for candidate tables, size and preservation
-reasons. The default age is 90 days, measured from receipt creation; accepted
-values are 1–3650. Change the default with
-<code>monitoring_reference_retention_days</code> in the target variables. Active enrollment
-in any project sharing the store, a registered alias, a policy baseline or
-pending retraining can preserve an old reference. Unknown ownership or missing
-dependency evidence is never permission to delete it.</p>
-<p>Before enabling deletion, upgrade every producer sharing this store to the same
-admission protocol. Updated generated jobs serialize model alias changes,
-enrollment, reference publication and confirmed cleanup through one control row
-in <code>retraining_requests</code>. The row uses Serializable Delta writes; it adds no new
-store table. A competing mutation waits for the verified owner to release, for
-up to ten minutes by default. Timeout reports the exact owner and job/task;
-it never takes over an old lock. SDK callers can set <code>wait_timeout_s</code> from 0
-to 3,600 seconds. An uncertain claim/write is not automatically retried.
+<p>Keep <code>reference_cleanup_audit</code>: admission recovery below still writes to it.</p>
+<h2 id="store-writer-admission">Store writer admission</h2>
+<p>Generated jobs serialize model alias changes and monitoring enrollment through one
+control row in <code>retraining_requests</code>. The row uses Serializable Delta writes; it
+adds no new store table. A competing mutation waits for the verified owner to
+release, for up to ten minutes by default. Timeout reports the exact owner and
+job/task; it never takes over an old lock. SDK callers can set <code>wait_timeout_s</code>
+from 0 to 3,600 seconds. An uncertain claim/write is not automatically retried.
 During acquisition, a successful claim that loses to another owner, or a Delta
 write explicitly rejected with a recognized data-conflict condition, can retry
 within that same wait budget. Retries use bounded backoff and recheck the physical
@@ -6397,36 +6359,17 @@ allowlisted condition at the beginning of the message. Any supplied structured
 condition remains authoritative; malformed or contradictory metadata stops retry.
 Lifecycle evaluation and quality checks run before admission; the first alias
 write acquires it and retains it through phase completion and failure cleanup.
-Training computation and ordinary reference preparation run outside the publication
-lock. First enrollment of a serving monitor retains its existing prepare-before-enroll
-order and can hold admission longer while preparing that reference.</p>
-<p>This is a cooperative protocol. Restrict alias and reference-table writes to the
-participating job identities. Pause legacy jobs and external UI/MLflow writers
-that bypass admission, and wait for them to finish before deleting. A separate
-job with <code>max_concurrent_runs: 1</code> does not serialize other jobs.</p>
-<p>After reviewing the dry run, use <code>cleanup_confirm=true</code>. The action rechecks
-dependencies while holding admission, records intent and outcome in the owned
-<code>reference_cleanup_audit</code> Delta table, drops reference populations and drops
-their receipt last. Cross-service checks and table drops are not one atomic
-transaction. A shared source is dropped only by its last retiring receipt, after
-checking all projects' remaining receipts. Unknown receipt state prevents that
-deletion. If dropping a population table
-fails, the receipt remains for investigation and recovery. A failure writing the
-final audit result can occur after every table, including the receipt, is gone;
-completed deletions are not rolled back. Inspect the table state and recorded
-intent before retrying or treating an absent final audit row as proof of no deletion.</p>
-<p>The action does not delete source/prediction tables, model versions, monitoring
-reports, jobs or dashboards. Disabled monitoring can still run cleanup when the
-store destination is configured; personal development targets remain disabled.
-The caller needs read access to the store, registry aliases and retraining job
-state, permission to create/write the audit table, and ownership or equivalent
-permission to drop the selected references. No new dashboard chart is created.</p>
+Training computation and reference verification run outside the lock. First
+enrollment of a serving monitor verifies the reference before it enrolls.</p>
+<p>This is a cooperative protocol. Restrict alias writes to the participating job
+identities. A separate job with <code>max_concurrent_runs: 1</code> does not serialize
+other jobs.</p>
 <h3 id="recover-a-failed-reference-mutation">Recover a failed reference mutation</h3>
 <p>A failed remote request can still finish after its response is lost. Admission
 therefore remains held after a mutation fails or its driver crashes; there is
 no expiry timer. Normal completion releases it, as does a validation failure
 before any protected write started. A held owner temporarily blocks
-other reference mutations in the same store, including model promotion and
+other store mutations, including model promotion and
 enrollment, while ordinary observation reads remain available.</p>
 <p>Inspect the row before taking action:</p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">request_id</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">owner</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">,</span><span class="w"> </span><span class="n">created_at_ms</span><span class="p">,</span><span class="w"> </span><span class="n">evidence_json</span>
@@ -6434,7 +6377,7 @@ enrollment, while ordinary observation reads remain available.</p>
 <span class="k">WHERE</span><span class="w"> </span><span class="n">row_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'control:reference_mutation'</span><span class="p">;</span>
 </code></pre></div>
 <p>Generated tasks record their workspace, job-run ID and task key. Stop the
-original run, wait for it to terminate, and inspect its alias/table/audit state
+original run, wait for it to terminate, and inspect its alias and audit state
 to resolve uncertain writes. From a separate operator notebook, first preview:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">databricks.sdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkspaceClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">skyulf.integrations.databricks.observability.monitoring.reference_admission</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -6472,10 +6415,10 @@ After verifying that the original writer cannot resume, explicitly call the
 same function with <code>confirm=True</code>. It records a recovery intent, conditionally
 clears only that exact owner, then records the result in
 <code>reference_cleanup_audit</code>. Recovery does not retry the interrupted operation or
-restore deleted tables. Review its partial work before starting a fresh job.
+undo partial work. Review it before starting a fresh job.
 An audit failure can occur after release; re-read the control row before retrying.</p>
 <p>Direct SDK callers must use <code>hold_reference_mutation(spark, namespace)</code> around
-alias operations that could activate or retire these references. For recoverable
+alias operations and enrollment writes. For recoverable
 job provenance, also pass <code>job_run_id</code>, <code>task_key</code> and <code>workspace_host</code> together.
 Custom table writers inside that scope must call
 <code>require_reference_mutation(spark, namespace, owner)</code> immediately before writing;

@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://www.skyulf.com/manual/user_guide/databricks_serving_monitoring.html">
+        <link rel="canonical" href="https://kayra.skyulf.com/manual/user_guide/databricks_serving_monitoring.html">
       
       
       
@@ -168,13 +168,13 @@
     
     <div class="md-header__source">
       
-        <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
       
@@ -374,13 +374,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/flyingriverhorse/Skyulf" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/flyingriverhorse/Kayra" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    flyingriverhorse/Skyulf
+    flyingriverhorse/Kayra
   </div>
 </a>
     </div>
@@ -4213,6 +4213,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="What to edit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-labels-join-an-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How labels join an endpoint
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6102,12 +6119,80 @@ enrollments together and use the existing report, policy and dashboard.</p>
 <p>For manually enrolled endpoints with two served versions, add a separate entry
 for each concrete version and endpoint. A model-set branch needs its own entry with <code>model_set_name</code>,
 <code>model_set_version</code> and <code>model_set_branch</code> identifying the parent release and
-output. Labels are provided independently in a Delta table keyed by
-<code>databricks_request_id</code> and zero-based <code>request_row_index</code>, with the actual target
-column and UTC <code>available_at</code>. Skyulf does not generate outcomes or write them
-back to the training table. Missing or late labels remain unavailable until an
-eligible observation; choose <code>mode: report</code> first and make any retraining policy
-an explicit later decision.</p>
+output. Skyulf does not generate outcomes or write them back to the training
+table. Missing or late labels remain unavailable until an eligible observation;
+choose <code>mode: report</code> first and make any retraining policy an explicit later decision.</p>
+<h4 id="how-labels-join-an-endpoint">How labels join an endpoint</h4>
+<p>Skyulf picks the join from the label table's columns; there is no setting.</p>
+<table>
+<thead>
+<tr>
+<th>Label table has</th>
+<th>Join</th>
+<th>Endpoints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>databricks_request_id</code> and <code>request_row_index</code></td>
+<td>each request row</td>
+<td>all endpoints</td>
+</tr>
+<tr>
+<td>the training record keys (for example silver)</td>
+<td>latest request per key</td>
+<td>model-set endpoints; single-model endpoints whose callers pass the keys</td>
+</tr>
+</tbody>
+</table>
+<p>A model-set endpoint already receives its record keys in every request, so the
+payload log has them. A single-model endpoint receives them when callers pass
+them (see below). With a record-key table:</p>
+<ul>
+<li>When one key was requested more than once in the window (for example daily
+  re-scoring of one company-month), only the latest request counts. The report's
+  performance evidence counts the prediction rows left out as <code>duplicate_key_rows</code>.</li>
+<li>Requests without keys are left out of performance and counted as
+  <code>unkeyed_requests</code>. Drift still uses every request.</li>
+<li>One label row can carry every target; each component reads its own target column.</li>
+<li>Keys are compared as text. A DATE key in the label table matches a
+  <code>'yyyy-MM-dd'</code> request value.</li>
+</ul>
+<p>Callers should use the Skyulf SQL function from <code>config/serving.yml</code>
+(<code>sql_function.name</code>) instead of <code>ai_query</code> with the endpoint name, so the
+endpoint can be renamed without breaking callers. Pass the record keys as
+arguments; for a model set they are function inputs:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">company_id</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">month_end</span><span class="p">,</span>
+<span class="w">       </span><span class="n">main</span><span class="p">.</span><span class="n">ml</span><span class="p">.</span><span class="n">company_score</span><span class="p">(</span>
+<span class="w">         </span><span class="o">`</span><span class="n">company_id</span><span class="o">`</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="o">`</span><span class="n">company_id</span><span class="o">`</span><span class="p">,</span>
+<span class="w">         </span><span class="o">`</span><span class="n">month_end</span><span class="o">`</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">date_format</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="o">`</span><span class="n">month_end</span><span class="o">`</span><span class="p">,</span><span class="w"> </span><span class="s1">'yyyy-MM-dd'</span><span class="p">),</span>
+<span class="w">         </span><span class="o">`</span><span class="n">employees</span><span class="o">`</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="o">`</span><span class="n">employees</span><span class="o">`</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">result</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">main</span><span class="p">.</span><span class="n">silver</span><span class="p">.</span><span class="n">companies</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">s</span><span class="p">;</span>
+</code></pre></div>
+<p>For a single-model endpoint the SQL function takes the training record keys as
+optional arguments after the model inputs (<code>DEFAULT NULL</code>); the model ignores
+them. Pass them by name:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">main</span><span class="p">.</span><span class="n">ml</span><span class="p">.</span><span class="n">risk_score</span><span class="p">(</span><span class="o">`</span><span class="n">amount</span><span class="o">`</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="o">`</span><span class="n">amount</span><span class="o">`</span><span class="p">,</span><span class="w"> </span><span class="o">`</span><span class="n">order_id</span><span class="o">`</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="o">`</span><span class="n">order_id</span><span class="o">`</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">result</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">main</span><span class="p">.</span><span class="k">source</span><span class="p">.</span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">s</span><span class="p">;</span>
+</code></pre></div>
+<p>REST callers add the same key names as extra fields in each <code>dataframe_records</code>
+row. Calls without keys work as before; their requests are counted as
+<code>unkeyed_requests</code>. A label table with <code>databricks_request_id</code> and
+<code>request_row_index</code> (a request-outcomes table) remains an option for every
+endpoint and needs no keys in the request.</p>
+<p>The label table may be a Streaming Table, materialized view or view. Those are
+read as they are now, without a Delta version pin; the availability column
+alone decides which labels a run may use. The availability column may be a
+DATE, meaning 00:00 UTC on that day. If the label table does not exist yet
+but its schema does, the endpoint job still enrolls the monitor and prints a
+warning naming the table, and monitoring reports performance as <code>unavailable</code>
+with reason <code>awaiting_labels: &lt;table&gt; does not exist yet</code> while drift runs
+normally. A schema that does not exist is a configuration error and fails.
+Batch monitors still fail when their label table is missing.</p>
+<p>Upgrade: a monitor that switches to a record-key label table starts a new
+performance population, so earlier degraded windows do not count toward
+<code>consecutive_windows</code>, and a <code>production_window</code> baseline from before the switch
+no longer matches. Request-keyed label tables keep their history.</p>
 <p>Keep performance in <code>report</code> mode initially. The inline online policy determines its measured
 verdict; automatic requests also require the deployment gate described in
 <a href="databricks_retraining.html#what-to-edit">guarded retraining</a>. Retraining alone does
