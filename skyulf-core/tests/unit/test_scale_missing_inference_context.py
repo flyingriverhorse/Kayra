@@ -575,7 +575,8 @@ def test_standard_polars_preserves_dtype_and_exact_request_partitions(dtype, sta
     legacy = sample.select((centered / state["scale"][1]).alias("x"))
     assert full["x"].dtype == legacy["x"].dtype
     expected = np.divide(
-        sample.select(centered).to_series().to_numpy(),
+        # Polars 2 widens UInt64 - int to Int128, which NumPy lacks; these values fit Float64.
+        sample.select(centered).to_series().cast(pl.Float64).to_numpy(),
         state["scale"][1:],
         dtype=str(legacy["x"].dtype).lower(),
     )

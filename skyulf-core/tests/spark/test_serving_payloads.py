@@ -424,6 +424,8 @@ def test_partial_capture_metrics_preserve_drift_and_performance_eligibility(
         lambda *a: (labels, {"label_table_id": "labels"}),
     )
     monkeypatch.setattr(serving_labels, "label_table_missing", lambda *a: False)
+    label_schema = {field.name: field.dataType.typeName() for field in labels.schema.fields}
+    monkeypatch.setattr(serving_labels, "label_types", lambda *a: label_schema)
     monkeypatch.setattr(monitoring_performance, "load_performance_history", lambda *a: [])
     artifact = SimpleNamespace(
         manifest=SimpleNamespace(

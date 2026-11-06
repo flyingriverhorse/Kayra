@@ -6,6 +6,7 @@ The Delta round trip itself (lossless for these types) is checked on Databricks.
 
 import hashlib
 import json
+import math
 import shutil
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -218,6 +219,26 @@ def _result(spark, frames, features) -> dict:
     }
 
 
+def _assert_same_report(actual, expected, path="drift"):
+    """Match every key, string and count exactly; floats only up to summation-order noise.
+
+    NumPy and Arrow releases may add the same values in another order, which moves the
+    last digit or two of a float. Anything larger is a real change.
+    """
+    if isinstance(expected, float) and isinstance(actual, float):
+        assert math.isclose(actual, expected, rel_tol=1e-12, abs_tol=1e-15), path
+    elif isinstance(expected, dict):
+        assert isinstance(actual, dict) and actual.keys() == expected.keys(), path
+        for key in expected:
+            _assert_same_report(actual[key], expected[key], f"{path}.{key}")
+    elif isinstance(expected, list):
+        assert isinstance(actual, list) and len(actual) == len(expected), path
+        for index, (left, right) in enumerate(zip(actual, expected, strict=True)):
+            _assert_same_report(left, right, f"{path}[{index}]")
+    else:
+        assert actual == expected, path
+
+
 CASES = {
     "random": (tuple(name for name in FEATURES if name != "x_empty"), False),
     "temporal": (tuple(name for name in FEATURES if name != "x_empty"), True),
@@ -230,15 +251,14 @@ def test_saved_rows_reference_reproduces_the_table_reference(spark, tmp_path, mo
     """Drift, freshness counts and holdout baseline equal what the reference tables gave.
 
     reference_parity_golden.json was recorded from the frames the removed table path
-    wrote (pyspark 4.0.3, local[2]); both paths agreed exactly then. Equality is exact.
+    wrote (pyspark 4.0.3, local[2]); both paths agreed exactly then. Everything but
+    float rounding noise must still match exactly.
     """
     features, temporal = CASES[case]
     frames, evidence = saved_reference(spark, tmp_path, monkeypatch, features, temporal=temporal)
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))[case]
     result = _result(spark, frames, features)
-    assert json.dumps(result["drift"], sort_keys=True) == json.dumps(
-        golden["drift"], sort_keys=True
-    )
+    _assert_same_report(json.loads(json.dumps(result["drift"])), golden["drift"])
     assert result["seen_counts_sha256"] == golden["seen_counts_sha256"]
     assert (result["train_rows"], result["seen_rows"]) == (
         golden["train_rows"],
