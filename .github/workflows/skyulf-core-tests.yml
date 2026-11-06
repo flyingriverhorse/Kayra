@@ -59,11 +59,11 @@ jobs:
         # stable shards. The coverage job enforces the unchanged 90% floor only
         # after every base shard and native runtime lane passes and combines.
         run: |
-          bash .github/scripts/run_check.sh "pytest skyulf-core/tests shard ${{ matrix.shard }}/4" \
+          bash .github/scripts/run_check.sh "pytest skyulf-core/tests shard ${{ matrix.shard }}/8" \
             python .github/scripts/run_core_shard.py \
               --shard-index "${{ matrix.shard }}" --shard-count 8 \
               skyulf-core/tests -q --disable-warnings \
-              --cov=skyulf-core/skyulf --cov-branch --cov-report=
+              --cov=skyulf-core/skyulf --cov-branch --cov-report= --durations=25
 
       - name: Upload shard coverage data
         if: ${{ !cancelled() }}
