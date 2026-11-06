@@ -71,7 +71,7 @@ def _substitute(value: str, bindings: dict[str, str]) -> str:
     return value
 
 
-def _bound_settings(settings: dict, values: dict[str, str]) -> dict:
+def bound_settings(settings: dict, values: dict[str, str]) -> dict:
     """Apply UC target ownership and an endpoint-safe spelling of the same suffix."""
     bindings = {key: values.get(key, "") for key in _BINDINGS}
     if any(not is_uc_identifier(bindings[key]) for key in _BINDINGS[:-1]):
@@ -210,7 +210,7 @@ def read_serving_endpoint_settings(values: dict[str, str]) -> dict[str, Any]:
     settings = _known_fields(document.get("serving_endpoint"), _SETTINGS_FIELDS, "serving_endpoint")
     if not _boolean(settings.get("enabled"), "serving_endpoint.enabled"):
         return settings
-    settings = _bound_settings(settings, values)
+    settings = bound_settings(settings, values)
     explicit_function = "function_permissions" in settings
     _validate_settings(settings)
     if not settings["permissions"]:

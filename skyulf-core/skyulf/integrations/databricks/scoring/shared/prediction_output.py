@@ -103,14 +103,14 @@ def prune_prediction_generations(
     kept = {name.lower() for name in newest[:keep]} | {active.lower()}
     dropped = []
     for name in newest[keep:]:
-        if name.lower() in kept or not _owned_generation(spark, name, model_name):
+        if name.lower() in kept or not owned_generation(spark, name, model_name):
             continue
         spark.sql(f"DROP TABLE IF EXISTS {_quoted(name)}").collect()
         dropped.append(name)
     return dropped
 
 
-def _owned_generation(spark: Any, name: str, model_name: str) -> bool:
+def owned_generation(spark: Any, name: str, model_name: str) -> bool:
     """Return True for a full-rebuild generation written for ``model_name``."""
     rows = spark.sql(f"SHOW TBLPROPERTIES {_quoted(name)}").collect()
     properties = {row["key"]: row["value"] for row in rows}

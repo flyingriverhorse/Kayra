@@ -223,10 +223,10 @@ def _serving(values: dict[str, str]) -> dict[str, Any] | None:
     settings = read_yaml_mapping(path).get("serving_endpoint")
     if not isinstance(settings, dict) or settings.get("enabled") is not True:
         return None
-    from .serving_endpoint_job import _bound_settings  # noqa: PLC0415
+    from .serving_endpoint_job import bound_settings  # noqa: PLC0415
 
     # Cost tags are only written on create; cleanup_dev never needs the real value.
-    return _bound_settings(
+    return bound_settings(
         dict(settings), {**values, "cost_tag_key": "skyulf_cleanup_dev", "cost_tag_value": "none"}
     )
 
@@ -320,14 +320,14 @@ def _as_dict(value: Any) -> dict[str, Any]:
 
 def _endpoint(item, deployment, spark, client, dry_run) -> tuple[str, str]:
     """Delete the serving endpoint after checking its owner tags."""
-    from ..serving.managed_endpoint import _require_owner  # noqa: PLC0415
+    from ..serving.managed_endpoint import require_owner  # noqa: PLC0415
 
     try:
         endpoint = _as_dict(client.serving_endpoints.get(item.name))
     except _not_found():
         return "already_absent", ""
     try:
-        _require_owner(endpoint, deployment.serving["ownership"])
+        require_owner(endpoint, deployment.serving["ownership"])
     except ValueError as error:
         return "skipped", str(error)
     if dry_run:
@@ -338,7 +338,7 @@ def _endpoint(item, deployment, spark, client, dry_run) -> tuple[str, str]:
 
 def _function(item, deployment, spark, client, dry_run) -> tuple[str, str]:
     """Delete the UC SQL function after checking its owner comment."""
-    from ..serving.managed_endpoint import _require_function_owner  # noqa: PLC0415
+    from ..serving.managed_endpoint import require_function_owner  # noqa: PLC0415
 
     try:
         function = _as_dict(client.functions.get(item.name))
@@ -347,7 +347,7 @@ def _function(item, deployment, spark, client, dry_run) -> tuple[str, str]:
     serving = deployment.serving
     expected = {"ownership": serving["ownership"], "endpoint_name": serving["endpoint_name"]}
     try:
-        _require_function_owner(function.get("comment"), expected)
+        require_function_owner(function.get("comment"), expected)
     except ValueError as error:
         return "skipped", str(error)
     if dry_run:
@@ -433,16 +433,14 @@ def _drop_object(spark: Any, name: str, dry_run: bool) -> tuple[str, str]:
 
 def _generations(item, deployment, spark, client, dry_run) -> tuple[str, str]:
     """Drop every full-rebuild generation this model wrote for the prediction table."""
-    from ..scoring.shared.prediction_output import _owned_generation  # noqa: PLC0415
+    from ..scoring.shared.prediction_output import owned_generation  # noqa: PLC0415
 
     logical = item.name.removesuffix("_v*")
     catalog, schema, base = logical.split(".")
     rows = spark.sql(f"SHOW TABLES IN {table_name(catalog + '.' + schema)} LIKE '{base}_v*'")
     names = [f"{catalog}.{schema}.{row['tableName']}" for row in rows.collect()]
     owned = [
-        name
-        for name in names
-        if any(_owned_generation(spark, name, model) for model in item.owners)
+        name for name in names if any(owned_generation(spark, name, model) for model in item.owners)
     ]
     if not owned:
         return "already_absent", ""

@@ -82,7 +82,7 @@ def _tag_matches(endpoint: dict[str, Any], key: str, value: str) -> bool:
     ]
 
 
-def _require_owner(endpoint: dict[str, Any], ownership: dict[str, str]) -> None:
+def require_owner(endpoint: dict[str, Any], ownership: dict[str, str]) -> None:
     """Reject foreign, missing or duplicate ownership tags without adopting names."""
     for key, value in ownership.items():
         if not _tag_matches(endpoint, key, value):
@@ -260,7 +260,7 @@ def ensure_owned_endpoint(
         submit_pinned_endpoint(client, wanted)
         action, previous = "created", None
     else:
-        _require_owner(endpoint, owner)
+        require_owner(endpoint, owner)
         entity, previous = _existing_entity(endpoint, plan)
         wanted = _named_plan(plan, entity["name"], owner | extra_tags)
         desired = wanted.config["config"]["served_entities"][0]
@@ -280,7 +280,7 @@ def ensure_owned_endpoint(
         client, plan.spec.endpoint_name, _early_viewers(entries, action == "created")
     )
     final = _dictionary(wait_for_pinned_endpoint_ready(client, wanted))
-    _require_owner(final, owner)
+    require_owner(final, owner)
     _require_owned_config(final, wanted)
     if any(not _tag_matches(final, key, value) for key, value in extra_tags.items()):
         raise ValueError("Serving endpoint requested extra tags differ from their exact readback.")
@@ -318,7 +318,7 @@ def _sql_metadata(plan: ServingSQLFunctionPlan, owner: dict[str, str]) -> dict[s
     }
 
 
-def _require_function_owner(comment: Any, expected: dict[str, Any]) -> dict[str, Any]:
+def require_function_owner(comment: Any, expected: dict[str, Any]) -> dict[str, Any]:
     """Treat unrelated or malformed function comments as foreign ownership."""
     try:
         if not isinstance(comment, str) or not comment.startswith(_COMMENT_PREFIX):
@@ -344,10 +344,10 @@ def ensure_owned_sql_function(
     except NotFound:
         action = "created"
     else:
-        actual = _require_function_owner(function.get("comment"), metadata)
+        actual = require_function_owner(function.get("comment"), metadata)
         action = "unchanged" if actual == metadata else "updated"
     endpoint = _dictionary(require_pinned_endpoint_ready(client, plan.endpoint))
-    _require_owner(endpoint, owner)
+    require_owner(endpoint, owner)
     _require_owned_config(endpoint, plan.endpoint)
     if action != "unchanged":
         comment = _COMMENT_PREFIX + json.dumps(metadata, sort_keys=True, separators=(",", ":"))
