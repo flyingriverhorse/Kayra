@@ -32,7 +32,7 @@ pip install skyulf-core
 
 ```bash
 git clone https://github.com/flyingriverhorse/Kayra.git
-cd Skyulf
+cd Kayra
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt

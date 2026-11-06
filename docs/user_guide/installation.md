@@ -47,7 +47,7 @@ If you cloned the repository and want live changes reflected:
 
 ```bash
 git clone https://github.com/flyingriverhorse/Kayra.git
-cd Skyulf
+cd Kayra
 pip install -e ./skyulf-core
 ```
 

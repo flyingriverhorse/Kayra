@@ -21,7 +21,7 @@ This guide walks you through deploying the complete Kayra application by Skyulf 
 
 ```bash
 git clone https://github.com/flyingriverhorse/Kayra.git
-cd Skyulf
+cd Kayra
 ```
 
 ---

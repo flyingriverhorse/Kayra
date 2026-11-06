@@ -33,14 +33,14 @@ Node.js stays optional for all paths—it's only necessary if you plan to build 
 # Windows PowerShell
 cd C:\path\to\projects
 git clone https://github.com/flyingriverhorse/Kayra.git
-cd skyulf
+cd Kayra
 ```
 
 ```bash
 # macOS / Linux
 cd ~/projects
 git clone https://github.com/flyingriverhorse/Kayra.git
-cd skyulf
+cd Kayra
 ```
 
 ---
