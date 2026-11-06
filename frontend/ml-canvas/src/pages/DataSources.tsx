@@ -16,6 +16,7 @@ import {
   useCancelIngestion,
   hasPendingIngestion,
 } from '../core/hooks/useDatasets';
+import { useDemoMode } from '../core/hooks/useUploadConfig';
 import { DatasetService } from '../core/api/datasets';
 
 /** Searches the displayed dataset identity and its format fallback. */
@@ -45,6 +46,7 @@ export const DataSources: React.FC = () => {
 
   const deleteMutation = useDeleteDataset();
   const cancelMutation = useCancelIngestion();
+  const demoMode = useDemoMode();
 
   // Track which row's mutation is in flight (for per-row spinner state).
   const deletingId = deleteMutation.isPending ? deleteMutation.variables ?? null : null;
@@ -188,6 +190,23 @@ export const DataSources: React.FC = () => {
     );
   };
 
+  // The public demo server refuses deletion, so the demo shows no delete button.
+  const renderDeleteButton = (d: Dataset) => (demoMode ? null : (
+    <button
+      onClick={() => { void handleDelete(d.id); }}
+      disabled={deletingId === d.id}
+      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors disabled:opacity-50"
+      title="Delete Dataset"
+      aria-label="Delete dataset"
+    >
+      {deletingId === d.id ? (
+        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+      ) : (
+        <Trash2 size={16} aria-hidden="true" />
+      )}
+    </button>
+  ));
+
   const renderDatasetActions = (d: Dataset) => (
     <div className="flex items-center justify-end gap-2">
       {(!d.source_metadata?.ingestion_status?.status || d.source_metadata?.ingestion_status?.status === 'completed') && (
@@ -265,19 +284,7 @@ export const DataSources: React.FC = () => {
           Retry
         </button>
       )}
-      <button
-        onClick={() => { void handleDelete(d.id); }}
-        disabled={deletingId === d.id}
-        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors disabled:opacity-50"
-        title="Delete Dataset"
-        aria-label="Delete dataset"
-      >
-        {deletingId === d.id ? (
-          <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-        ) : (
-          <Trash2 size={16} aria-hidden="true" />
-        )}
-      </button>
+      {renderDeleteButton(d)}
     </div>
   );
 
@@ -483,6 +490,26 @@ export const DataSources: React.FC = () => {
     </div>
   );
 
+  // Upload and new-source entry points; the public demo server refuses both.
+  const renderAddDataButtons = () => (demoMode ? null : (
+    <>
+      <button
+        onClick={() => { setShowAddSource(true); }}
+        className="flex items-center gap-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 px-4 py-2 rounded-md shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-700"
+      >
+        <Database size={18} />
+        Add Source
+      </button>
+      <button
+        onClick={() => { setShowUpload(!showUpload); }}
+        className="flex items-center gap-2 action-primary px-4 py-2 rounded-md shadow-sm transition-all hover:opacity-90 focus-ring"
+      >
+        <Plus size={18} />
+        {showUpload ? 'Cancel Upload' : 'Upload File'}
+      </button>
+    </>
+  ));
+
   return (
     <div className="p-8 space-y-6">
       <DatasetPreviewModal
@@ -525,7 +552,9 @@ export const DataSources: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Data Sources</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Upload a file or connect an S3 source, then send it to the Canvas pipeline builder or the EDA explorer.
+            {demoMode
+              ? 'Public demo: the Iris dataset is pre-loaded. Send it to the Canvas pipeline builder or the EDA explorer.'
+              : 'Upload a file or connect an S3 source, then send it to the Canvas pipeline builder or the EDA explorer.'}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -536,20 +565,7 @@ export const DataSources: React.FC = () => {
             <Calendar size={18} />
             Ingestion Jobs
           </button>
-          <button
-            onClick={() => { setShowAddSource(true); }}
-            className="flex items-center gap-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 px-4 py-2 rounded-md shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-700"
-          >
-            <Database size={18} />
-            Add Source
-          </button>
-          <button
-            onClick={() => { setShowUpload(!showUpload); }}
-            className="flex items-center gap-2 action-primary px-4 py-2 rounded-md shadow-sm transition-all hover:opacity-90 focus-ring"
-          >
-            <Plus size={18} />
-            {showUpload ? 'Cancel Upload' : 'Upload File'}
-          </button>
+          {renderAddDataButtons()}
         </div>
       </div>
 

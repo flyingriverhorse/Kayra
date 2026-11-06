@@ -21,11 +21,39 @@ cp .env.example .env
 | `PORT` | `8000` | Bind port |
 | `WORKERS` | `1` | Number of uvicorn worker processes (production only) |
 | `SENTRY_DSN` | *(unset)* | Sentry error tracking DSN — leave unset to disable |
+| `DEMO_MODE` | `false` | Run as the public demo: Iris only, no uploads (see below) |
 
 > **Note:** `FASTAPI_ENV=development` is the default. Production mode is enabled with `FASTAPI_ENV=production`.
 > The value may come from the process environment or from `.env`, and case and surrounding whitespace are
 > normalized (`PRODUCTION` and `"production "` both work). Anything else raises at startup rather than
 > falling back to development — a typo used to boot the development security posture silently.
+
+---
+
+## Public Demo Mode
+
+`DEMO_MODE=true` turns a normal deployment into the public demo. It is off by
+default, and with it off nothing below applies.
+
+- At startup the server writes the Iris dataset (150 rows, 3 species) to
+  `UPLOAD_DIR` and creates or refreshes its data source, `iris-demo`. This runs
+  on every start, so a host that wipes its disk on redeploy still works.
+- Uploads, new S3 sources and data source deletion return `403` with a message
+  that points to Iris.
+- Every other data source behaves as if it did not exist: lists show only
+  Iris, and reading, sampling, exporting, profiling or running a pipeline on
+  another source returns `404`.
+- Lists of jobs, models, deployments and EDA reports, and the dashboard counts,
+  include only rows for Iris.
+- `GET /api/config` returns `demo_mode: true`, and the frontend hides its
+  upload, Add Source and delete controls.
+
+Training, tuning, deployment, prediction, drift checks and project export
+still work, on Iris.
+
+The demo at `api.skyulf.com` runs on Render from the `master` branch with
+`DEMO_MODE=true` set in the service's environment. There is no separate
+demo branch.
 
 ---
 

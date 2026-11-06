@@ -14,3 +14,10 @@ export const useUploadConfig = () =>
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
+
+/**
+ * True when the server runs the public demo (`DEMO_MODE`): only the bundled
+ * Iris dataset exists, and upload, new-source and delete controls are hidden
+ * because the server refuses them. False until the config has loaded.
+ */
+export const useDemoMode = (): boolean => useUploadConfig().data?.demo_mode ?? false;
