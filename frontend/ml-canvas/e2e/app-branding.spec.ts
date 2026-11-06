@@ -3,7 +3,7 @@ import { mockBackend } from './fixtures/mockApi';
 
 for (const width of [1440, 390]) {
   test(`application branding and loading motion at ${width}px`, async ({ page }, testInfo) => {
-    // The supplied scene stays transparent, while reduced motion stops animated frame work.
+    // The loader plays the light-theme logo video; reduced motion shows the still logo and fetches no video.
     await mockBackend(page);
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -19,13 +19,11 @@ for (const width of [1440, 390]) {
     await page.goto('/data');
     await expect(page).toHaveTitle('Kayra');
     const status = page.getByRole('status').filter({ hasText: 'Loading datasets...' });
-    const scene = status.locator('svg');
-    await expect(scene).toBeVisible();
-    await expect(scene).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect.poll(() => scene.locator('line').count()).toBeGreaterThan(0);
-    const camera = scene.locator(':scope > g');
-    const initialTransform = await camera.getAttribute('transform');
-    await expect.poll(() => camera.getAttribute('transform')).not.toBe(initialTransform);
+    const video = status.locator('video');
+    await expect(video).toBeVisible();
+    await expect(video).toHaveAttribute('src', /logo-animasyon-beyaz.*\.mp4/);
+    await expect(video).toHaveAttribute('loop', '');
+    expect(await video.evaluate(element => (element as HTMLVideoElement).muted)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('loading-light.png') });
 
     const favicon = page.locator('link[rel="icon"]');
@@ -38,8 +36,9 @@ for (const width of [1440, 390]) {
     if (width < 768) await page.getByRole('button', { name: 'Open navigation menu' }).click();
     const sidebar = page.locator('#app-sidebar');
     const logo = sidebar.getByRole('img', { name: 'Kayra logo', exact: true });
-    await expect(sidebar.getByRole('heading', { name: 'Kayra', exact: true })).toBeVisible();
-    await expect(sidebar.getByText('by Skyulf', { exact: true })).toBeVisible();
+    const byline = sidebar.getByText('by Skyulf', { exact: true });
+    await expect(byline).toBeVisible();
+    await expect(byline.locator('..')).toHaveText('Kayra by Skyulf');
     await expect(logo).toBeVisible();
     await expect.poll(() => logo.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
     await sidebar.getByRole('button', { name: 'Switch to dark mode' }).click();
@@ -47,8 +46,9 @@ for (const width of [1440, 390]) {
     await page.screenshot({ path: testInfo.outputPath('navigation-dark.png') });
     if (width < 768) await page.getByRole('button', { name: 'Close navigation menu' }).click();
 
+    mediaRequests.length = 0;
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await expect(status.locator('svg')).toHaveCount(0);
+    await expect(status.locator('video')).toHaveCount(0);
     await expect(status.locator('img')).toBeVisible();
     expect(mediaRequests).toEqual([]);
     finishLoading();
