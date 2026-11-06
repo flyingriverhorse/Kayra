@@ -4,7 +4,7 @@
 
 Exposes non-sensitive runtime settings to the frontend so client-side UI
 can mirror server-side limits (upload size, allowed file types) instead
-of hardcoding its own copy.
+of hardcoding its own copy, and tell it whether the public demo mode is on.
 """
 
 from fastapi import APIRouter, Depends
@@ -21,12 +21,14 @@ class UploadConfig(BaseModel):
 
     max_upload_size_bytes: int
     allowed_extensions: list[str]
+    demo_mode: bool
 
 
 @router.get("/config", response_model=UploadConfig)
 def get_upload_config(settings: Settings = Depends(get_config)) -> UploadConfig:
-    """Return the server-side upload limits for the frontend to mirror."""
+    """Return the server-side upload limits and the demo-mode flag for the frontend."""
     return UploadConfig(
         max_upload_size_bytes=settings.MAX_UPLOAD_SIZE,
         allowed_extensions=list(settings.ALLOWED_EXTENSIONS),
+        demo_mode=settings.DEMO_MODE,
     )

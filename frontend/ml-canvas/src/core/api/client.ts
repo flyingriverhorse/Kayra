@@ -160,10 +160,12 @@ export interface NodeWarning {
   message: string;
 }
 
-/** Server-side upload limits, mirrored to the client by `GET /api/config`. */
+/** Server-side upload limits and the demo flag, mirrored to the client by `GET /api/config`. */
 export interface UploadConfig {
   max_upload_size_bytes: number;
   allowed_extensions: string[];
+  /** True on the public demo server, which refuses uploads, new sources and deletions. */
+  demo_mode?: boolean;
 }
 
 // --- Functions ---

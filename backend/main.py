@@ -230,6 +230,18 @@ def _reset_stale_jobs() -> None:
         logger.warning("Could not reset stale jobs on startup: %s", exc)
 
 
+async def _seed_demo_dataset() -> None:
+    """Seed the Iris source the public demo is limited to (DEMO_MODE only)."""
+    from backend.data_ingestion.demo import seed_demo_iris
+    from backend.database import engine
+
+    if engine.async_session_factory is None:
+        raise RuntimeError("Database not initialised; cannot seed the demo dataset")
+    async with engine.async_session_factory() as session:
+        source = await seed_demo_iris(session, Path(settings.UPLOAD_DIR).expanduser())
+    logger.info("✅ Demo mode: Iris dataset ready (source id %s)", source.id)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan context manager for FastAPI application.
@@ -251,6 +263,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Reset any jobs left in 'running'/'queued' from a previous crashed process.
     _reset_stale_jobs()
     logger.info("✅ Stale job reset complete")
+
+    if settings.DEMO_MODE:
+        await _seed_demo_dataset()
 
     # Start the realtime job-event subscriber. Failures are non-fatal:
     # the frontend has a polling safety net.

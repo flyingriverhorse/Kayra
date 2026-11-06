@@ -6,6 +6,7 @@ import { DatasetService } from '../../../core/api/datasets';
 import { Dataset } from '../../../core/types/api';
 import { useDatasetSchema } from '../../../core/hooks/useDatasetSchema';
 import { useUsableDatasets } from '../../../core/hooks/useDatasets';
+import { useDemoMode } from '../../../core/hooks/useUploadConfig';
 import { FileUpload } from './FileUpload';
 
 interface DatasetNodeConfig {
@@ -33,6 +34,8 @@ const DatasetSettings: React.FC<{ config: DatasetNodeConfig; onChange: (c: Datas
   const datasetsQuery = useUsableDatasets();
   const datasets: Dataset[] = datasetsQuery.data ?? [];
   const loading = datasetsQuery.isLoading;
+  // The public demo server refuses uploads, so the demo offers no upload button.
+  const demoMode = useDemoMode();
 
   useEffect(() => {
     if (!showUpload && restoreUploadFocus.current) {
@@ -78,14 +81,16 @@ const DatasetSettings: React.FC<{ config: DatasetNodeConfig; onChange: (c: Datas
       <div className="space-y-2">
         <div className="flex justify-between items-center">
           <label htmlFor={datasetSelectId} className="block text-sm font-medium">Select Dataset</label>
-          <button
-            ref={uploadButtonRef}
-            onClick={() => { setShowUpload(true); }}
-            className="text-xs flex items-center gap-1 text-link hover:underline font-medium focus-ring"
-          >
-            <Plus size={14} />
-            New Upload
-          </button>
+          {!demoMode && (
+            <button
+              ref={uploadButtonRef}
+              onClick={() => { setShowUpload(true); }}
+              className="text-xs flex items-center gap-1 text-link hover:underline font-medium focus-ring"
+            >
+              <Plus size={14} />
+              New Upload
+            </button>
+          )}
         </div>
 
         <ValidationField field="datasetId">

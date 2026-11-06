@@ -22,6 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import get_settings
+from backend.data_ingestion.demo import demo_scope, hidden_in_demo
 from backend.data_ingestion.schemas.ingestion import (
     DataSourceCreate,
     IngestionJobResponse,
@@ -69,7 +70,7 @@ class DataIngestionService:
         """List all data sources."""
         effective_limit = limit if limit is not None else get_settings().DEFAULT_PAGE_SIZE
         validate_page_bounds(effective_limit, skip)
-        query = select(DataSource)
+        query = demo_scope(select(DataSource))
         if user_id:
             query = query.where(DataSource.created_by == user_id)
 
@@ -82,7 +83,7 @@ class DataIngestionService:
 
     async def list_usable_sources(self, user_id: int | None = None) -> Sequence[DataSource]:
         """List only successfully ingested data sources."""
-        query = select(DataSource).where(DataSource.test_status == "success")
+        query = demo_scope(select(DataSource).where(DataSource.test_status == "success"))
         if user_id:
             query = query.where(DataSource.created_by == user_id)
 
@@ -90,7 +91,7 @@ class DataIngestionService:
         return result.scalars().all()
 
     async def get_source(self, source_id: int | str) -> DataSource | None:
-        """Get a data source by ID (PK) or source_id (UUID)."""
+        """Get a data source by ID (PK) or source_id (UUID); demo mode finds only Iris."""
         stmt = select(DataSource)
 
         if isinstance(source_id, int):
@@ -102,7 +103,8 @@ class DataIngestionService:
                 stmt = stmt.where(DataSource.source_id == source_id)
 
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        source = result.scalar_one_or_none()
+        return None if hidden_in_demo(source) else source
 
     async def get_data_source_by_id(self, ds_id: int) -> DataSource | None:
         """Alias for get_source with int ID, for backward compatibility if needed."""

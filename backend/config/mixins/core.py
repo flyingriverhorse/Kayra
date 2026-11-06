@@ -61,6 +61,10 @@ class CoreMixin:
     PORT: int = 8000
     WORKERS: int = 1
 
+    # Public demo (api.skyulf.com): seed Iris, hide every other source, refuse
+    # uploads, new sources and deletions. See backend/data_ingestion/demo.py.
+    DEMO_MODE: bool = False
+
     # Observability — opt-in; no-op when not set
     SENTRY_DSN: str | None = None
 

@@ -15,6 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.data.catalog import FileSystemCatalog
+from backend.data_ingestion.demo import demo_dataset_ids, demo_scope
 from backend.data_ingestion.service import DataIngestionService
 from backend.database.engine import get_async_session
 from backend.database.models import (
@@ -91,19 +92,20 @@ def _build_node_registry() -> list[RegistryItem]:
 
 @router.get("/stats", response_model=dict[str, int])
 async def get_system_stats(session: AsyncSession = Depends(get_async_session)):
-    """Return high-level system statistics for the dashboard."""
-    training_count = await session.scalar(
-        select(func.count(TrainingJob.id)).where(TrainingJob.run_mode == "fixed")
+    """Return high-level system statistics for the dashboard; demo mode counts Iris only."""
+    jobs = select(func.count(TrainingJob.id))
+    sources = demo_scope(
+        select(func.count(DataSource.id)).where(DataSource.test_status == "success")
     )
-    tuning_count = await session.scalar(
-        select(func.count(TrainingJob.id)).where(TrainingJob.run_mode == "tuned")
-    )
+    demo_ids = await demo_dataset_ids(session)
+    if demo_ids is not None:
+        jobs = jobs.where(TrainingJob.dataset_source_id.in_(demo_ids))
+    training_count = await session.scalar(jobs.where(TrainingJob.run_mode == "fixed"))
+    tuning_count = await session.scalar(jobs.where(TrainingJob.run_mode == "tuned"))
     deployment_count = await session.scalar(
         select(func.count(Deployment.id)).where(Deployment.is_active)
     )
-    datasource_count = await session.scalar(
-        select(func.count(DataSource.id)).where(DataSource.test_status == "success")
-    )
+    datasource_count = await session.scalar(sources)
     return {
         "total_jobs": (training_count or 0) + (tuning_count or 0),
         "active_deployments": deployment_count or 0,
@@ -221,8 +223,8 @@ def get_model_default_search_space(model_type: str, strategy: str = "random"):
 
 @router.get("/datasets/list", response_model=list[dict[str, Any]])
 async def list_datasets(session: AsyncSession = Depends(get_async_session)):
-    """Return a simple list of available datasets for filtering."""
-    stmt = select(DataSource.source_id, DataSource.name).where(DataSource.is_active)
+    """Return a simple list of available datasets for filtering; demo mode lists Iris only."""
+    stmt = demo_scope(select(DataSource.source_id, DataSource.name).where(DataSource.is_active))
     result = await session.execute(stmt)
     return [{"id": row.source_id, "name": row.name} for row in result.all()]
 
