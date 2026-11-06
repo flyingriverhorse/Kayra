@@ -573,6 +573,7 @@ def prepared_job(endpoint_project, monkeypatch):
         predict=lambda frame: pd.DataFrame({"prediction": frame["value"] * 2})
     )
     monkeypatch.setattr(api, "_load_pyfunc", Mock(return_value=predictor))
+    monkeypatch.setattr(api, "request_record_keys", Mock(return_value=()))
     events = []
     ensure = Mock(
         side_effect=lambda *args, **kwargs: (
@@ -819,6 +820,73 @@ def test_generated_python_request_example_runs_without_hidden_variables(prepared
     )
 
 
+def test_single_model_record_keys_reach_sql_function_and_label_check(prepared_job, monkeypatch):
+    """Training keys become optional SQL arguments and let a key-only label table enroll."""
+    api, settings, registry, _, _, _ = prepared_job
+    api.request_record_keys.return_value = (("order_id", "bigint"),)
+    labels = Mock(return_value=[])
+    monkeypatch.setattr(api, "validate_serving_label_sources", labels)
+    result = api.run_serving_endpoint(
+        None, settings, source_table="main.source.inputs", client=Mock(), registry_client=registry
+    )
+    assert labels.call_args.args[2] == ("order_id",)
+    assert "`order_id` => `order_id`" in result["examples"]["sql"]
+    assert api.ensure_owned_sql_function.call_args.args[2].record_keys == (("order_id", "bigint"),)
+
+
+def _key_sources(tmp_path, keys, source_types):
+    """Fake the registered run's training spec and the scoring source schema."""
+    import json
+
+    spec = tmp_path / "candidate_training_spec.json"
+    spec.write_text(json.dumps({"record_key_columns": keys}), encoding="utf-8")
+    registry = Mock()
+    registry.get_model_version.return_value.run_id = "run-1"
+    registry.download_artifacts.return_value = str(spec)
+    fields = [
+        SimpleNamespace(name=name, dataType=SimpleNamespace(simpleString=lambda t=dtype: t))
+        for name, dtype in source_types.items()
+    ]
+    spark = Mock()
+    spark.table.return_value.schema.fields = fields
+    return spark, registry
+
+
+def test_record_keys_come_from_the_training_run_and_source_types(tmp_path):
+    """Key names follow the saved training spec monitoring reads; types follow the source."""
+    from skyulf.integrations.databricks.jobs.serving_endpoint_job import request_record_keys
+    from skyulf.integrations.databricks.serving.contracts import PinnedEndpointPlan
+
+    spark, registry = _key_sources(
+        tmp_path, ["order_id", "day"], {"order_id": "bigint", "day": "date", "value": "double"}
+    )
+    spec = Mock(model_name="main.ml.model", model_version="3")
+    plan = PinnedEndpointPlan(spec, {}, ("value",), (("value", "float64"),))
+    assert request_record_keys(spark, registry, plan, "main.src.inputs") == (
+        ("order_id", "bigint"),
+        ("day", "date"),
+    )
+    registry.get_model_version.assert_called_once_with("main.ml.model", "3")
+    spark.table.assert_called_once_with("main.src.inputs")
+    model_set = PinnedEndpointPlan(
+        spec, {}, ("id",), (("id", "int64"),), record_key_columns=("id",)
+    )
+    assert request_record_keys(spark, registry, model_set, "main.src.inputs") == ()
+    registry.get_model_version.assert_called_once()
+
+
+@pytest.mark.parametrize("source_type", [None, "decimal(38,0)", "timestamp"])
+def test_untypable_record_keys_keep_the_previous_deploy(tmp_path, source_type):
+    """A missing, decimal or timestamp key must not fail a deploy that worked before."""
+    from skyulf.integrations.databricks.jobs.serving_endpoint_job import request_record_keys
+    from skyulf.integrations.databricks.serving.contracts import PinnedEndpointPlan
+
+    types = {"value": "double", "day": "date"} | ({"id": source_type} if source_type else {})
+    spark, registry = _key_sources(tmp_path, ["id", "day"], types)
+    plan = PinnedEndpointPlan(Mock(), {}, ("value",), (("value", "float64"),))
+    assert request_record_keys(spark, registry, plan, "main.src.inputs") == ()
+
+
 def test_explicit_version_does_not_read_champion_and_sql_can_be_disabled(prepared_job):
     """Manual version pins stay immutable and REST-only serving needs no SQL privileges."""
     api, settings, registry, prepare, ensure, events = prepared_job
@@ -1061,3 +1129,16 @@ def test_function_grants_can_differ_from_endpoint_callers(prepared_job, configur
     assert kwargs["principals"] == [{"group_name": "users", "level": "CAN_QUERY"}]
     expected = "uc" if configured else "users"
     assert kwargs["function_principals"] == [{"group_name": expected, "level": "CAN_QUERY"}]
+
+
+def test_viewers_reach_the_endpoint_step(prepared_job):
+    """CAN_VIEW entries must reach the endpoint step, which grants them before readiness."""
+    api, settings, registry, *_ = prepared_job
+    settings["permissions"] = [{"group_name": "viewers", "level": "CAN_VIEW"}]
+    settings.pop("function_permissions", None)
+    api.run_serving_endpoint(
+        None, settings, source_table="main.source.inputs", client=Mock(), registry_client=registry
+    )
+    assert api.ensure_owned_endpoint.call_args.kwargs["permissions"] == [
+        {"group_name": "viewers", "level": "CAN_VIEW"}
+    ]

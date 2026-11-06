@@ -49,7 +49,7 @@ EVIDENCE_CHECKS = ("lint", *REQUIRED_CHECKS)
 # More than twice the largest chunk, so every chunk check sees several full chunks.
 MIN_ROWS = 16
 GUIDE = (
-    "https://www.skyulf.com/manual/user_guide/databricks_spark_scoring.html#when-the-probe-fails"
+    "https://kayra.skyulf.com/manual/user_guide/databricks_spark_scoring.html#when-the-probe-fails"
 )
 _OTHER_ROWS = ("group", "window", "global")
 _RETRAIN = "retrain the model so training probes it again"

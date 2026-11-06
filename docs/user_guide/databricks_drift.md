@@ -47,11 +47,10 @@ displayed reference missing percentage as an allowed limit.
 
 ### Choose the reference population
 
-The monitor replays original training membership from saved source and split evidence, prepares
-immutable Spark reference tables, and compares current features from the source snapshots recorded
-with saved predictions. It does not pick an arbitrary latest table or retrain during measurement.
-See [reference preparation](databricks_monitoring_enrollment.md#the-command) and
-[store reference tables](databricks_monitoring_setup.md#what-to-edit).
+The monitor replays original training membership from the training rows saved in the model's
+MLflow run, checked against saved source and split evidence, and compares current features from the
+source snapshots recorded with saved predictions. It does not pick an arbitrary latest table or
+retrain during measurement. See [training references](databricks_monitoring_enrollment.md#verify-training-references).
 
 ## The command
 
@@ -295,8 +294,8 @@ For a sensor that writes `-200` during outages:
 | Model, predictions and training | Unchanged | Unchanged |
 
 - Markers apply to the reference and the current population before quality and
-  drift, in Spark and in-memory monitoring alike. Stored reference tables keep
-  raw rows, so changing markers takes effect at the next observation.
+  drift, in Spark and in-memory monitoring alike. Saved training rows keep
+  raw values, so changing markers takes effect at the next observation.
 - A marker matches exactly in the column's own type. Integer columns need whole
   numbers within their range. Floating-point columns need a value that type holds
   exactly: a 32-bit float column accepts `-200` or `-999.5`, but not `0.1`.

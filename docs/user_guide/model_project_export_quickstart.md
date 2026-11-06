@@ -33,7 +33,7 @@ drops, scaling and a classifier or regressor, trained in Basic or Advanced
 (tuning) mode. See [What it does not do](#what-it-does-not-do) for restrictions,
 including steps that require custom project code.
 
-![A canvas pipeline: dataset, split, imputation, outlier handling, encoding, date features, drop columns and a LightGBM classifier](../assets/project_export/canvas_pipeline.jpg)
+![An exportable run: split, two imputers, outlier removal, one-hot encoding, feature generation, column drop, LightGBM](../assets/project_export/canvas_pipeline.jpg)
 
 ## 2. Export from the Model Registry
 

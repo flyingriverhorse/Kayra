@@ -103,8 +103,12 @@ def read_serving_observation(
     start: datetime,
     end: datetime,
     artifact: Any,
+    record_keys: tuple[str, ...] = (),
 ) -> tuple[Any, Any, dict, datetime | None]:
-    """Use request-time windows on the latest pinned logging snapshot at the cutoff."""
+    """Use request-time windows on the latest pinned logging snapshot at the cutoff.
+
+    ``record_keys`` adds model-set record keys and request time to the predictions.
+    """
     observation_window(as_of, start, end)
     if (
         not config.serving_endpoint
@@ -130,6 +134,7 @@ def read_serving_observation(
         output_prefix=prefix,
         start=start,
         end=end,
+        record_key_columns=record_keys,
     )
     verify_serving_payload_snapshot(spark, config.source_table, capture_evidence)
     evidence = {

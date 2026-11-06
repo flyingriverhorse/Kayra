@@ -1,5 +1,6 @@
 """Validate and publish local model prediction tables and full-rebuild views."""
 
+import json
 import re
 from typing import Any
 
@@ -102,14 +103,14 @@ def prune_prediction_generations(
     kept = {name.lower() for name in newest[:keep]} | {active.lower()}
     dropped = []
     for name in newest[keep:]:
-        if name.lower() in kept or not _owned_generation(spark, name, model_name):
+        if name.lower() in kept or not owned_generation(spark, name, model_name):
             continue
         spark.sql(f"DROP TABLE IF EXISTS {_quoted(name)}").collect()
         dropped.append(name)
     return dropped
 
 
-def _owned_generation(spark: Any, name: str, model_name: str) -> bool:
+def owned_generation(spark: Any, name: str, model_name: str) -> bool:
     """Return True for a full-rebuild generation written for ``model_name``."""
     rows = spark.sql(f"SHOW TBLPROPERTIES {_quoted(name)}").collect()
     properties = {row["key"]: row["value"] for row in rows}
@@ -117,6 +118,36 @@ def _owned_generation(spark: Any, name: str, model_name: str) -> bool:
         properties.get("skyulf.mode") == "full_rebuild"
         and properties.get("skyulf.model_name") == model_name
     )
+
+
+def grant_prediction_readers(spark: Any, dbutils: Any, output: str) -> list[str]:
+    """GRANT SELECT on the published prediction table and views to access_data_readers.
+
+    Runs after every successful score or recovery, so a group set later still reaches
+    existing outputs; a full-rebuild generation is read through its view. A refused
+    grant fails the task, because a silent failure would hide missing access. USE
+    CATALOG and USE SCHEMA stay with the schema owner. Returns the granted names.
+    """
+    group = dbutils.widgets.getAll().get("access_data_readers", "").strip()
+    payload = json.loads(output)
+    if not group or payload.get("recovery_required"):
+        return []
+    if any(ord(char) < 32 for char in group):
+        raise ValueError("access_data_readers must be one group name without control characters.")
+    names = [payload["prediction_table"], *payload.get("prediction_views", [])]
+    principal = "`" + group.replace("`", "``") + "`"
+    for name in names:
+        if not TABLE_NAME_PATTERN.fullmatch(name):
+            raise ValueError(f"Prediction output {name!r} must be a three-part UC name.")
+        try:
+            spark.sql(f"GRANT SELECT ON TABLE {_quoted(name)} TO {principal}").collect()
+        except Exception as exc:  # noqa: BLE001 - any refusal must stop the task visibly
+            raise PermissionError(
+                f"GRANT SELECT on {name} to access_data_readers group {group!r} was refused. "
+                "The job identity must own the table or hold MANAGE on it; fix the grant "
+                "or clear access_data_readers for this target."
+            ) from exc
+    return names
 
 
 def _quoted(name: str) -> str:

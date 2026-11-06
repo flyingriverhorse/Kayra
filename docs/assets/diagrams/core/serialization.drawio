@@ -1,0 +1,91 @@
+<mxfile host="drawio" version="24.7.17">
+  <diagram id="core-serialization" name="Serialization">
+    <mxGraphModel dx="1200" dy="720" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="0" page="0" pageScale="1" pageWidth="1000" pageHeight="720" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="save(), load() and predict()" style="text;html=0;fontSize=20;fontStyle=1;fontColor=#1A1A19;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="0" width="900" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="c_fit" value="Fitted SkyulfPipeline&#xa;after a successful fit()" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="a_save" value="pipeline.save(path)&#xa;pickle.dump of the whole pipeline object" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="50" width="420" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="o_side" value="On demand, not saved&#xa;fingerprint(): SHA-256 over config,&#xa;fitted params, model, thresholds&#xa;export_model_card(): lineage, model&#xa;params, metrics, fingerprint, diagram" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="170" width="220" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="s_file" value="One pickle file: everything predict() needs&#xa;config (preprocessing steps and modeling)&#xa;fitted steps: each Applier with its learned params&#xa;trained model (tuner: model + tuning result)&#xa;input schema and model-input schema&#xa;target column, fit metrics, tuned thresholds" style="rounded=1;html=0;arcSize=10;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="170" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="a_load" value="SkyulfPipeline.load(path)&#xa;pickle.load returns the pickled pipeline object" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="340" width="420" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="f_trust" value="Trusted files only:&#xa;unpickling can run code;&#xa;there is no integrity check" style="rounded=1;html=0;arcSize=10;fillColor=#FDECEC;strokeColor=#B85450;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="340" width="220" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="b_new" value="New rows&#xa;same feature columns,&#xa;no target column" style="rounded=1;html=0;arcSize=10;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="474" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_predict" value="loaded.predict(new rows)&#xa;rejects input that still has the target column;&#xa;checks feature names and order against training;&#xa;replays the fitted steps with no refit (skips split,&#xa;resampling and row-drop filters); the model predicts" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="454" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="f_err" value="ValueError or&#xa;SchemaMismatchError&#xa;(also if a step changes&#xa;the row count)" style="rounded=1;html=0;arcSize=10;fillColor=#FDECEC;strokeColor=#B85450;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="474" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="o_preds" value="Predictions, one per input row&#xa;encoded class labels decoded to the originals" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="290" y="624" width="420" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="k_title" value="Colour key" style="text;html=0;fontSize=12;fontStyle=1;fontColor=#1A1A19;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="600" width="220" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="k0" value="Input" style="rounded=1;html=0;arcSize=10;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="624" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k1" value="Step / call" style="rounded=1;html=0;arcSize=10;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="135" y="624" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k2" value="Learned state" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="656" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k3" value="File / held data" style="rounded=1;html=0;arcSize=10;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="135" y="656" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k4" value="Output" style="rounded=1;html=0;arcSize=10;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="688" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="k5" value="Error / warning" style="rounded=1;html=0;arcSize=10;fillColor=#FDECEC;strokeColor=#B85450;fontColor=#1A1A19;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="135" y="688" width="105" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e_fit" value="save" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_fit" target="a_save">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_side" value="compute" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_fit" target="o_side">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_file" value="writes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_save" target="s_file">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_load" value="load" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_file" target="a_load">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_trust" value="risk" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;dashed=1;strokeColor=#B85450;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_load" target="f_trust">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pred" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_load" target="a_predict">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_new" value="rows" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_new" target="a_predict">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_err" value="error" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B85450;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_predict" target="f_err">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_out" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a_predict" target="o_preds">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

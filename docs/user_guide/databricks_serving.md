@@ -16,10 +16,10 @@ Quick setup defaults to `batch`. REST serving works independently of the SQL fun
 The [notebook API](#the-command) remains available for explicit, create-only setup.
 
 For a complete endpoint-only project, copy
-[taxi_fare_endpoint](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint).
+[taxi_fare_endpoint](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint).
 It uses the built-in NYC taxi data, automatically updates serving after champion
 promotion, and demonstrates SQL requests plus telemetry monitoring. Its
-[serving walkthrough](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint/GUIDE.md#call-the-taxi-endpoint-and-monitor-its-requests)
+[serving walkthrough](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint/GUIDE.md#call-the-taxi-endpoint-and-monitor-its-requests)
 ends at the **Online serving** dashboard; no batch prediction table is created.
 
 ### Choose how predictions are produced
@@ -179,6 +179,12 @@ serving_endpoint:
 The job adds endpoint `CAN_QUERY` and function `EXECUTE`. Callers also need
 `USE CATALOG` and `USE SCHEMA`, which the job does not grant.
 
+Leave `permissions` empty to use the target's access groups from
+`deployment/targets.yml` instead: `access_serving_callers` gets `CAN_QUERY` and
+`EXECUTE`, `access_viewers` gets `CAN_VIEW` (see
+[access groups](databricks_deployment.md#access-groups)). Entries in `serving.yml`
+replace those groups for that target; they do not add to them.
+
 `permissions` get both grants by default. Unity Catalog rejects workspace-local
 groups such as `users` in `GRANT`, while the endpoint accepts them. In that case,
 list the UC grantees separately in `function_permissions` (same format, a list or
@@ -195,6 +201,15 @@ a per-target mapping). An empty list grants no `EXECUTE`:
 SELECT main.ml.risk_score(`amount` => s.`amount`) AS result
 FROM main.source.customers AS s;
 ```
+
+For a single-model endpoint the function also takes the training record keys as
+optional arguments after the inputs, typed from the scoring source and
+`DEFAULT NULL`, for example `` `customer_id` => s.`customer_id` ``. They are sent
+as text and the model ignores them; endpoint monitoring uses them to
+[join delayed labels on record keys](databricks_serving_monitoring.md#how-labels-join-an-endpoint).
+Calls without them return the same predictions. The job's printed SQL example
+includes them. The first serving run after upgrading replaces an existing
+single-model function once to add these arguments.
 
 #### REST for applications
 
@@ -259,7 +274,7 @@ All keys below belong to `config/serving.yml` → `serving_endpoint`.
 | `logging_mode` | `disabled` | No inference tables or captured-request monitoring; alternatives: `telemetry`, `ai_gateway` |
 | `logging_catalog` / `logging_schema` / `logging_table_prefix` | Empty when disabled | Separate payload sink, required for logged modes |
 | `sql_function.enabled` / `sql_function.name` | `true` / target's score function | Create and smoke-test SQL; `false` leaves REST/SDK only |
-| `permissions` | `[]` | Additive caller grants; one user, group or service principal per entry. A list applies to every target; a mapping keyed by target (`test:`, `prod:` ...) grants each target its own principals, and an unlisted target grants nothing |
+| `permissions` | `[]` | Additive caller grants; one user, group or service principal per entry. A list applies to every target; a mapping keyed by target (`test:`, `prod:` ...) grants each target its own principals. An empty list or unlisted target uses the target's access groups (blank on personal targets) |
 | `verification.sample_rows` | `20` | Collected sample size, from 1 to 1000 |
 
 Use `verification: {sample_rows: 20}` to set how many source rows the job checks.
@@ -298,6 +313,8 @@ file. The endpoint job's existing dispatch tasks remain in place in either mode.
   permissions:
     test:
       - group_name: test-callers
+      - group_name: test-viewers
+        level: CAN_VIEW
     prod:
       - group_name: prod-callers
       - service_principal_name: <application-id>
@@ -307,6 +324,13 @@ file. The endpoint job's existing dispatch tasks remain in place in either mode.
   a key that is not a target in `deployment/targets.yml`. SQL callers also need
   `USE CATALOG`/`USE SCHEMA` on the function's schema and a SQL warehouse; the job
   grants only `EXECUTE` and endpoint `CAN_QUERY`.
+  An entry with `level: CAN_VIEW` gets only endpoint `CAN_VIEW`, never `CAN_QUERY`
+  or `EXECUTE`. It is granted right after the endpoint is created or updated, before
+  the readiness wait, so the team can see a deployment that fails; `CAN_QUERY` and
+  `EXECUTE` still wait for verification. When the endpoint is first created, the
+  `CAN_QUERY` entries also get `CAN_VIEW` at that point; on an existing endpoint
+  they do not, since it would lower their `CAN_QUERY` until verification ends.
+  One principal cannot be listed at both levels.
 - **Compute and cost:** job compute follows serverless/`policy_cluster` settings.
   Set `cost_tag_value` before serving, including serverless targets; its placeholder
   is rejected. Do not use an ownership key as `cost_tag_key`. Set Bundle

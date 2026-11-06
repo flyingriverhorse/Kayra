@@ -14,7 +14,11 @@ from ..observability.monitoring.monitoring_config import (
 )
 from ..observability.monitoring.monitoring_registration import monitoring_store_schema
 from ..observability.monitoring.serving import serving_registration
-from ..observability.monitoring.serving.serving_payloads import REQUEST_KEY, ROW_KEY
+from ..observability.monitoring.serving.serving_labels import (
+    check_label_schema,
+    label_table_missing,
+    label_types,
+)
 from ..serving.contracts import PinnedEndpointSpec
 from .shared import reference_mutations
 
@@ -108,31 +112,30 @@ def _served_identities(spec: PinnedEndpointSpec, settings: dict, metadata: dict)
     ]
 
 
-def validate_serving_label_sources(spark: Any, configs: list[MonitorConfig]) -> None:
-    """Require request-key outcomes before endpoint mutation, without reading label rows."""
+def validate_serving_label_sources(
+    spark: Any, configs: list[MonitorConfig], record_key_columns: tuple[str, ...] = ()
+) -> list[str]:
+    """Check label columns before endpoint mutation; a missing table only warns.
+
+    Monitoring reports performance as awaiting_labels until the table exists. A label
+    table joins on request columns when it has them, else on the record keys.
+    A table in a schema that does not exist is a configuration error, not a wait.
+    """
+    warnings = []
     sources = {
         (config.label_table, config.result_available_at_column)
         for config in configs
         if config.label_table is not None
     }
-    for table, available in sources:
-        types = {
-            field.name: field.dataType.typeName() for field in spark.table(table).schema.fields
-        }
-        if types.get(REQUEST_KEY) != "string" or types.get(ROW_KEY) not in {
-            "byte",
-            "short",
-            "integer",
-            "long",
-        }:
-            raise ValueError(
-                f"Serving label table {table} requires databricks_request_id STRING and "
-                "request_row_index integral; business record keys alone cannot identify requests."
+    for table, available in sorted(sources):
+        if label_table_missing(spark, table):
+            warnings.append(
+                f"Label table {table} does not exist yet; performance stays awaiting_labels "
+                "until it does. Drift monitoring runs normally."
             )
-        if types.get(available) not in {"timestamp", "string"}:
-            raise ValueError(
-                f"Serving label availability {available!r} requires a UTC timestamp or aware ISO string."
-            )
+            continue
+        check_label_schema(table, label_types(spark, table), str(available), record_key_columns)
+    return warnings
 
 
 def enroll_verified_serving(
@@ -143,8 +146,12 @@ def enroll_verified_serving(
     *,
     tracking_uri: str | None = "databricks",
     registry_uri: str | None = "databricks-uc",
+    warnings: list[str] | None = None,
 ) -> dict:
-    """Publish new monitors first, then disable superseded entries under the shared guard."""
+    """Publish new monitors first, then disable superseded entries under the shared guard.
+
+    ``warnings`` (for example a label table that does not exist yet) join the result.
+    """
     if not _monitoring_enabled(values):
         return {"status": "skipped", "reason": "monitoring_disabled"}
     if namespace is None:
@@ -158,7 +165,7 @@ def enroll_verified_serving(
             spark, namespace, request, tracking_uri=tracking_uri, registry_uri=registry_uri
         )
         retired = _retire_previous(spark, namespace, configs)
-    return {**result, "retired_monitor_ids": retired}
+    return {**result, "retired_monitor_ids": retired} | ({"warnings": warnings} if warnings else {})
 
 
 def _enrollment_request(configs: list[MonitorConfig]) -> dict[str, str]:

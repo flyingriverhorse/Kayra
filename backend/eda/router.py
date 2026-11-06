@@ -26,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.celery_app import celery_app
 from backend.config import get_settings
+from backend.data_ingestion.demo import demo_scope, ensure_visible_in_demo, hidden_in_demo
 from backend.database.models import DataSource, EDAReport
 from backend.dependencies import get_db
 from backend.eda.tasks import generate_profile_celery, run_eda_background
@@ -102,7 +103,7 @@ async def list_all_jobs(
     session: AsyncSession = Depends(get_db),
 ):
     """Returns a list of all EDA jobs across all datasets."""
-    query = (
+    query = demo_scope(
         select(EDAReport, DataSource.name.label("dataset_name"))
         .join(DataSource, EDAReport.data_source_id == DataSource.id)
         .order_by(desc(EDAReport.created_at))
@@ -180,7 +181,7 @@ async def trigger_analysis(
 
     # Check if dataset exists
     ds = await session.get(DataSource, dataset_id)
-    if not ds:
+    if not ds or hidden_in_demo(ds):
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     # Create Report entry
@@ -223,6 +224,7 @@ async def cancel_analysis(report_id: int, session: AsyncSession = Depends(get_db
 @router.get("/{dataset_id}/history")
 async def get_report_history(dataset_id: int, session: AsyncSession = Depends(get_db)):
     """Returns a list of past reports for a dataset."""
+    await ensure_visible_in_demo(session, dataset_id)
     query = (
         select(EDAReport.id, EDAReport.created_at, EDAReport.status, EDAReport.config)
         .where(EDAReport.data_source_id == dataset_id)
@@ -251,6 +253,7 @@ async def get_latest_report(dataset_id: int, session: AsyncSession = Depends(get
     Uses orjson serialisation + raw Response to avoid double-buffering the
     profile_data blob (can be 2-10 MB for wide datasets).
     """
+    await ensure_visible_in_demo(session, dataset_id)
     query = (
         select(EDAReport)
         .where(EDAReport.data_source_id == dataset_id)
@@ -276,6 +279,7 @@ async def get_report(report_id: int, session: AsyncSession = Depends(get_db)):
     report = await session.get(EDAReport, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
+    await ensure_visible_in_demo(session, report.data_source_id)
     return Response(content=orjson.dumps(report.to_dict()), media_type="application/json")
 
 
@@ -423,7 +427,7 @@ async def get_decomposition(
     try:
         # 1. Fetch DataSource
         ds = await session.get(DataSource, dataset_id)
-        if not ds:
+        if not ds or hidden_in_demo(ds):
             raise HTTPException(status_code=404, detail="Dataset not found")
 
         # 2-4. Resolve path/storage options and load the DataFrame

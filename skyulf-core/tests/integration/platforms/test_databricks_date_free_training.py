@@ -176,6 +176,7 @@ def test_direct_training_rejects_regression_stratification_before_read(monkeypat
     """Direct SDK calls must not stratify repeated regression targets as invented classes."""
     reader = Mock(side_effect=AssertionError("source opened"))
     monkeypatch.setattr(retraining, "read_training_snapshot", reader)
+    monkeypatch.setattr(retraining, "read_live_snapshot", reader)
     with pytest.raises(ValueError, match="classification"):
         retraining.train_candidate(
             None,
@@ -284,6 +285,7 @@ def test_random_candidate_approval_replays_saved_membership_after_config_changes
     frame = _frame()
     reader = Mock(return_value=frame)
     monkeypatch.setattr(retraining, "read_training_snapshot", reader)
+    monkeypatch.setattr(retraining, "read_live_snapshot", reader)
     monkeypatch.setattr(workflow, "read_training_snapshot", reader)
     uri = f"sqlite:///{(tmp_path / 'registry.db').as_posix()}"
     client = mlflow.MlflowClient(tracking_uri=uri, registry_uri=uri)

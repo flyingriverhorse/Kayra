@@ -53,6 +53,7 @@ resources:
               monitoring_environment: ${bundle.target}
               monitoring_deployment_mode: ${bundle.mode}
               monitoring_project: ${bundle.name}
+              access_data_readers: ${var.access_data_readers}
 
           environment_key: skyulf
           disable_auto_optimization: true

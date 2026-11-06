@@ -9,7 +9,7 @@ body:
         Thanks for taking the time to fill out this bug report!
 
         **Before you submit:**
-        1. Please search [existing issues](https://github.com/flyingriverhorse/Skyulf/issues) to see if this has already been reported.
+        1. Please search [existing issues](https://github.com/flyingriverhorse/Kayra/issues) to see if this has already been reported.
         2. Ensure you are running the latest version of Skyulf.
 
   - type: checkboxes
@@ -20,7 +20,7 @@ body:
       options:
         - label: I have searched for existing issues and found no duplicates.
           required: true
-        - label: I have checked the [Troubleshooting Guide](https://flyingriverhorse.github.io/Skyulf/user_guide/troubleshooting/).
+        - label: I have checked the [Troubleshooting Guide](https://kayra.skyulf.com/manual/user_guide/troubleshooting.html).
           required: false
 
   - type: input

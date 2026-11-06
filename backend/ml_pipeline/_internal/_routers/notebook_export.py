@@ -35,6 +35,7 @@ from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.data_ingestion.demo import hidden_in_demo
 from backend.database.engine import get_async_session
 from backend.database.models import DataSource, FeatureEngineeringPipeline
 from backend.utils.file_utils import extract_file_path_from_source
@@ -516,7 +517,7 @@ async def _lookup_dataset_file_path(dataset_id: str, session: AsyncSession) -> s
         stmt = select(DataSource).where(source_filter)
         result = await session.execute(stmt)
         ds = result.scalar_one_or_none()
-        if ds is None:
+        if ds is None or hidden_in_demo(ds):
             return None
         source_dict: dict[str, Any] = {
             "file_path": None,

@@ -42,7 +42,7 @@ def json_digest(value: Any) -> str:
 class MonitorConfig:
     """Enroll a model with independent source, result and registry locations.
 
-    ``max_rows`` and ``max_bytes`` bound legacy local materialization. Their
+    ``max_rows`` and ``max_bytes`` bound local (pandas) materialization. Their
     defaults are per-observation budgets, while MAX_MONITOR_* are safety ceilings.
     Spark readers keep observations distributed and do not apply these row/byte
     caps; bounded metadata and training-reference preparation have separate limits.
@@ -141,7 +141,7 @@ def _validate_serving(config: MonitorConfig) -> None:
 
 
 def _validate_execution(config: MonitorConfig) -> None:
-    """Require explicit distributed reference ownership without changing legacy payloads."""
+    """Require explicit distributed reference ownership."""
     if config.execution_engine not in {"local", "spark"}:
         raise ValueError("monitoring execution_engine must be local or spark.")
     if config.execution_engine == "spark" and config.reference_namespace is None:
@@ -214,6 +214,11 @@ def _validate_performance_enrollment(config: MonitorConfig) -> None:
         raise ValueError(
             "Active performance_policy requires label_table and result_available_at_column."
         )
+    baseline = policy.get("baseline", {})
+    if baseline and "model_version" not in baseline:
+        if config.model_version is None:
+            raise ValueError("baseline.model_version is required with model_alias selection.")
+        baseline["model_version"] = config.model_version
     object.__setattr__(config, "performance_policy", policy)
 
 

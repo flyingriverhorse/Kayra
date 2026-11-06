@@ -9,6 +9,7 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import get_settings
+from backend.data_ingestion.demo import demo_dataset_ids
 from backend.exceptions.core import SkyulfException
 from backend.middleware.rate_limiter import limiter
 from skyulf.preprocessing.time_series.history import TemporalHistorySession
@@ -103,7 +104,9 @@ async def list_deployments(
     it stays null here and is only populated by the per-row endpoints.
     """
     effective_limit = limit if limit is not None else get_settings().DEFAULT_PAGE_SIZE
-    return await DeploymentService.list_deployment_details(session, effective_limit, skip)
+    return await DeploymentService.list_deployment_details(
+        session, effective_limit, skip, await demo_dataset_ids(session)
+    )
 
 
 @router.post("/deactivate")

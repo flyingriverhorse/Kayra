@@ -188,15 +188,30 @@ def test_historical_transport_does_not_reapply_string_parsing(monkeypatch):
     normalizer = MagicMock(return_value=frame)
     monkeypatch.setattr(spark_retraining_data, "_functions", MagicMock)
     monkeypatch.setattr(spark_retraining_data, "_counts", lambda *args: frame)
-    monkeypatch.setattr(spark_retraining_data, "read_reference_population", lambda *args: frame)
     monkeypatch.setattr(spark_retraining_data, "normalize_training_dates", normalizer)
     monkeypatch.setattr(spark_retraining_data, "_pandas_source_types", lambda *args: frame)
     monkeypatch.setattr(spark_retraining_data, "_overlay_weights", lambda *args: frame)
     monkeypatch.setattr(spark_retraining_data, "_eligible", lambda *args: frame)
-    evidence = {"prepared_reference": {"seen": {}, "source": {}}}
-    spark_retraining_data._baseline(None, evidence, spec, spec, frame, ["x", "y"])
+    readers = {"seen": lambda: frame, "source": lambda: frame}
+    spark_retraining_data._baseline(readers, spec, spec, frame, ["x", "y"])
     assert normalizer.call_args.kwargs["event_spec"] == TrainingDateSpec()
     assert normalizer.call_args.kwargs["result_spec"] == TrainingDateSpec()
+
+
+def test_baseline_reads_the_training_source_only_for_changed_weights(monkeypatch):
+    """Unweighted models must not read (or rebuild) the saved source population at all."""
+    from unittest.mock import Mock
+
+    from skyulf.integrations.databricks.data.training import spark_retraining_data
+
+    seen = MagicMock()
+    counts = Mock(return_value="counts")
+    monkeypatch.setattr(spark_retraining_data, "_functions", MagicMock)
+    monkeypatch.setattr(spark_retraining_data, "_counts", counts)
+    readers = {"seen": lambda: seen, "source": Mock(side_effect=AssertionError("source read"))}
+    spec = _spec()
+    assert spark_retraining_data._baseline(readers, spec, spec, None, ["x", "y"]) == "counts"
+    counts.assert_called_once_with(seen, ["x", "y"])
 
 
 def test_assessment_does_not_require_serverless_unsupported_persistence(monkeypatch):
@@ -213,10 +228,10 @@ def test_assessment_does_not_require_serverless_unsupported_persistence(monkeypa
     counts.cache.side_effect = ValueError("DataFrame.cache unsupported on serverless")
     monkeypatch.setattr(
         module,
-        "load_spark_monitoring_reference",
-        Mock(return_value=(artifact, spec, None, evidence)),
+        "load_spark_reference_populations",
+        Mock(return_value=(artifact, spec, {}, evidence)),
     )
-    monkeypatch.setattr(module, "table_identity", Mock(return_value="identity"))
+    monkeypatch.setattr(module, "source_table_identity", Mock(return_value="identity"))
     monkeypatch.setattr(module, "resolve_training_spec", Mock(return_value=spec))
     monkeypatch.setattr(module, "phase_training_spec", Mock(return_value=spec))
     for name in ("_read_source", "_eligible", "_training_partition", "_baseline"):
@@ -292,3 +307,58 @@ def test_temporal_metadata_split_and_group_overlap():
     frame["group"] = 1
     with pytest.raises(ValueError, match="disjoint groups"):
         _metadata_train_ordinals(frame, replace(spec, group_column="group"))
+
+
+def test_unversioned_current_source_is_read_without_time_travel(monkeypatch):
+    """A streaming table or view has no versionAsOf; freshness reads its current rows plainly."""
+    from skyulf.integrations.databricks.data.training import spark_retraining_data as module
+
+    source = MagicMock()
+    source.columns = ["id", "x", "y"]
+    source.select.return_value = source
+    source.limit.return_value.count.return_value = 2
+    source.agg.return_value.first.return_value = {"bytes": 64}
+    spark = MagicMock()
+    spark.read.format.side_effect = AssertionError("versionAsOf is refused on this source")
+    spark.read.table.return_value = source
+    monkeypatch.setattr(module, "_functions", MagicMock)
+    monkeypatch.setattr(module, "join_training_labels", lambda *args: source)
+    monkeypatch.setattr(module, "normalize_training_dates", lambda *args, **kwargs: source)
+    monkeypatch.setattr(module, "require_unique_keys", lambda *args: None)
+    monkeypatch.setattr(module, "normalize_spark_decimals", lambda *args, **kwargs: (source, []))
+    monkeypatch.setattr(module, "_pandas_source_types", lambda *args: source)
+    monkeypatch.setattr(module, "validate_label_identity", lambda *args: None)
+    assert module._read_source(spark, _spec(version=0, source_kind="MATERIALIZED_VIEW")) is source
+    spark.read.table.assert_called_once_with("a.b.c")
+
+
+def test_assessment_checks_unversioned_identity_by_catalog_id(monkeypatch):
+    """An MV has no DESCRIBE DETAIL id; freshness must compare its Unity Catalog id instead."""
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    from skyulf.integrations.databricks.data.training import spark_retraining_data as module
+
+    spec = _spec(version=0, source_kind="MATERIALIZED_VIEW")
+    evidence = {"prepared_reference_source_table_id": "uc-mv", "model_version": "1"}
+    artifact = SimpleNamespace(manifest=SimpleNamespace(fitted_engine="pandas"))
+    identity = Mock(return_value="uc-mv")
+    monkeypatch.setattr(
+        module,
+        "load_spark_reference_populations",
+        Mock(return_value=(artifact, spec, {}, evidence)),
+    )
+    monkeypatch.setattr(module, "source_table_identity", identity)
+    monkeypatch.setattr(module, "resolve_training_spec", Mock(return_value=spec))
+    monkeypatch.setattr(module, "phase_training_spec", Mock(return_value=spec))
+    for name in ("_read_source", "_eligible", "_training_partition", "_baseline", "_counts"):
+        monkeypatch.setattr(module, name, Mock(return_value=object()))
+    monkeypatch.setattr(module, "_assessment", Mock(return_value={"status": "ready"}))
+    result = module.assess_spark_training_data(
+        None,
+        None,
+        {"engine": "pandas", "training_table": "a.b.c"},
+        datetime(2026, 10, 5, tzinfo=UTC),
+    )
+    assert result["source_table_id"] == "uc-mv"
+    assert {call.args[2] for call in identity.call_args_list} == {"MATERIALIZED_VIEW"}

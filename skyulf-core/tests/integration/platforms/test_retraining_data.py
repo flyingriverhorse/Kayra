@@ -58,6 +58,7 @@ def freshness(monkeypatch):
         return artifact, spec, train, {"model_version": "1"}
 
     monkeypatch.setattr(candidate, "read_training_snapshot", snapshot)
+    monkeypatch.setattr(retraining_data, "read_live_snapshot", snapshot)
     monkeypatch.setattr(retraining_data, "load_monitoring_reference", reference)
     history = SimpleNamespace(
         select=lambda *args: SimpleNamespace(

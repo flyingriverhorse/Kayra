@@ -13,13 +13,13 @@ it: sklearn remains the modeling foundation while Skyulf provides pipeline
 configuration, artifacts, metrics, and safe execution conventions.
 
 <!-- Quick badges + links -->
-[![Docs](https://img.shields.io/website?down_color=red&down_message=offline&up_message=online&url=https://www.skyulf.com/manual/)](https://www.skyulf.com/manual/) [![PyPI](https://img.shields.io/pypi/v/skyulf-core.svg)](https://pypi.org/project/skyulf-core) [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/LICENSE)
-[![Downloads](https://img.shields.io/pypi/dm/skyulf-core.svg)](https://pypi.org/project/skyulf-core) [![issues](https://img.shields.io/github/issues/flyingriverhorse/Skyulf.svg)](https://github.com/flyingriverhorse/Skyulf/issues) [![contributors](https://img.shields.io/github/contributors/flyingriverhorse/Skyulf.svg)](https://github.com/flyingriverhorse/Skyulf/graphs/contributors)
+[![Docs](https://img.shields.io/website?down_color=red&down_message=offline&up_message=online&url=https://kayra.skyulf.com/manual/)](https://kayra.skyulf.com/manual/) [![PyPI](https://img.shields.io/pypi/v/skyulf-core.svg)](https://pypi.org/project/skyulf-core) [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/LICENSE)
+[![Downloads](https://img.shields.io/pypi/dm/skyulf-core.svg)](https://pypi.org/project/skyulf-core) [![issues](https://img.shields.io/github/issues/flyingriverhorse/Kayra.svg)](https://github.com/flyingriverhorse/Kayra/issues) [![contributors](https://img.shields.io/github/contributors/flyingriverhorse/Kayra.svg)](https://github.com/flyingriverhorse/Kayra/graphs/contributors)
 
 **Website & Documentation**
 
-- Project site / docs: https://www.skyulf.com
-- Repository: https://github.com/flyingriverhorse/Skyulf
+- Project site / docs: https://kayra.skyulf.com
+- Repository: https://github.com/flyingriverhorse/Kayra
 - PyPI package: https://pypi.org/project/skyulf-core
 
 ## Installation
@@ -73,7 +73,7 @@ pip install skyulf-core[mlflow]
 
 ## Databricks Bundle template
 
-The source checkout includes a [local-engine Databricks Bundle template](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks)
+The source checkout includes a [local-engine Databricks Bundle template](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks)
 for bounded pandas or Polars training and scoring with Skyulf Core. From the
 repository root, initialize an editable project with:
 
@@ -82,7 +82,7 @@ databricks bundle init skyulf-core/templates/databricks --output-dir ./generated
 ```
 
 The generated project has `train` and `score` jobs. The first score creates
-its prediction table; see the [Bundle guide](https://github.com/flyingriverhorse/Skyulf/blob/master/docs/user_guide/databricks_bundle.md)
+its prediction table; see the [Bundle guide](https://github.com/flyingriverhorse/Kayra/blob/master/docs/user_guide/databricks_bundle.md)
 for configuration and the single-writer requirement.
 
 ## Compute engines (pandas / Polars)
@@ -155,7 +155,7 @@ new_customers = pl.DataFrame(
 predictions = SkyulfPipeline.load("customer_model.pkl").predict(new_customers)
 ```
 
-See [`examples/00_quickstart.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/00_quickstart.ipynb) for a
+See [`examples/00_quickstart.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/00_quickstart.ipynb) for a
 complete, executed save/load round trip.
 
 ## How it fits together
@@ -229,7 +229,7 @@ Carve the holdout off the raw data before `fit()` instead. The same search
 is available as standalone array-level functions,
 `from skyulf.modeling import optimize_thresholds, apply_thresholds`, for use
 outside a pipeline. See the
-[Threshold Tuning guide](https://www.skyulf.com/manual/user_guide/threshold_tuning.html)
+[Threshold Tuning guide](https://kayra.skyulf.com/manual/user_guide/threshold_tuning.html)
 for signatures, a full example, and how the binary grid / multiclass
 Nelder-Mead search works.
 
@@ -283,7 +283,7 @@ scaler mean/std, TF-IDF vocabulary, feature selectors, outlier detectors,
 learned binning) must come **after** the split in the preprocessing list.
 Deterministic, row-independent parses (string splitting, unit conversions,
 date-part extraction) are safe before the split. Read and run
-[`examples/01_house_prices_regression.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/01_house_prices_regression.ipynb)
+[`examples/01_house_prices_regression.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/01_house_prices_regression.ipynb)
 to see this pattern applied to a real regression dataset, including a
 deliberate pre-split/post-split split of "safe" vs. "learned" feature steps.
 
@@ -299,29 +299,30 @@ warnings = SkyulfPipeline(config).validate_leakage_safety()
 Users can pass `polars.DataFrame` inputs directly. `PolarsEngine` and
 `SklearnBridge` convert Polars straight to NumPy at the sklearn boundary—there
 is no user-facing pandas round trip. Arrow integrations use the explicit
-`to_arrow()` path (and therefore `pyarrow`). Every notebook in
-[`examples/`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/examples) uses Polars + NumPy only — no pandas import appears
+`to_arrow()` path (and therefore `pyarrow`). Notebooks 00-08 in
+[`examples/`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/examples) use Polars + NumPy only — no pandas import appears
 anywhere in the example code.
 
 ## Examples
 
-Runnable Jupyter notebooks in [`examples/`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/examples), covering the full
+Runnable Jupyter notebooks in [`examples/`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/examples), covering the full
 feature set end-to-end on real datasets. Open with `jupyter lab` or
 `jupyter notebook` from the repository root — see
-[`examples/README.md`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/README.md) for dataset sourcing notes and a
+[`examples/README.md`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/README.md) for dataset sourcing notes and a
 per-notebook breakdown of what's demonstrated.
 
 | # | Notebook | Dataset | Task | Highlights |
 |---|----------|---------|------|------------|
-| 00 | [`00_quickstart.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/00_quickstart.ipynb) | Synthetic | Classification | Config, fit, save/load, predict, geo features (`GeoDistance` + `H3Index`) |
-| 01 | [`01_house_prices_regression.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/01_house_prices_regression.ipynb) | House Prices | Regression | EDA, leakage-safe null handling, outlier handling (Winsorize vs. IQR removal), Optuna tuning, SHAP |
-| 02 | [`02_disaster_tweets_text_classification.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/02_disaster_tweets_text_classification.ipynb) | Disaster Tweets | Text classification | TF-IDF, hash encoding, Naive Bayes vs. tuned LogReg vs. stacking, char n-gram experiment, sentence embeddings |
-| 03 | [`03_mall_customers_segmentation.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/03_mall_customers_segmentation.ipynb) | Mall Customers | Clustering | Unsupervised EDA, k-selection by silhouette, multi-algorithm comparison |
-| 04 | [`04_forest_cover_multiclass_ensemble.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/04_forest_cover_multiclass_ensemble.ipynb) | Covertype | Multiclass | Ensembles, tuning, per-class metrics |
-| 05 | [`05_santander_imbalanced_classification.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/05_santander_imbalanced_classification.ipynb) | Santander | Imbalanced classification | Drift checks, feature selection strategies (Variance/Correlation vs. Univariate vs. Model-Based), resampling-aware evaluation |
-| 06 | [`06_credit_card_fraud_extreme_imbalance.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/06_credit_card_fraud_extreme_imbalance.ipynb) | Credit Card Fraud | Extreme imbalance | PR-AUC focus, precision/recall tradeoffs |
-| 07 | [`07_spaceship_titanic_classification.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/07_spaceship_titanic_classification.ipynb) | Spaceship Titanic | Classification | Structured-string feature parsing, feature generation (interactions + polynomial), Grid vs. Random Search tuning, voting + stacking ensembles |
-| 08 | [`08_online_retail_customer_segmentation.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/08_online_retail_customer_segmentation.ipynb) | UCI Online Retail | Clustering (RFM segmentation) | Raw-transaction-to-RFM feature engineering, 4-algorithm comparison, business-named segments, bonus time-series features (`DateFeatures`/`LagFeatures`/`RollingAggregate`) |
+| 00 | [`00_quickstart.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/00_quickstart.ipynb) | Synthetic | Classification | Config, fit, save/load, predict, geo features (`GeoDistance` + `H3Index`) |
+| 01 | [`01_house_prices_regression.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/01_house_prices_regression.ipynb) | House Prices | Regression | EDA, leakage-safe null handling, outlier handling (Winsorize vs. IQR removal), Optuna tuning, SHAP |
+| 02 | [`02_disaster_tweets_text_classification.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/02_disaster_tweets_text_classification.ipynb) | Disaster Tweets | Text classification | TF-IDF, hash encoding, Naive Bayes vs. tuned LogReg vs. stacking, char n-gram experiment, sentence embeddings |
+| 03 | [`03_mall_customers_segmentation.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/03_mall_customers_segmentation.ipynb) | Mall Customers | Clustering | Unsupervised EDA, k-selection by silhouette, multi-algorithm comparison |
+| 04 | [`04_forest_cover_multiclass_ensemble.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/04_forest_cover_multiclass_ensemble.ipynb) | Covertype | Multiclass | Ensembles, tuning, per-class metrics |
+| 05 | [`05_santander_imbalanced_classification.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/05_santander_imbalanced_classification.ipynb) | Santander | Imbalanced classification | Drift checks, feature selection strategies (Variance/Correlation vs. Univariate vs. Model-Based), resampling-aware evaluation |
+| 06 | [`06_credit_card_fraud_extreme_imbalance.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/06_credit_card_fraud_extreme_imbalance.ipynb) | Credit Card Fraud | Extreme imbalance | PR-AUC focus, precision/recall tradeoffs |
+| 07 | [`07_spaceship_titanic_classification.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/07_spaceship_titanic_classification.ipynb) | Spaceship Titanic | Classification | Structured-string feature parsing, feature generation (interactions + polynomial), Grid vs. Random Search tuning, voting + stacking ensembles |
+| 08 | [`08_online_retail_customer_segmentation.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/08_online_retail_customer_segmentation.ipynb) | UCI Online Retail | Clustering (RFM segmentation) | Raw-transaction-to-RFM feature engineering, 4-algorithm comparison, business-named segments, bonus time-series features (`DateFeatures`/`LagFeatures`/`RollingAggregate`) |
+| 10 | [`10_leakage_score_gap.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/10_leakage_score_gap.ipynb) | Synthetic | Classification | Measured leakage cost: feature selection before vs. after the split, reported vs. fresh-data accuracy |
 
 ## Automated EDA
 
@@ -378,8 +379,8 @@ if profile.rule_tree is not None:
         print(f"  {f['feature']:20s} {f['importance']:.4f}")
 ```
 
-See any of [`examples/00_quickstart.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/00_quickstart.ipynb)
-through [`08_online_retail_customer_segmentation.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/examples/08_online_retail_customer_segmentation.ipynb)
+See any of [`examples/00_quickstart.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/00_quickstart.ipynb)
+through [`08_online_retail_customer_segmentation.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/08_online_retail_customer_segmentation.ipynb)
 for the full EDA pass run against real datasets, both with and without a
 target column.
 
@@ -438,11 +439,11 @@ mindmap
 ## License
 
 `skyulf-core` — this standalone Python library — is licensed under the
-**Apache License 2.0**; see the [LICENSE](https://github.com/flyingriverhorse/Skyulf/blob/master/skyulf-core/LICENSE) file beside it.
+**Apache License 2.0**; see the [LICENSE](https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/LICENSE) file beside it.
 
 That is the permissive half of a split model: the Skyulf **backend and
 frontend are GNU AGPLv3**. You can use `skyulf-core` in proprietary projects
 without restriction, while running a modified backend or frontend as a network
 service carries AGPLv3's copyleft obligations. See
-[COMMERCIAL-LICENSE.md](https://github.com/flyingriverhorse/Skyulf/blob/master/COMMERCIAL-LICENSE.md)
+[COMMERCIAL-LICENSE.md](https://github.com/flyingriverhorse/Kayra/blob/master/COMMERCIAL-LICENSE.md)
 for the full terms.

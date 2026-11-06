@@ -5,6 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from skyulf.inference.fitted_pipeline import ArtifactRuntimeMismatchError
+
 
 def test_summary_omits_absent_options_but_keeps_false_zero_and_reasons():
     """Optional training choices must not obscure meaningful negative decisions."""
@@ -168,3 +170,90 @@ def test_summary_failure_cannot_fail_completed_task(monkeypatch, capsys):
     )
     assert json.loads(output) == {"rows": 12}
     assert '"rows": 12' in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("error", "anchor"),
+    [
+        (
+            ValueError(
+                "Serving endpoint config update failed: UPDATE_FAILED. Served entity m-1: "
+                "build failed; PERMISSION_DENIED in log tail"
+            ),
+            "serving-endpoint-update-failed",
+        ),
+        (
+            ValueError("Owned serving endpoint must have exactly one served entity."),
+            "serving-endpoint-does-not-serve-one-entity",
+        ),
+        (
+            ArtifactRuntimeMismatchError(
+                "Local artifact runtime mismatch for skyulf-core: requires 0.9.5, found 0.9.6."
+            ),
+            "champion-saved-by-another-core-release",
+        ),
+        (ValueError("on_drift must be disabled or retrain."), "on-drift-value-is-not-supported"),
+        (
+            ValueError(
+                "Active performance_policy requires label_table and result_available_at_column."
+            ),
+            "performance-policy-without-a-label-table",
+        ),
+        (
+            ValueError("Initialize the central monitoring store before writing."),
+            "monitoring-store-is-not-initialized",
+        ),
+        (
+            RuntimeError("[STREAMING_TABLE_OPERATION_NOT_ALLOWED] DESCRIBE HISTORY is not allowed"),
+            "streaming-table-operation-not-allowed",
+        ),
+        (
+            RuntimeError("PERMISSION_DENIED: User does not have SELECT"),
+            "permission-denied-in-a-job-run",
+        ),
+        (
+            RuntimeError("[INSUFFICIENT_PERMISSIONS] Insufficient privileges"),
+            "permission-denied-in-a-job-run",
+        ),
+    ],
+)
+def test_known_failure_prints_fix_and_docs_link(error, anchor, capsys):
+    """Known task failures must name the fix and its docs section, still re-raising the original."""
+    from skyulf.integrations.databricks.jobs.shared.notebook_diagnostics import notebook_task
+
+    with pytest.raises(type(error)) as caught, notebook_task("deploy", None):
+        raise error
+    visible = capsys.readouterr().out
+    docs = (
+        f"Docs: https://kayra.skyulf.com/manual/user_guide/databricks_troubleshooting.html#{anchor}"
+    )
+    assert caught.value is error
+    assert "Fix: " in visible and docs in visible
+    assert "Inspect the traceback below" not in visible
+    assert any(docs in note for note in error.__notes__)
+
+
+def test_known_failure_matches_the_wrapped_cause(capsys):
+    """A wrapper raised from a known failure must still point at the cause's fix."""
+    from skyulf.integrations.databricks.jobs.shared.notebook_diagnostics import notebook_task
+
+    with pytest.raises(RuntimeError, match="Scoring failed"), notebook_task("score", None):
+        try:
+            raise ValueError("Initialize the central monitoring store before reading.")
+        except ValueError as cause:
+            raise RuntimeError("Scoring failed") from cause
+    assert "#monitoring-store-is-not-initialized" in capsys.readouterr().out
+
+
+def test_unknown_failure_keeps_generic_advice_and_original_exception(capsys):
+    """An unrecognized failure must keep today's generic line, add no fix and stay unchanged."""
+    from skyulf.integrations.databricks.jobs.shared.notebook_diagnostics import notebook_task
+
+    failure = KeyError("unexpected column")
+    with pytest.raises(KeyError) as caught, notebook_task("train", None):
+        raise failure
+    visible = capsys.readouterr().out
+    assert caught.value is failure and caught.value.args == ("unexpected column",)
+    assert "Inspect the traceback below and this task's inputs before retrying." in visible
+    assert "Fix:" not in visible and "Docs:" not in visible
+    assert len(failure.__notes__) == 1

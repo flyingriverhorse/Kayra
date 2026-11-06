@@ -14,14 +14,14 @@ Six NYC taxi projects on `samples.nyctaxi.trips` cover the main shapes:
 | Your project | Copy | Notes |
 | --- | --- | --- |
 | One model, scored on Spark workers | `taxi_fare` | Promotes automatically and scores after promotion |
-| REST/SQL serving and monitoring without batch output | [taxi_fare_endpoint](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint) | Automatic endpoint after promotion, `ai_query` and captured-request monitoring; no score job or prediction table |
+| REST/SQL serving and monitoring without batch output | [taxi_fare_endpoint](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint) | Automatic endpoint after promotion, `ai_query` and captured-request monitoring; no score job or prediction table |
 | Preprocessing exclusions with Spark and raw-input serving | `taxi_fare_robust` | Reuses pre-split preparation; IQR, PowerTransformer and imputer handling; REST/`ai_query` examples and labels for monitoring |
 | One model behind an online endpoint | `taxi_fare_online` | Needs a billable Lakebase online store; batch scoring runs on its own, not after approval |
 | One target, several candidate algorithms | `taxi_high_fare` | Competition with custom steps and manual approval |
 | Several targets approved together | `taxi_trips` | Model set with a combined scoring rule |
 
 1. Copy the project folder out of
-   [`examples/nyctaxi`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi).
+   [`examples/nyctaxi`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi).
 2. Run `load_nyctaxi.sql` in the Databricks SQL editor with `catalog` set to
    `workspace` (or yours) and `schema` set to the project name. It creates the
    source tables and never overwrites one.
@@ -32,7 +32,7 @@ Six NYC taxi projects on `samples.nyctaxi.trips` cover the main shapes:
    `databricks bundle run train -t test --profile <profile>`.
 
 Three more projects in
-[`examples/real_data`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/real_data)
+[`examples/real_data`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/real_data)
 use public UCI data, loaded by its `load_data.py` notebook with pinned archive
 hashes. `air_quality_no2` is the most complete one: built-in and custom
 pre-split filters, custom and built-in preprocessing (missing-value markers, IQR
@@ -41,10 +41,11 @@ evaluation charts and monitoring on a later season with real drift and a
 report-only WAPE policy. `diagnostic_single` and `bike_demand_set` add serving
 endpoints and a model set.
 
-[`examples/lakeflow`](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/lakeflow)
+[`examples/lakeflow`](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/lakeflow)
 trains from a Lakeflow streaming table: the features job copies and pins it, and
 a `base_transform` derives the target and a text date key, so no separate
-preparation job is needed.
+preparation job is needed. Without a `base_transform`, `training_table` can name
+the streaming table, materialized view or view directly.
 
 Then swap the taxi tables, columns and recipes for your own. The examples README
 owns the complete steps, approval and serving. Not sure which shape fits? See
@@ -285,12 +286,7 @@ create schemas. Personal development targets set `monitoring_enabled` to
 their own separate store (see
 [development monitoring](databricks_monitoring_enrollment.md#development-monitoring-optional)).
 
-Configured projects also include an independent weekly `monitoring_cleanup`
-job. It defaults to Sunday 04:00 UTC, confirmed cleanup and a 90-day minimum
-reference age. Its cron, confirmation and pause controls are editable per
-target; personal development keeps it paused. Review
-[reference retention](databricks_monitoring_setup.md#retain-or-clean-old-spark-references)
-before deployment. Setup does not move or delete tables in an existing store.
+Setup does not move or delete tables in an existing store.
 
 To turn monitoring on later, set `monitoring_catalog`, `monitoring_schema` and
 `monitoring_enabled: "true"` in `deployment/variables.yml`, or per target under
@@ -322,7 +318,7 @@ apply to the chosen layout and earlier answers:
 | `training_table_version` (not asked for `single_model`) | `null`: pin the latest snapshot at run start |
 | `training_window_mode` | `auto`: full snapshot for random, rolling calendar for temporal |
 | `cv_enabled`, then `cv_folds`, `cv_type`, `cv_shuffle`, `cv_random_state` | CV off; `5`, `k_fold`, `true`, `42` |
-| `max_rows`, `max_input_mb` | `10000`, `64` |
+| `max_rows`, `max_input_mb` | `1000000`, `512` (MiB of pandas memory; keep near 1/8-1/10 of the driver memory) |
 | `training_sample_rows` (per branch for model sets) | `null`: read all rows within the limits; this never samples predictions |
 | `save_preprocessing_diagnostics` | `false`: enable to check fitted preprocessing on a bounded holdout sample |
 | `performance_policy_mode`, task-specific metric, tolerance and baseline version | `off`; when enabled, require outcomes and a monitoring store. See [performance policy](databricks_performance.md). |

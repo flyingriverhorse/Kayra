@@ -225,7 +225,7 @@ def test_model_set_images_belong_to_each_independent_child(workflow_config, trac
         config["evaluation_charts"] = {"enabled": True, "max_rows": 9}
     monkeypatch.setattr(
         candidate,
-        "read_training_snapshot",
+        "read_live_snapshot",
         lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
     )
     context = LifecycleContext("10", "20")

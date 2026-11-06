@@ -369,15 +369,17 @@ def test_owner_and_view_groups_follow_setup_answers(tmp_path):
         tmp_path,
         personal_development_targets="true",
         pipeline_owner="owner@example.com",
-        test_view_group="fT-DBX-team",
-        prod_view_group="Data Team",
+        access_groups="true",
+        test_access_viewers="fT-DBX-team",
+        prod_access_viewers="Data Team",
     )
     bundle = _read_bundle(project)
     assert bundle["variables"]["pipeline_owner"]["default"] == "owner@example.com"
     views = {"test": "fT-DBX-team", "syst": None, "prod": "Data Team"}
     for env, group in views.items():
-        extra = [{"level": "CAN_VIEW", "group_name": group}] if group else []
+        extra = [{"level": "CAN_VIEW", "group_name": "${var.access_viewers}"}] if group else []
         assert bundle["targets"][env]["permissions"] == MANAGERS + extra
+        assert bundle["targets"][env]["variables"]["access_viewers"] == (group or "")
         assert bundle["targets"][f"{env}_development"]["permissions"] == MANAGERS
 
 
@@ -473,7 +475,9 @@ def test_personal_targets_keep_outputs_and_identity_separate(tmp_path, identity)
         assert personal["variables"]["monitoring_pause_status"] == "PAUSED"
         assert personal["variables"]["monitoring_enabled"] == "false"
         # No short-name overrides: the development prefix keeps the project in job names.
-        assert "resources" not in personal
+        # Personal targets add only the dev cleanup_dev job.
+        assert set(personal["resources"]) == {"jobs"}
+        assert set(personal["resources"]["jobs"]) == {"cleanup_dev"}
         assert "name_prefix" not in personal.get("presets", {})
         assert "run_as" not in personal
         for job in ("train", "score", "monitoring"):
@@ -1280,6 +1284,9 @@ def test_cli_emits_independent_policies_and_serialized_operator_graph(
     assert tasks["training_report"]["run_if"] == "ALL_DONE"
     completion = tasks["training_report"]["notebook_task"]["base_parameters"]
     assert completion["decision_result_state"] == "{{tasks.model_decision.result_state}}"
+    # The ALL_DONE report reads initialize_run's values at run time; a reference here
+    # would fail as "Failed to resolve references" and hide initialize_run's own error.
+    assert not {"reference_json", "tracking_uri"} & set(completion)
     assert tasks["monitoring_allowed"]["depends_on"] == [{"task_key": "training_report"}]
     assert tasks["register_monitor"]["depends_on"] == [
         {"task_key": "monitoring_allowed", "outcome": "true"}
@@ -1350,7 +1357,7 @@ def test_cli_emits_independent_policies_and_serialized_operator_graph(
             assert runtime["job_run_id"] == "{{job.run_id}}"
             assert runtime["repair_count"] == "{{job.repair_count}}"
             assert runtime["execution_count"] == "{{task.execution_count}}"
-            if task["task_key"] != "initialize_run":
+            if task["task_key"] not in {"initialize_run", "training_report"}:
                 assert runtime["tracking_uri"] == "{{tasks.initialize_run.values.tracking_uri}}"
 
 

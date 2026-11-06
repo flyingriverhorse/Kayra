@@ -20,6 +20,18 @@ This shows manual approval. Automatic policy applies the same saved quality
 gates without an operator approval run. First-champion initialization has no
 prior champion to restore.
 
+## How a model moves
+
+![Model lifecycle from candidate to champion](../assets/diagrams/databricks/model_lifecycle.svg)
+
+[Editable draw.io source](../assets/diagrams/databricks/model_lifecycle.drawio)
+
+Training registers the candidate as `@challenger` and compares it with the current `@champion`
+on the same holdout. With `automatic` promotion an eligible candidate is promoted at once; with
+`manual_approval` the training report offers approve and reject runs. A promotion can later be
+rolled back with its receipt. Each champion change can start the score job and the
+serving_endpoint job when their `follow_champion` settings are on.
+
 ## What to edit
 
 ### Independent scoring and promotion policies

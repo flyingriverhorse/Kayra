@@ -64,36 +64,54 @@ def _artifact_size(client: Any, run_id: str) -> int | None:
     return matches[0].file_size
 
 
-def _read_parquet(path: Path, evidence: dict, spec: Any) -> pd.DataFrame:
+def _read_parquet(path: Path, evidence: dict, spec: Any, label: str = "holdout") -> pd.DataFrame:
     """Verify bytes, footer rows and schema before decoding, then bound decoded memory."""
-    _validate_memory_limit(evidence, spec.max_bytes)
+    _validate_memory_limit(evidence, spec.max_bytes, label)
     size = path.stat().st_size
     if size != evidence["bytes"] or size > spec.max_bytes:
-        raise ValueError("Saved holdout exceeds byte budget or differs from its receipt.")
+        raise ValueError(f"Saved {label} exceeds byte budget or differs from its receipt.")
     if hashlib.sha256(path.read_bytes()).hexdigest() != evidence["sha256"]:
-        raise ValueError("Saved holdout digest differs from its comparison.")
-    _validate_parquet_footer(path, evidence, spec)
+        raise ValueError(f"Saved {label} digest differs from its comparison.")
+    _validate_parquet_footer(path, evidence, spec, label)
     frame = pd.read_parquet(path)
     validate_holdout_budget(frame, spec.max_rows, spec.max_bytes)
     if frame_schema(frame) != evidence["schema"] or frame.attrs != evidence["attrs"]:
-        raise ValueError("Saved holdout schema or split context differs from its comparison.")
+        raise ValueError(f"Saved {label} schema or split context differs from its comparison.")
     return frame
 
 
-def _validate_parquet_footer(path: Path, evidence: dict, spec: Any) -> None:
+def _validate_parquet_footer(path: Path, evidence: dict, spec: Any, label: str) -> None:
     """Bound typed row metadata and uncompressed allocations before decoding columns."""
     metadata = pq.read_metadata(path)
     if metadata.num_rows != evidence["rows"] or metadata.num_rows > spec.max_rows:
-        raise ValueError("Saved holdout row count differs from its comparison or budget.")
+        raise ValueError(f"Saved {label} row count differs from its comparison or budget.")
     schema_digest = hashlib.sha256(pq.read_schema(path).serialize()).hexdigest()
     if schema_digest != evidence["arrow_schema_sha256"]:
-        raise ValueError("Saved holdout Parquet schema differs from its comparison.")
+        raise ValueError(f"Saved {label} Parquet schema differs from its comparison.")
     # Footer uncompressed sizes also bound highly compressed allocations before decoding.
     uncompressed = sum(
         metadata.row_group(i).total_byte_size for i in range(metadata.num_row_groups)
     )
     if uncompressed > spec.max_bytes:
-        raise ValueError("Saved holdout uncompressed bytes exceed budget.")
+        raise ValueError(f"Saved {label} uncompressed bytes exceed budget.")
+
+
+def load_frame_artifact(
+    client: Any, run_id: str, path: str, evidence: dict, spec: Any
+) -> pd.DataFrame:
+    """Load a saved source snapshot, rejecting an over-budget receipt before downloading."""
+    label = "source snapshot"
+    try:
+        if type(evidence["bytes"]) is not int or not 0 < evidence["bytes"] <= spec.max_bytes:
+            raise ValueError(f"Saved {label} exceeds byte budget.")
+        if type(evidence["rows"]) is not int or evidence["rows"] > spec.max_rows:
+            raise ValueError(f"Saved {label} exceeds row budget.")
+        _validate_memory_limit(evidence, spec.max_bytes, label)
+        with TemporaryDirectory(prefix="skyulf-saved-source-") as directory:
+            downloaded = Path(client.download_artifacts(run_id, path, directory))
+            return _read_parquet(downloaded, evidence, spec, label)
+    except (KeyError, TypeError) as exc:
+        raise ValueError(f"Saved {label} receipt is malformed.") from exc
 
 
 def _saved_or_new_frame(client: Any, run_id: str, frame: pd.DataFrame, spec: Any) -> dict:
@@ -210,8 +228,8 @@ def _validate_frame_limits(evidence: dict, report: Any, spec: Any) -> None:
     _validate_memory_limit(evidence, spec.max_bytes)
 
 
-def _validate_memory_limit(evidence: dict, max_bytes: int) -> None:
+def _validate_memory_limit(evidence: dict, max_bytes: int, label: str = "holdout") -> None:
     """Bound producer-measured decoded memory before Parquet dictionary expansion."""
     size = evidence.get("memory_bytes")
     if type(size) is not int or not 0 < size <= max_bytes:
-        raise ValueError("Saved holdout decoded memory exceeds byte budget.")
+        raise ValueError(f"Saved {label} decoded memory exceeds byte budget.")

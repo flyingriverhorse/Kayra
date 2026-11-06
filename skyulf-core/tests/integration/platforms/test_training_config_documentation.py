@@ -65,7 +65,7 @@ def test_reference_examples_use_all_layouts_and_load(tmp_path):
 def test_project_guide_links_to_the_single_field_reference():
     """Project instructions must route users to one maintained field contract."""
     guide = _reference(PROJECT_GUIDE)
-    reference_url = "https://www.skyulf.com/manual/user_guide/databricks_training_config.html"
+    reference_url = "https://kayra.skyulf.com/manual/user_guide/databricks_training_config.html"
     assert reference_url in guide
     assert "<!-- training-fields:start -->" not in guide
     assert "<!-- model-fields:start -->" not in guide

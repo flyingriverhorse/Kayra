@@ -13,6 +13,18 @@ Skyulf is split into three pieces with strict boundaries:
    - React + TypeScript UI (ML canvas).
    - Builds pipeline configs and talks to the backend.
 
+## The Big Picture
+
+![Kayra system overview: browser, FastAPI backend, job runner, skyulf-core, storage and exports](assets/diagrams/architecture/system_overview.svg)
+
+[Editable draw.io source](assets/diagrams/architecture/system_overview.drawio)
+
+The browser talks to the FastAPI backend over REST, and job progress comes back over a WebSocket.
+Training and tuning run in the job runner: in-process threads by default, or a Celery worker
+with Redis when `USE_CELERY=true`. The runner imports skyulf-core, the same library your own
+scripts can install with pip. Job records live in the SQL database, while datasets and model
+artifacts live in local folders or an S3 bucket.
+
 ## The Calculator → Applier Pattern
 
 Skyulf-core separates learning from transformation:

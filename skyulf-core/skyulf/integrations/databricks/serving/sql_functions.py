@@ -20,6 +20,8 @@ _SQL_TYPES = {
 
 # Types without a nullable wire form whose SQL NULL ai_query would send as 0/false.
 _NULL_GUARDED = frozenset({"int32", "int64", "bool"})
+# Record keys reach the label join as text; these Spark types cast to the label's text.
+KEY_TYPES = frozenset({"string", "tinyint", "smallint", "int", "bigint", "boolean", "date"})
 
 
 def _identifier(value: str, label: str) -> str:
@@ -66,6 +68,26 @@ def _request_fields(endpoint: PinnedEndpointPlan) -> str:
     return ",\n".join(fields)
 
 
+def _key_schema(
+    keys: tuple[tuple[str, str], ...], inputs: tuple[str, ...]
+) -> tuple[tuple[str, str], ...]:
+    """Validate optional record-key parameters; a key that is already an input is skipped."""
+    extra = tuple((name, dtype) for name, dtype in keys if name not in inputs)
+    names = [name.casefold() for name, _ in extra] + [name.casefold() for name in inputs]
+    if len(set(names)) != len(names):
+        raise ValueError("SQL record key names must be case-insensitively unique.")
+    fields = []
+    for name, dtype in extra:
+        _identifier(name, "record key identifier")
+        if dtype not in KEY_TYPES:
+            raise ValueError(
+                f"SQL record key {name!r} is {dtype}; record keys must be string, integer, "
+                "boolean or date to match label values."
+            )
+        fields.append((name, dtype.upper()))
+    return tuple(fields)
+
+
 def _null_guarded(endpoint: PinnedEndpointPlan) -> list[str]:
     """Return inputs whose SQL NULL the request stops instead of sending as 0/false."""
     transport = transport_spec(endpoint.input_schema)
@@ -103,11 +125,14 @@ class ServingSQLFunctionPlan:
     Use ``build_serving_sql_function`` to prepare a plan. Model version pinning
     is checked when deploying; the SQL function itself calls an endpoint name.
     Administrators must keep that release endpoint on the selected version.
+    ``record_keys`` are optional ``DEFAULT NULL`` parameters sent as text so
+    endpoint monitoring can join delayed labels; the model ignores them.
     """
 
     endpoint: PinnedEndpointPlan
     function_name: str
     fail_on_error: bool = True
+    record_keys: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete schemas and ambiguous configuration before rendering SQL."""
@@ -118,6 +143,12 @@ class ServingSQLFunctionPlan:
             raise ValueError("input_columns differ from the inspected input schema.")
         if not isinstance(self.fail_on_error, bool):
             raise TypeError("fail_on_error must be a boolean.")
+        _key_schema(self.record_keys, self.endpoint.input_columns)
+
+    @property
+    def _keys(self) -> tuple[tuple[str, str], ...]:
+        """Return the validated optional key parameters as (name, SQL type)."""
+        return _key_schema(self.record_keys, self.endpoint.input_columns)
 
     @property
     def response_type(self) -> str:
@@ -142,7 +173,13 @@ class ServingSQLFunctionPlan:
     def render_create_sql(self, *, comment: str, replace: bool = False) -> str:
         """Render the same typed wrapper with an explicit management comment and mode."""
         parameters = ",\n".join(
-            f"  {name} {dtype}" for name, dtype in _sql_schema(self.endpoint.input_schema)
+            [f"  {name} {dtype}" for name, dtype in _sql_schema(self.endpoint.input_schema)]
+            + [f"  `{name}` {dtype} DEFAULT NULL" for name, dtype in self._keys]
+        )
+        # A NULL key stays a JSON null (an unkeyed request) instead of ai_query's 0/false.
+        request = ",\n".join(
+            [_request_fields(self.endpoint)]
+            + [f"    '{name}', CAST(`{name}` AS STRING)" for name, _ in self._keys]
         )
         spec = self.endpoint.spec
         error_mode = str(self.fail_on_error).lower()
@@ -153,19 +190,21 @@ class ServingSQLFunctionPlan:
             f"RETURNS {self.return_type}\nLANGUAGE SQL\nNOT DETERMINISTIC\n"
             f"COMMENT '{escaped_comment}'\n"
             f"RETURN ai_query(\n  endpoint => '{spec.endpoint_name}',\n"
-            f"  request => named_struct(\n{_request_fields(self.endpoint)}\n  ),\n"
+            f"  request => named_struct(\n{request}\n  ),\n"
             f"  returnType => '{self.response_type}',\n  failOnError => {error_mode}\n)"
         )
 
-    def call_sql(self, *, table_alias: str | None = None) -> str:
+    def call_sql(self, *, table_alias: str | None = None, record_keys: bool = False) -> str:
         """Render a named-argument call against matching model-input column names.
 
         ``table_alias`` is an optional simple SQL alias, not a table expression.
+        ``record_keys`` also passes the optional key columns of the same names.
         The caller owns the surrounding SELECT, source selection and any writes.
         """
         prefix = "" if table_alias is None else _identifier(table_alias, "table_alias") + "."
+        keys = [name for name, _ in self._keys] if record_keys else []
         arguments = ", ".join(
-            f"`{name}` => {prefix}`{name}`" for name in self.endpoint.input_columns
+            f"`{name}` => {prefix}`{name}`" for name in (*self.endpoint.input_columns, *keys)
         )
         return f"{_function_name(self.function_name)}({arguments})"
 
@@ -186,7 +225,8 @@ class ServingSQLFunctionPlan:
         # Listed only when present, so functions without guarded inputs keep their hash
         # while older functions with them are replaced once.
         guarded = _null_guarded(self.endpoint)
-        return contract | ({"null_guard": guarded} if guarded else {})
+        keys = {"record_keys": self._keys} if self.record_keys else {}
+        return contract | ({"null_guard": guarded} if guarded else {}) | keys
 
 
 def build_serving_sql_function(
@@ -194,6 +234,7 @@ def build_serving_sql_function(
     function_name: str,
     *,
     fail_on_error: bool = True,
+    record_keys: tuple[tuple[str, str], ...] = (),
 ) -> ServingSQLFunctionPlan:
     """Build a typed SQL function from a prepared pinned endpoint, without any writes.
 
@@ -202,8 +243,9 @@ def build_serving_sql_function(
     integer/boolean wire columns. No preprocessing is fitted or moved into SQL.
     With ``fail_on_error=False``, endpoint errors appear as ``errorMessage``;
     SQL, permission and other non-endpoint failures can still fail the query.
+    ``record_keys`` (name, Spark type) become optional text request fields.
     """
-    return ServingSQLFunctionPlan(endpoint, function_name, fail_on_error)
+    return ServingSQLFunctionPlan(endpoint, function_name, fail_on_error, record_keys)
 
 
 def create_serving_sql_function(spark: Any, client: Any, plan: ServingSQLFunctionPlan) -> None:

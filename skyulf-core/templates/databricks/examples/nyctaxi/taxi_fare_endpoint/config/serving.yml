@@ -21,8 +21,13 @@ serving_endpoint:
   sql_function:
     enabled: true
     name: "{catalog}.{metadata_schema}.taxi_fare_endpoint_score{resource_suffix}"
-  # Who may call the endpoint: each entry gets endpoint CAN_QUERY and SQL function
-  # EXECUTE. Grants are additive; removing an entry does not revoke access.
+  # Who may call the endpoint. Left empty, a target uses its access groups from
+  # deployment/targets.yml (access_serving_callers query, access_viewers view);
+  # entries here replace those groups for the target. Each entry gets endpoint
+  # CAN_QUERY and SQL function EXECUTE. Grants are additive; removing an entry does
+  # not revoke access. An entry with `level: CAN_VIEW` only sees the endpoint and
+  # its state, granted right after create/update so a failed deployment can be
+  # inspected.
   #
   # Same callers in every target:
   #   permissions:
@@ -30,10 +35,12 @@ serving_endpoint:
   #       level: CAN_QUERY
   #
   # Different callers per target (groups differ per workspace). A target that is
-  # not listed, such as a personal development target, grants nothing:
+  # not listed uses its access groups (blank on personal development targets):
   #   permissions:
   #     test:
   #       - group_name: xx-team
+  #       - group_name: xx-viewers
+  #         level: CAN_VIEW
   #     syst:
   #       - group_name: yy-team
   #     prod:

@@ -9,9 +9,6 @@ from skyulf.integrations.databricks.observability.monitoring.monitoring_config i
     MonitorConfig,
     json_digest,
 )
-from skyulf.integrations.databricks.observability.monitoring.spark.spark_monitoring_reference import (
-    reference_id,
-)
 
 
 def options() -> dict[str, Any]:
@@ -72,11 +69,3 @@ def test_invalid_online_sources_fail_before_remote_access(changed, message):
     values: dict[str, Any] = {**options(), "serving_endpoint": "risk-endpoint", **changed}
     with pytest.raises(ValueError, match=message):
         MonitorConfig(**values)
-
-
-def test_online_enrollment_reuses_the_same_verified_training_reference():
-    """Endpoint identity must not force a second copy of immutable training data."""
-    batch = MonitorConfig(**options())
-    online = MonitorConfig(**options(), serving_endpoint="risk-endpoint")
-    evidence = {"model_version": "1", "model_digest": "fixed-training-digest"}
-    assert reference_id(batch, evidence) == reference_id(online, evidence)

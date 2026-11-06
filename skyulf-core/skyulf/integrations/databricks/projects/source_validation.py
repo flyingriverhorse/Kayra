@@ -5,6 +5,7 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from ..data.delta_io.delta import UNVERSIONED_KINDS
 from ..data.training.training_dates import TrainingDateSpec, training_date_spec
 from ..shared._contracts import column_name, table_name
 
@@ -71,21 +72,44 @@ def _training_columns(config: dict[str, Any], external: bool) -> list[str]:
     )
 
 
-def _table_schema(query: Query, name: str) -> tuple[dict[str, str], bool]:
-    """Inspect Delta metadata without treating absent permissions as an empty table."""
+def _table_schema(
+    query: Query, name: str, *, unversioned_ok: bool = False
+) -> tuple[dict[str, str], bool]:
+    """Inspect Delta metadata without treating absent permissions as an empty table.
+
+    With ``unversioned_ok`` a streaming table, materialized view or view is accepted too:
+    training reads it directly and saves the rows it read. It has no change data feed here.
+    """
     quoted = table_name(name)
-    detail = query(f"DESCRIBE DETAIL {quoted}")
-    if len(detail) != 1 or detail[0].get("format") != "delta":
-        raise ValueError(f"Source must be an existing Delta table: {name}.")
-    properties = detail[0].get("properties") or {}
-    if isinstance(properties, str):
-        properties = json.loads(properties)
+    properties = _delta_properties(query, quoted, name, unversioned_ok)
     columns = {
         row["col_name"]: row["data_type"].lower()
         for row in query(f"DESCRIBE TABLE {quoted}")
         if row.get("col_name") and not row["col_name"].startswith("#") and row.get("data_type")
     }
     return columns, str(properties.get("delta.enableChangeDataFeed", "false")).lower() == "true"
+
+
+def _delta_properties(query: Query, quoted: str, name: str, unversioned_ok: bool) -> dict:
+    """Return Delta table properties, or none for an accepted unversioned source."""
+    failure: ValueError | None = None
+    try:
+        detail = query(f"DESCRIBE DETAIL {quoted}")
+    except ValueError as exc:
+        detail, failure = [], exc
+    if len(detail) != 1 or detail[0].get("format") != "delta":
+        if unversioned_ok and _table_type(query, quoted) in UNVERSIONED_KINDS:
+            return {}
+        raise failure or ValueError(f"Source must be an existing Delta table: {name}.")
+    properties = detail[0].get("properties") or {}
+    return json.loads(properties) if isinstance(properties, str) else properties
+
+
+def _table_type(query: Query, quoted: str) -> str:
+    """Read the catalog Type row, for example MANAGED or MATERIALIZED_VIEW."""
+    rows = query(f"DESCRIBE TABLE EXTENDED {quoted}")
+    types = [row.get("data_type") for row in rows if str(row.get("col_name")).strip() == "Type"]
+    return str(types[0]).strip().upper() if types else "UNKNOWN"
 
 
 def _keys(query: Query, name: str, columns: dict[str, str], keys: list[str]) -> None:
@@ -160,13 +184,25 @@ def _conversion_preview(
     return []
 
 
-def _source_key_sets(config: dict, name: str, monitoring: str | None) -> list[list[str]]:
+_REQUEST_KEYS = ["databricks_request_id", "request_row_index"]
+# Endpoint requests carry record keys as JSON text; these label types cast to the same text.
+_TEXT_KEY_TYPES = {"string", "tinyint", "smallint", "int", "bigint", "boolean", "date"}
+
+
+def _record_key_labels(config: dict, columns: dict[str, str]) -> bool:
+    """An endpoint joins labels on record keys when the table has no request columns."""
+    return not set(_REQUEST_KEYS) <= set(columns)
+
+
+def _source_key_sets(
+    config: dict, name: str, monitoring: str | None, columns: dict[str, str]
+) -> list[list[str]]:
     """Keep request identity separate from business identity across overlapping table roles."""
     business = list(config["record_key_columns"])
     delivery = config.get("prediction_delivery", "batch")
-    if name != monitoring or delivery == "batch":
+    if name != monitoring or delivery == "batch" or _record_key_labels(config, columns):
         return [business]
-    request = ["databricks_request_id", "request_row_index"]
+    request = _REQUEST_KEYS
     business_tables = {
         config["training_table"],
         config["score_source_table"],
@@ -177,15 +213,38 @@ def _source_key_sets(config: dict, name: str, monitoring: str | None) -> list[li
 
 def _source_tables(config: dict, query: Query, names: list[str], monitoring: str | None) -> dict:
     """Validate each table's actual identity contracts before inspecting feature columns."""
+    # Training sources are read once and saved, and monitoring reads labels as they are now,
+    # so both may be unversioned; the scoring source still needs Delta history and CDF.
+    readable = {
+        config["training_table"],
+        config.get("training_label_table"),
+        monitoring,
+    } - {config["score_source_table"]}
     tables = {}
     for name in names:
-        schema, cdf = _table_schema(query, name)
-        for keys in _source_key_sets(config, name, monitoring):
-            if keys == ["databricks_request_id", "request_row_index"]:
-                _require_request_key_types(schema, name)
+        schema, cdf = _table_schema(query, name, unversioned_ok=name in readable)
+        for keys in _source_key_sets(config, name, monitoring, schema):
+            _require_key_types(config, schema, name, keys, monitoring)
             _keys(query, name, schema, keys)
         tables[name] = {"columns": schema, "change_data_feed": cdf}
     return tables
+
+
+def _require_key_types(
+    config: dict, schema: dict[str, str], name: str, keys: list[str], monitoring: str | None
+) -> None:
+    """Check request columns, or record keys that an endpoint compares as request text."""
+    if keys == _REQUEST_KEYS:
+        _require_request_key_types(schema, name)
+        return
+    endpoint = config.get("prediction_delivery", "batch") != "batch"
+    if name != monitoring or not endpoint or not _record_key_labels(config, schema):
+        return
+    if wrong := [key for key in keys if schema.get(key) not in _TEXT_KEY_TYPES]:
+        raise ValueError(
+            f"Endpoint label key {name}.{wrong[0]} is {schema.get(wrong[0])}; record keys "
+            "must be string, integer, boolean or date to match request values."
+        )
 
 
 def _require_request_key_types(schema: dict[str, str], name: str) -> None:
@@ -217,11 +276,13 @@ def validate_project_sources(
     """
     training, scoring = config["training_table"], config["score_source_table"]
     outcome = config.get("training_label_table")
+    label_table, pending = _pending_label_table(config, query, label_table)
     names = list(dict.fromkeys(name for name in (training, scoring, outcome, label_table) if name))
     for name in names:
         table_name(name)
     keys = list(config["record_key_columns"])
     inputs, warnings, lookup_controls = _raw_inputs(config)
+    warnings += pending
     tables = _source_tables(config, query, names, label_table)
     if (
         config.get("prediction_delivery", "batch") != "endpoint"
@@ -251,6 +312,24 @@ def validate_project_sources(
     return {"status": "passed", "tables": tables, "warnings": warnings}
 
 
+def _pending_label_table(
+    config: dict, query: Query, label_table: str | None
+) -> tuple[str | None, list[str]]:
+    """Drop an endpoint label table that does not exist yet; a missing schema still fails."""
+    endpoint = config.get("prediction_delivery", "batch") == "endpoint"
+    if not label_table or not endpoint:
+        return label_table, []
+    table_name(label_table)
+    namespace, _, table = label_table.rpartition(".")
+    rows = query(f"SHOW TABLES IN {table_name(namespace)} LIKE '{table}'")
+    if any(str(row.get("tableName", "")).casefold() == table.casefold() for row in rows):
+        return label_table, []
+    return None, [
+        f"Label table {label_table} does not exist yet; endpoint performance stays "
+        "awaiting_labels until it does."
+    ]
+
+
 def _check_outcome_columns(
     config: dict,
     tables: dict,
@@ -276,7 +355,9 @@ def _check_outcome_columns(
         label_keys = (
             keys
             if is_training
-            else [key for group in _source_key_sets(config, name, monitoring) for key in group]
+            else [
+                key for group in _source_key_sets(config, name, monitoring, schema) for key in group
+            ]
         )
         _require_columns(schema, [*label_keys, target, timestamp], name)
         if is_training or config.get("prediction_delivery", "batch") != "endpoint":
@@ -316,9 +397,11 @@ def _training_availability(kind: str, column: str, parsing: Any) -> list[str]:
 
 
 def _monitoring_availability(kind: str, column: str) -> list[str]:
-    """Accept only monitoring's native instants or explicitly offset ISO text values."""
+    """Accept monitoring's native instants, dates or explicitly offset ISO text values."""
     if kind == "timestamp":
         return []
+    if kind == "date":
+        return [f"Monitoring treats DATE availability in {column} as 00:00 UTC that day."]
     if kind == "string":
         return [
             f"Monitoring availability values in {column} must be ISO timestamps with an "

@@ -1,0 +1,97 @@
+<mxfile host="drawio" version="24.7.17">
+  <diagram id="system-overview" name="System overview">
+    <mxGraphModel dx="1200" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="0" page="0" pageScale="1" pageWidth="1100" pageHeight="900" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Kayra: how the pieces fit" style="text;html=0;fontSize=20;fontStyle=1;fontColor=#1A1A19;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="0" width="520" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="browser" value="Browser&#xa;Kayra canvas (React + React Flow)" style="rounded=1;html=0;arcSize=10;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="50" width="380" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scripts" value="Your scripts and notebooks&#xa;pip install skyulf-core" style="rounded=1;html=0;arcSize=10;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="460" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" value="backend  (FastAPI)" style="rounded=1;html=0;arcSize=4;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=14;fontStyle=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="280" y="160" width="660" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" value="Data sources&#xa;upload, S3, ingestion" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="200" width="140" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="Pipelines and jobs&#xa;leakage check, run, tune" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="455" y="200" width="150" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="EDA&#xa;profiles, insights" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="620" y="200" width="140" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="Registry and&#xa;deployments" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="775" y="200" width="145" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" value="Monitoring&#xa;drift, error log, slow nodes" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="270" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="b6" value="Realtime job events&#xa;(WebSocket)" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="515" y="270" width="170" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="b7" value="Data service&#xa;dataset I/O, local or S3" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="700" y="270" width="220" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="runner" value="Job runner: in-process threads (default)  or  Celery worker + Redis (USE_CELERY=true)" style="rounded=1;html=0;fillColor=#FFE9C7;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="342" width="620" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="core" value="skyulf-core  (Python library, Apache-2.0)" style="rounded=1;html=0;arcSize=4;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=14;fontStyle=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="280" y="460" width="320" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" value="Preprocessing nodes&#xa;Calculator learns, Applier applies" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="498" width="280" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" value="Modeling and tuning&#xa;scikit-learn, XGBoost, LightGBM" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="554" width="280" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" value="Profiling&#xa;EDA, drift, data expectations" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="610" width="280" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" value="SkyulfPipeline&#xa;leakage check, fit, save, load" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="666" width="280" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="store" value="Storage" style="rounded=1;html=0;arcSize=4;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=14;fontStyle=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="630" y="460" width="310" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" value="SQL database&#xa;SQLite (default) or PostgreSQL" style="shape=cylinder3;html=0;boundedLbl=1;size=8;fillColor=#FFFFFF;strokeColor=#666666;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="498" width="270" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="Files: datasets and model artifacts&#xa;local folders or an S3 bucket" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#666666;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="578" width="270" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="out" value="Ways out" style="rounded=1;html=0;arcSize=4;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=14;fontStyle=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="160" width="200" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="o1" value="Jupyter notebook&#xa;export" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="36" y="200" width="168" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="o2" value="Model project export&#xa;HTTP API + batch scoring" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="36" y="265" width="168" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="o3" value="Databricks bundle&#xa;template in skyulf-core" style="rounded=1;html=0;fillColor=#FFFFFF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="36" y="330" width="168" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="REST + WebSocket" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;startArrow=block;endFill=1;startFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="browser" target="backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="imports" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.2;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="runner" target="core">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="reads / writes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;startArrow=block;endFill=1;startFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="runner" target="store">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="imports" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#82B366;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;" edge="1" parent="1" source="scripts" target="core">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="exports" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#9673A6;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="backend" target="out">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

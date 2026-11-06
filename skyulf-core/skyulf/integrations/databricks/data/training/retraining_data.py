@@ -19,7 +19,9 @@ from ...observability.monitoring.monitoring_reference import load_monitoring_ref
 from ...training.fitting.candidate import (
     TrainingSpec,
     eligible_training_snapshot,
+    read_live_snapshot,
     read_training_partitions,
+    split_labeled_snapshot,
     training_spec_payload,
     validate_pre_split_step,
 )
@@ -221,9 +223,10 @@ def assess_training_data(spark: Any, monitor: MonitorConfig, workflow: dict, now
         training_spec_payload(current, engine),
         workflow.get("pipeline", {}).get("project_python_source"),
     )
-    current_frame, train, _, _ = read_training_partitions(
-        spark, _bounded(current, monitor), temporal_cv=False, engine=engine
-    )
+    # The current source is read live; only the active model's rows are replayed.
+    bounded = _bounded(current, monitor)
+    current_frame = read_live_snapshot(spark, bounded)
+    train, _, _ = split_labeled_snapshot(current_frame, bounded, engine=engine)
     saved = phase_training_spec(
         training_spec_payload(saved, engine), artifact.pipeline.config.get("project_python_source")
     )

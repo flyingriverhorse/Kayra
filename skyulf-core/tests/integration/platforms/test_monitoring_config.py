@@ -211,3 +211,23 @@ def test_per_model_performance_mapping_preserves_exact_keys():
 
     policies = {"models.risk.model": performance_policy(), "models.risk.other": {"mode": "off"}}
     assert parse_performance_policies(json.dumps(policies)) == policies
+
+
+def test_training_holdout_baseline_defaults_to_enrolled_version():
+    """An unpinned holdout baseline must compare against the version being enrolled."""
+    from skyulf.integrations.databricks.observability.monitoring.monitoring_config import (
+        MonitorConfig,
+    )
+
+    unpinned = performance_policy() | {"baseline": {"kind": "training_holdout"}}
+    labels = {"label_table": "labels.risk.actuals", "result_available_at_column": "available_at"}
+    config = MonitorConfig.from_dict(entry(**labels, performance_policy=unpinned))
+    assert config.performance_policy is not None
+    assert config.performance_policy["baseline"] == {
+        "kind": "training_holdout",
+        "model_version": "2",
+    }
+    assert unpinned["baseline"] == {"kind": "training_holdout"}
+    aliased = entry(**labels, performance_policy=unpinned, model_version=None, model_alias="prod")
+    with pytest.raises(ValueError, match="baseline.model_version"):
+        MonitorConfig.from_dict(aliased)

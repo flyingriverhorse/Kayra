@@ -120,7 +120,6 @@ def register_set_monitors(
                 config,
                 tracking_uri=workflow.get("tracking_uri", "databricks"),
                 registry_uri=workflow.get("registry_uri", "databricks-uc"),
-                reference_holder=holder,
             )
     return {
         "inventory_table": f"{namespace}.model_inventory",

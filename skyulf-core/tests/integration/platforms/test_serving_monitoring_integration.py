@@ -201,7 +201,8 @@ def test_online_observation_routes_event_keys_and_operational_evidence(
 
     saved = artifact()
     spec = SimpleNamespace(record_key_columns=("company_id",), target_column="target")
-    reference, current, predictions, labels = object(), object(), object(), object()
+    # Predictions are a frame: the record-key columns are dropped before the request join.
+    reference, current, predictions, labels = object(), object(), Mock(), object()
     now = datetime(2026, 10, 6, tzinfo=UTC)
     serving = {
         "request_count": 4,
@@ -261,10 +262,6 @@ def test_partial_serving_capture_retains_performance_policy_and_visible_count(mo
     """Measured loss remains eligible for training with an explicit partial-capture warning."""
     from tests.integration.platforms.test_monitoring_performance import policy
 
-    from skyulf.integrations.databricks.observability.monitoring.spark import (
-        spark_monitoring_sources,
-    )
-
     selected = config(
         label_table="a.b.labels",
         result_available_at_column="available_at",
@@ -289,9 +286,13 @@ def test_partial_serving_capture_retains_performance_policy_and_visible_count(mo
     )
     monkeypatch.setattr(monitoring_performance, "_measure", measured)
     monkeypatch.setattr(
-        spark_monitoring_sources,
-        "read_spark_labels",
-        lambda *a: (None, {"label_table_id": "labels"}),
+        monitoring_performance,
+        "read_serving_labels",
+        lambda spark, config, spec, predictions, now: (
+            predictions,
+            None,
+            {"label_table_id": "labels"},
+        ),
     )
     monkeypatch.setattr(monitoring_performance, "load_performance_history", lambda *a: [])
     baseline = {
@@ -345,3 +346,258 @@ def test_performance_policy_count_uses_own_window_and_omits_missing_values(loggi
     if logging_errors is not None:
         assert f">{logging_errors}<" in html
     assert ("usable payloads" in html) == bool(logging_errors)
+
+
+class _LabelSpark:
+    """Fake Spark with one label table of a chosen catalog type and no Delta history."""
+
+    def __init__(
+        self, kind: str | None, columns: dict[str, str], *, schema_exists: bool = True
+    ) -> None:
+        """Expose ``columns`` (name to Spark type) as the label table schema."""
+        self.kind, self.statements = kind, []
+        self.frame = SimpleNamespace(
+            columns=list(columns),
+            schema=SimpleNamespace(
+                fields=[
+                    SimpleNamespace(name=name, dataType=SimpleNamespace(typeName=lambda t=dtype: t))
+                    for name, dtype in columns.items()
+                ]
+            ),
+        )
+        self.catalog = SimpleNamespace(
+            tableExists=lambda table: kind is not None,
+            databaseExists=lambda name: schema_exists,
+        )
+
+    def table(self, name):
+        """Return the label table frame."""
+        return self.frame
+
+    def sql(self, statement):
+        """Answer the catalog type and reject history, detail and time travel."""
+        self.statements.append(statement)
+        if self.kind is None:
+            raise RuntimeError("[TABLE_OR_VIEW_NOT_FOUND] The table cannot be found.")
+        if statement.startswith("DESCRIBE TABLE EXTENDED"):
+            return SimpleNamespace(collect=lambda: [("Type", self.kind)])
+        raise RuntimeError("STREAMING_TABLE_OPERATION_NOT_ALLOWED.REQUIRES_SHARED_COMPUTE")
+
+
+def test_unversioned_label_table_is_read_plain_without_history(monkeypatch):
+    """A Streaming Table on dedicated compute rejects history, so labels need a plain read."""
+    from skyulf.integrations.databricks.observability.monitoring.spark import (
+        spark_monitoring_sources,
+    )
+
+    identity = Mock(return_value="uc-table-id")
+    monkeypatch.setattr(spark_monitoring_sources, "source_table_identity", identity)
+    spark = _LabelSpark("STREAMING_TABLE", {"company": "string"})
+    assert spark_monitoring_sources.label_table_kind(spark, "a.b.silver") == "STREAMING_TABLE"
+    now = datetime(2026, 10, 6, tzinfo=UTC)
+    frame, evidence = spark_monitoring_sources.read_label_source(
+        spark, "a.b.silver", "STREAMING_TABLE", now
+    )
+    assert frame is spark.frame
+    assert evidence == {
+        "label_table": "a.b.silver",
+        "label_table_id": "uc-table-id",
+        "label_version": None,
+    }
+    identity.assert_called_once_with(spark, "a.b.silver", "STREAMING_TABLE")
+    assert all(s.startswith("DESCRIBE TABLE EXTENDED") for s in spark.statements)
+
+
+def test_label_kind_falls_back_when_dedicated_refuses_describe(monkeypatch):
+    """Dedicated compute can refuse DESCRIBE on an ST; the error still names the kind."""
+    from skyulf.integrations.databricks.data.delta_io import delta
+    from skyulf.integrations.databricks.observability.monitoring.spark import (
+        spark_monitoring_sources,
+    )
+
+    monkeypatch.setattr(delta, "_uc_table", lambda table: None)
+    spark = _LabelSpark("STREAMING_TABLE", {"company": "string"})
+    spark.sql = Mock(side_effect=RuntimeError("STREAMING_TABLE_OPERATION_NOT_ALLOWED"))
+    assert spark_monitoring_sources.label_table_kind(spark, "a.b.silver") == "STREAMING_TABLE"
+    spark.sql = Mock(side_effect=RuntimeError("PERMISSION_DENIED"))
+    with pytest.raises(RuntimeError, match="PERMISSION_DENIED"):
+        spark_monitoring_sources.label_table_kind(spark, "a.b.silver")
+
+
+def test_missing_label_table_awaits_labels_at_monitoring_time(monkeypatch):
+    """No label table yet must neither fail drift nor fabricate a performance verdict."""
+    from tests.integration.platforms.test_monitoring_performance import policy
+
+    from skyulf.integrations.databricks.observability.monitoring.serving.serving_labels import (
+        read_serving_labels,
+    )
+
+    spark = _LabelSpark(None, {})
+    selected = config(
+        label_table="a.b.labels",
+        result_available_at_column="available_at",
+        performance_policy=policy() | {"baseline": {"kind": "training_holdout"}},
+    )
+    spec = SimpleNamespace(record_key_columns=("company",), target_column="target")
+    predictions = Mock()
+    kept, labels, evidence = read_serving_labels(
+        spark, selected, spec, predictions, datetime.now(UTC)
+    )
+    assert (kept, labels) == (predictions.drop.return_value, None)
+    assert evidence["label_state"] == "awaiting_labels"
+    now = datetime(2026, 10, 6, tzinfo=UTC)
+    monkeypatch.setattr(
+        monitoring_performance,
+        "read_serving_observation",
+        lambda *a, **kw: (None, predictions, {"serving": {}}, now),
+    )
+    measure = Mock()
+    monkeypatch.setattr(monitoring_performance, "_measure", measure)
+    result = monitoring_performance.observe_performance_safely(
+        spark, "a.monitoring", selected, artifact(), spec, {"model_version": "1"}, now
+    )
+    assert (result["status"], result["reason"], result["action"]) == (
+        "unavailable",
+        "awaiting_labels: a.b.labels does not exist yet",
+        "none",
+    )
+    assert result["window_end"] and not measure.called
+
+
+def test_wrong_label_schema_fails_instead_of_awaiting_labels():
+    """A typo in the schema must fail loudly, not wait forever for labels."""
+    from skyulf.integrations.databricks.observability.monitoring.serving.serving_labels import (
+        read_serving_labels,
+    )
+
+    selected = config(label_table="a.typo.labels", result_available_at_column="available_at")
+    spec = SimpleNamespace(record_key_columns=("company",), target_column="target")
+    spark = _LabelSpark(None, {}, schema_exists=False)
+    with pytest.raises(ValueError, match="schema a.typo does not exist"):
+        read_serving_labels(spark, selected, spec, Mock(), datetime.now(UTC))
+
+
+def test_batch_monitoring_still_fails_on_a_missing_label_table():
+    """Only endpoints wait for labels; a batch monitor keeps its loud missing-table error."""
+    from skyulf.integrations.databricks.observability.monitoring.spark import (
+        spark_monitoring_sources,
+    )
+
+    selected = config(
+        serving_endpoint=None, label_table="a.b.labels", result_available_at_column="available_at"
+    )
+    with pytest.raises(RuntimeError, match="TABLE_OR_VIEW_NOT_FOUND"):
+        spark_monitoring_sources.read_spark_labels(
+            _LabelSpark(None, {}), selected, ("id",), "target", object(), datetime.now(UTC)
+        )
+
+
+def test_record_key_type_is_checked_when_the_label_table_appears_later():
+    """A TIMESTAMP key cast to text would silently match nothing, so monitoring must fail."""
+    from skyulf.integrations.databricks.observability.monitoring.serving.serving_labels import (
+        read_serving_labels,
+    )
+
+    parent = {"model_set_name": "a.b.group", "model_set_version": "1", "model_set_branch": "risk"}
+    selected = config(label_table="a.b.silver", result_available_at_column="month", **parent)
+    spec = SimpleNamespace(record_key_columns=("company", "month"), target_column="target")
+    columns = {"company": "string", "month": "timestamp", "target": "double"}
+    spark = _LabelSpark("STREAMING_TABLE", columns)
+    with pytest.raises(ValueError, match="'month' is timestamp.*string, integer, boolean or date"):
+        read_serving_labels(spark, selected, spec, Mock(), datetime.now(UTC))
+
+
+@pytest.mark.parametrize(
+    "columns,record,expected",
+    [
+        ({"databricks_request_id", "request_row_index", "company"}, ("company",), "request"),
+        ({"company", "month", "target"}, ("company", "month"), "record"),
+        ({"company", "target"}, (), "business record keys"),
+        ({"company", "target"}, ("company", "month"), "missing: month"),
+    ],
+)
+def test_label_join_mode_is_detected_from_label_columns(columns, record, expected):
+    """Request columns keep today's join; without them an endpoint joins on its record keys."""
+    from skyulf.integrations.databricks.observability.monitoring.serving.serving_labels import (
+        REQUEST_KEYS,
+        label_join_keys,
+    )
+
+    if expected in {"request", "record"}:
+        keys = label_join_keys("a.b.labels", columns, record)
+        assert keys == (REQUEST_KEYS if expected == "request" else record)
+    else:
+        with pytest.raises(ValueError, match=expected):
+            label_join_keys("a.b.labels", columns, record)
+
+
+def test_single_model_endpoint_uses_its_training_record_keys():
+    """Single-model callers may pass the training keys, so monitoring parses and joins them."""
+    from skyulf.integrations.databricks.jobs.serving_enrollment import (
+        validate_serving_label_sources,
+    )
+    from skyulf.integrations.databricks.observability.monitoring.serving.serving_labels import (
+        serving_record_keys,
+    )
+
+    spec = SimpleNamespace(record_key_columns=("company",), target_column="target")
+    assert serving_record_keys(config(), spec) == ("company",)
+    spark = _LabelSpark("MANAGED", {"company": "string", "month": "date"})
+    selected = config(label_table="a.b.labels", result_available_at_column="month")
+    assert validate_serving_label_sources(spark, [selected], ("company",)) == []
+    with pytest.raises(ValueError, match="business record keys"):
+        validate_serving_label_sources(spark, [selected], ())
+
+
+def test_record_key_join_changes_population_digest_only_in_record_mode():
+    """Request-keyed monitors keep their streak; a record-key join is a new population."""
+    evidence = {"source_table_id": "p", "prediction_table_id": "p", "label_table_id": "l"}
+    digest = monitoring_performance.population_contract("a" * 64, evidence)
+    assert digest == monitoring_performance.population_contract(
+        "a" * 64, evidence | {"unkeyed_requests": 3}
+    )
+    assert digest != monitoring_performance.population_contract(
+        "a" * 64, evidence | {"label_join_keys": ["company"]}
+    )
+
+
+@pytest.mark.parametrize(
+    "kind,columns,model_set,expected",
+    [
+        (None, {}, True, "does not exist yet"),
+        ("schema", {}, True, "schema a.b does not exist"),
+        ("STREAMING_TABLE", {"company": "string", "month": "date", "y": "double"}, True, None),
+        ("MANAGED", {"company": "string", "month": "timestamp"}, False, None),
+        (
+            "MANAGED",
+            {"databricks_request_id": "string", "request_row_index": "integer", "month": "long"},
+            False,
+            "availability",
+        ),
+        ("MANAGED", {"company": "string", "month": "date"}, True, "missing: region"),
+        ("MANAGED", {"company": "double", "month": "date"}, True, "'company' is double"),
+    ],
+)
+def test_enrollment_label_check_warns_on_missing_table_and_rejects_bad_columns(
+    kind, columns, model_set, expected
+):
+    """Serving must not block on labels that do not exist yet, but wrong columns still fail."""
+    from skyulf.integrations.databricks.jobs.serving_enrollment import (
+        validate_serving_label_sources,
+    )
+
+    spark = _LabelSpark(None if kind == "schema" else kind, columns, schema_exists=kind != "schema")
+    parent = {"model_set_name": "a.b.group", "model_set_version": "1", "model_set_branch": "risk"}
+    selected = config(
+        label_table="a.b.labels",
+        result_available_at_column="month",
+        **(parent if model_set else {}),
+    )
+    keys = ("company", "region") if expected == "missing: region" else ("company",)
+    if expected is None or "exist yet" in expected:
+        warnings = validate_serving_label_sources(spark, [selected], keys)
+        assert len(warnings) == (expected is not None)
+        assert all("awaiting_labels" in w and "a.b.labels" in w for w in warnings)
+    else:
+        with pytest.raises(ValueError, match=expected):
+            validate_serving_label_sources(spark, [selected], keys)

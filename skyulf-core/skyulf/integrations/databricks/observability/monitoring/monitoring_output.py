@@ -33,7 +33,6 @@ def render_monitor_output(result: dict, dashboard_url: str = "") -> str:
         return (
             "<h2>Model monitoring queued</h2>"
             "<p>Monitoring runs in a separate job. Open its monitoring_report task "
-            "(drift_report in older projects) "
             "for these results. The dashboard shows the latest completed calculations.</p>"
             + output_table(
                 ("Monitoring job", "Monitoring run"),
@@ -50,7 +49,7 @@ def render_monitor_output(result: dict, dashboard_url: str = "") -> str:
     return (
         "<h2>Model monitoring</h2>"
         "<p>Checks: feature drift, data quality and performance when actual targets are available. "
-        "Open monitoring_report (drift_report in older projects) for this batch's "
+        "Open monitoring_report for this batch's "
         "drift and performance results.</p>" + summary + _dashboard_link(dashboard_url)
     )
 
@@ -257,7 +256,7 @@ def _observed_performance_section(report: dict) -> str:
 
 
 def render_drift_output(row: dict, dashboard_url: str = "") -> str:
-    """Render saved drift and performance evidence through the compatible report API."""
+    """Render saved drift and performance evidence for one saved report row."""
     features: dict[str, dict] = {}
     report = json.loads(row["report_json"])
     notes = report.get("notes", [])
@@ -326,14 +325,10 @@ def render_drift_output(row: dict, dashboard_url: str = "") -> str:
     )
 
 
-def _run_report_notebook(
-    spark: Any,
-    dbutils: Any,
-    *,
-    display_html: Callable[[str], Any] | None,
-    independent_statuses: bool,
+def run_monitoring_report_notebook(
+    spark: Any, dbutils: Any, *, display_html: Callable[[str], Any] | None = None
 ) -> dict:
-    """Display the upstream monitor's saved batch and return a small task result."""
+    """Display the upstream monitor's saved batch and return independent signal statuses."""
     reference = dbutils.jobs.taskValues.get(taskKey="monitor_model", key="monitoring_reference")
     if not isinstance(reference, dict) or reference.get("status") not in {
         "ready",
@@ -350,7 +345,7 @@ def _run_report_notebook(
         rows = [
             load_observation(spark, item) for item in reference.get("observations", [reference])
         ]
-        results = [_report_result(row, independent_statuses) for row in rows]
+        results = [_report_result(row) for row in rows]
         result = results[0] if len(results) == 1 else {"results": results}
         html = "".join(render_drift_output(row, url) for row in rows)
     if display_html is not None:
@@ -358,27 +353,8 @@ def _run_report_notebook(
     return result
 
 
-def _report_result(row: dict, independent_statuses: bool) -> dict:
-    """Extend new notebook results while preserving the legacy drift task result shape."""
+def _report_result(row: dict) -> dict:
+    """Return the compact task result with independent drift and performance statuses."""
     result = {key: row[key] for key in ("report_id", "status", "drifted_columns")}
-    if independent_statuses:
-        result.update(_monitoring_statuses(json.loads(row["report_json"])))
+    result.update(_monitoring_statuses(json.loads(row["report_json"])))
     return result
-
-
-def run_monitoring_report_notebook(
-    spark: Any, dbutils: Any, *, display_html: Callable[[str], Any] | None = None
-) -> dict:
-    """Display independent drift and performance states for the exact saved observation."""
-    return _run_report_notebook(
-        spark, dbutils, display_html=display_html, independent_statuses=True
-    )
-
-
-def run_drift_report_notebook(
-    spark: Any, dbutils: Any, *, display_html: Callable[[str], Any] | None = None
-) -> dict:
-    """Keep the legacy notebook entrypoint and compact result compatible."""
-    return _run_report_notebook(
-        spark, dbutils, display_html=display_html, independent_statuses=False
-    )

@@ -90,6 +90,9 @@ def _removed_answer_guards(properties: dict[str, Any]) -> dict[str, Any]:
         "preprocessing_probe": "save_preprocessing_diagnostics",
         "admit_probed_custom_steps": "allow_tested_custom_steps",
         "monitoring_catalog": "monitoring",
+        "test_view_group": "test_access_viewers",
+        "syst_view_group": "syst_access_viewers",
+        "prod_view_group": "prod_access_viewers",
     }
     order = max(field["order"] for field in properties.values())
     for offset, (old, new) in enumerate(renamed.items(), 1):

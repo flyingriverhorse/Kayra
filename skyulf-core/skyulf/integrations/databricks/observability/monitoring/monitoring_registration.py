@@ -63,7 +63,7 @@ def monitoring_destination(values: dict[str, str]) -> str | None:
 
 
 def monitoring_reference_holder(values: dict) -> dict:
-    """Use complete generated provenance; legacy jobs retain explicit manual recovery."""
+    """Use complete job-run provenance; without it, reference recovery stays manual."""
     fields = {"job_run_id", "task_key", "workspace_host"}
     if not fields.issubset(values):
         return {}
@@ -199,7 +199,6 @@ def register_deployed_monitor(
             config,
             tracking_uri=workflow.get("tracking_uri", "databricks"),
             registry_uri=workflow.get("registry_uri", "databricks-uc"),
-            reference_holder=reference_holder,
         )
     return {"monitor_id": config.monitor_id, "inventory_table": f"{namespace}.model_inventory"}
 

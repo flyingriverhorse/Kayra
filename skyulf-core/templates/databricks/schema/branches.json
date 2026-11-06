@@ -2416,7 +2416,7 @@
   "branch_SLOT_max_rows": {
     "order": 45,
     "type": "string",
-    "default": "10000",
+    "default": "1000000",
     "description": "Branch SLOT | Maximum rows transferred into Python memory per read; exceeding this stops the run. This does not randomly sample rows",
     "pattern": "^[1-9][0-9]*$",
     "skip_prompt_if": {
@@ -2435,8 +2435,8 @@
   "branch_SLOT_max_input_mb": {
     "order": 46,
     "type": "string",
-    "default": "64",
-    "description": "Branch SLOT | Maximum input data size transferred into Python memory, in MiB (64 = 64 MiB). Model training can use more RAM",
+    "default": "512",
+    "description": "Branch SLOT | Maximum input data size in Python (pandas) memory, in MiB (512 = 512 MiB); about 1/8 to 1/10 of the driver memory. Model training can use more RAM",
     "pattern": "^[1-9][0-9]*$",
     "skip_prompt_if": {
       "not": {

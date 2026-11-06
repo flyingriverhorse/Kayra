@@ -12,7 +12,7 @@
 # Shared environments are independent of your CI/CD provider.
 # Personal development targets deliberately have no shared run_as or job ACL overrides.
 # Every target lets the deployer and pipeline_owner manage its resources;
-# shared targets can add a read-only group chosen in setup.
+# shared targets add their access groups (see access_* under each target's variables).
 # Personal targets use Databricks' development prefix, so their jobs are named
 # "[dev <your short name>] <project>_train" and keep the project in the name.
 #
@@ -59,10 +59,7 @@ targets:
         user_name: ${workspace.current_user.userName}
       - level: CAN_MANAGE
         user_name: ${var.pipeline_owner}
-{{- if .test_view_group}}
-      - level: CAN_VIEW
-        group_name: {{printf "%q" .test_view_group}}
-{{- end}}
+{{- template "access_permissions" (map (pair "viewers" .test_access_viewers) (pair "runners" .test_access_runners))}}
     workspace:
       host: https://replace-test.example.invalid
       root_path: ${var.test_root_path}
@@ -72,6 +69,7 @@ targets:
       output_schema: ${var.test_output_schema}
       metadata_schema: ${var.test_metadata_schema}
       resource_suffix: ""
+{{- template "access_variables" (map (pair "viewers" .test_access_viewers) (pair "runners" .test_access_runners) (pair "callers" .test_access_serving_callers) (pair "readers" .test_access_data_readers))}}
 {{- if $create}}
       # Dashboard: create. This project creates and owns this target's dashboard;
       # other projects connect to it.
@@ -167,20 +165,6 @@ targets:
 {{- end}}
 {{- end}}
 {{- end}}
-{{if and $acl (eq .monitoring "true")}}
-        monitoring_cleanup:
-{{if eq .deployment_identity "shared_service_principal"}}
-          run_as:
-            service_principal_name: ${var.shared_service_principal}
-{{end}}
-{{if eq .deployment_identity "separate_service_principals"}}
-          run_as:
-            service_principal_name: ${var.score_service_principal}
-{{end}}
-{{if eq .manage_job_permissions "true"}}
-          permissions: ${var.monitoring_permissions}
-{{end}}
-{{end}}
 {{end}}
 {{if eq .personal_development_targets "true"}}
   test_development:
@@ -193,8 +177,8 @@ targets:
         user_name: ${var.pipeline_owner}
     presets:
       trigger_pause_status: PAUSED
-{{- if $devdash}}
     resources:
+{{- if $devdash}}
       dashboards:
         monitoring_dashboard:
           # Your own dashboard over the development store (development mode prefixes its name).
@@ -204,7 +188,9 @@ targets:
           dataset_catalog: ${var.monitoring_catalog}
           dataset_schema: ${var.development_monitoring_schema}
           embed_credentials: false
+{{- end}}
       jobs:
+{{- if $devdash}}
         monitoring:
           tasks:
             - task_key: dashboard_refresh_enabled
@@ -223,6 +209,7 @@ targets:
               dashboard_task:
                 dashboard_id: ${resources.dashboards.monitoring_dashboard.id}
 {{- end}}
+{{- template "cleanup_dev_job" .}}
     workspace:
       host: https://replace-test.example.invalid
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/test_development
@@ -243,7 +230,6 @@ targets:
       monitoring_enabled: "false"
 {{- end}}
       monitoring_pause_status: PAUSED
-      monitoring_cleanup_pause_status: PAUSED
       monitoring_performance_policies: '{}'
       on_drift: disabled
 {{- if $devdash}}
@@ -266,10 +252,7 @@ targets:
         user_name: ${workspace.current_user.userName}
       - level: CAN_MANAGE
         user_name: ${var.pipeline_owner}
-{{- if .syst_view_group}}
-      - level: CAN_VIEW
-        group_name: {{printf "%q" .syst_view_group}}
-{{- end}}
+{{- template "access_permissions" (map (pair "viewers" .syst_access_viewers) (pair "runners" .syst_access_runners))}}
     workspace:
       host: https://replace-syst.example.invalid
       root_path: ${var.syst_root_path}
@@ -279,6 +262,7 @@ targets:
       output_schema: ${var.syst_output_schema}
       metadata_schema: ${var.syst_metadata_schema}
       resource_suffix: ""
+{{- template "access_variables" (map (pair "viewers" .syst_access_viewers) (pair "runners" .syst_access_runners) (pair "callers" .syst_access_serving_callers) (pair "readers" .syst_access_data_readers))}}
 {{if $acl}}
     resources:
       jobs:
@@ -328,20 +312,6 @@ targets:
 {{if eq .manage_job_permissions "true"}}
           permissions: ${var.monitoring_permissions}
 {{end}}
-{{if eq .monitoring "true"}}
-        monitoring_cleanup:
-{{if eq .deployment_identity "shared_service_principal"}}
-          run_as:
-            service_principal_name: ${var.shared_service_principal}
-{{end}}
-{{if eq .deployment_identity "separate_service_principals"}}
-          run_as:
-            service_principal_name: ${var.score_service_principal}
-{{end}}
-{{if eq .manage_job_permissions "true"}}
-          permissions: ${var.monitoring_permissions}
-{{end}}
-{{end}}
 {{end}}
 {{if eq .personal_development_targets "true"}}
   syst_development:
@@ -354,6 +324,9 @@ targets:
         user_name: ${var.pipeline_owner}
     presets:
       trigger_pause_status: PAUSED
+    resources:
+      jobs:
+{{- template "cleanup_dev_job" .}}
     workspace:
       host: https://replace-syst.example.invalid
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/syst_development
@@ -374,7 +347,6 @@ targets:
       monitoring_enabled: "false"
 {{- end}}
       monitoring_pause_status: PAUSED
-      monitoring_cleanup_pause_status: PAUSED
       monitoring_performance_policies: '{}'
       on_drift: disabled
 {{if eq .retraining_mode "scheduled"}}
@@ -393,10 +365,7 @@ targets:
         user_name: ${workspace.current_user.userName}
       - level: CAN_MANAGE
         user_name: ${var.pipeline_owner}
-{{- if .prod_view_group}}
-      - level: CAN_VIEW
-        group_name: {{printf "%q" .prod_view_group}}
-{{- end}}
+{{- template "access_permissions" (map (pair "viewers" .prod_access_viewers) (pair "runners" .prod_access_runners))}}
     workspace:
       host: https://replace-prod.example.invalid
       root_path: ${var.prod_root_path}
@@ -406,6 +375,7 @@ targets:
       output_schema: ${var.prod_output_schema}
       metadata_schema: ${var.prod_metadata_schema}
       resource_suffix: ""
+{{- template "access_variables" (map (pair "viewers" .prod_access_viewers) (pair "runners" .prod_access_runners) (pair "callers" .prod_access_serving_callers) (pair "readers" .prod_access_data_readers))}}
 {{if $acl}}
     resources:
       jobs:
@@ -455,20 +425,6 @@ targets:
 {{if eq .manage_job_permissions "true"}}
           permissions: ${var.monitoring_permissions}
 {{end}}
-{{if eq .monitoring "true"}}
-        monitoring_cleanup:
-{{if eq .deployment_identity "shared_service_principal"}}
-          run_as:
-            service_principal_name: ${var.shared_service_principal}
-{{end}}
-{{if eq .deployment_identity "separate_service_principals"}}
-          run_as:
-            service_principal_name: ${var.score_service_principal}
-{{end}}
-{{if eq .manage_job_permissions "true"}}
-          permissions: ${var.monitoring_permissions}
-{{end}}
-{{end}}
 {{end}}
 {{if eq .personal_development_targets "true"}}
   prod_development:
@@ -481,6 +437,9 @@ targets:
         user_name: ${var.pipeline_owner}
     presets:
       trigger_pause_status: PAUSED
+    resources:
+      jobs:
+{{- template "cleanup_dev_job" .}}
     workspace:
       host: https://replace-prod.example.invalid
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/prod_development
@@ -501,7 +460,6 @@ targets:
       monitoring_enabled: "false"
 {{- end}}
       monitoring_pause_status: PAUSED
-      monitoring_cleanup_pause_status: PAUSED
       monitoring_performance_policies: '{}'
       on_drift: disabled
 {{if eq .retraining_mode "scheduled"}}

@@ -1,0 +1,47 @@
+{{- define "cleanup_dev_job" }}
+        # Personal targets only: removes what this deployment created (endpoint, SQL
+        # function, models, its monitoring rows, prediction and payload tables). Run
+        # with dry_run=true first, then dry_run=false, then `databricks bundle destroy`.
+        cleanup_dev:
+          name: ${bundle.name}_cleanup_dev
+          tags: ${var.job_tags}
+          budget_policy_id: ${var.monitoring_budget_policy_id}
+          max_concurrent_runs: 1
+          timeout_seconds: ${var.monitoring_timeout_seconds}
+          parameters:
+            - name: dry_run
+              default: "true"
+          tasks:
+            - task_key: cleanup_dev
+              description: List (dry_run=true) or delete this deployment's run-time objects
+              timeout_seconds: ${var.monitoring_task_timeout_seconds}
+              max_retries: 0
+              environment_key: cleanup_dev
+              notebook_task:
+                notebook_path: ../src/jobs/cleanup_dev.py
+                base_parameters:
+                  dry_run: '{{"{{job.parameters.dry_run}}"}}'
+                  job_run_id: '{{"{{job.run_id}}"}}'
+                  task_key: cleanup_dev
+                  workspace_host: ${workspace.host}
+                  config_path: ${workspace.file_path}/config/training.yml
+                  serving_config_path: ${workspace.file_path}/config/serving.yml
+                  experiment_name: ${workspace.root_path}/experiment
+                  bundle_project: ${bundle.name}
+                  bundle_target: ${bundle.target}
+                  bundle_mode: ${bundle.mode}
+                  catalog: ${var.catalog}
+                  input_schema: ${var.input_schema}
+                  output_schema: ${var.output_schema}
+                  metadata_schema: ${var.metadata_schema}
+                  resource_suffix: ${var.resource_suffix}
+                  monitoring_catalog: ${var.monitoring_catalog}
+                  monitoring_schema: ${var.monitoring_schema}
+                  development_monitoring_schema: ${var.development_monitoring_schema}
+          environments:
+            - environment_key: cleanup_dev
+              spec:
+                client: ${var.monitoring_environment_version}
+                dependencies:
+                  - -r ${workspace.file_path}/deployment/serving-requirements.txt
+{{- end }}

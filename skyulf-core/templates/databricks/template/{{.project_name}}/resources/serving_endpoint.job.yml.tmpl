@@ -56,6 +56,8 @@ resources:
               monitoring_expected_interval_hours: ${var.monitoring_expected_interval_hours}
               monitoring_label_table: ${var.monitoring_label_table}
               monitoring_result_available_at_column: ${var.monitoring_result_available_at_column}
+              access_viewers: ${var.access_viewers}
+              access_serving_callers: ${var.access_serving_callers}
 {{if eq .compute_mode "serverless"}}
       environments:
         - environment_key: serving

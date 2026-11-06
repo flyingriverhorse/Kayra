@@ -2,7 +2,8 @@
 
 import hashlib
 import json
-from dataclasses import asdict
+from contextlib import suppress
+from dataclasses import asdict, replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
@@ -22,7 +23,9 @@ from ...training.branches import (
     restore_training_branches,
     train_branch,
 )
+from ...training.fitting import candidate as fitting
 from ...training.fitting.candidate import CandidateResult
+from ...training.shared.holdout_evidence import save_frame_artifact
 from ...training.shared.training_evidence import evidence_digest
 from ..lifecycle.lifecycle_tasks import record_phase_failure, validate_active_phase
 from ..shared.reference_mutations import phase_reference_mutation, prepare_reference_mutations
@@ -85,17 +88,51 @@ def initialize_branch_training(
     prepare_reference_mutations(spark, monitoring_destination(operator_values or {}))
     store = PhaseStore(tracking_uri, context)
     _create_parent(store, request, experiment_name)
+    output: dict[str, Any] = {"training_requested": action == "train", "action": action}
     if action == "train":
-        store.log("branch_training_plan.json", request["branch_plan"])
+        output["sources"] = _start_training(spark, store)
+    return store.complete("prepare", output, None)
+
+
+def _start_training(spark: Any, store: PhaseStore) -> dict[str, dict]:
+    """Save each branch's source rows on the parent run; branch tasks replay only these."""
+    try:
+        # shortcut: one live read per branch, back to back; a streaming table refreshed
+        # between reads gives branches slightly different rows. Upgrade to one shared
+        # localCheckpoint base once it is verified on serverless (S3).
+        sources = {}
+        for branch in restore_training_branches(store.request["branch_plan"]):
+            frame = fitting.read_live_snapshot(spark, branch.spec)
+            sources[branch.name] = save_frame_artifact(
+                store.client, store.run_id, f"source_{branch.name}", frame
+            )
+        store.log("branch_training_plan.json", store.request["branch_plan"])
         store.run.set_tags(
             {
-                "skyulf.training.plan_sha256": request["plan_sha256"],
+                "skyulf.training.plan_sha256": store.request["plan_sha256"],
                 "skyulf.training.status": "running",
             }
         )
-    return store.complete(
-        "prepare", {"training_requested": action == "train", "action": action}, None
-    )
+        return sources
+    except BaseException:
+        with suppress(Exception):
+            store.client.set_terminated(store.run_id, status="FAILED")
+        raise
+
+
+def _with_saved_source(store: PhaseStore, branch: Any, tracking_uri: str) -> Any:
+    """Point a branch at the source rows initialize saved, so no task re-reads the source."""
+    receipt = store.receipt("prepare")["output"].get("sources", {}).get(branch.name)
+    if receipt is None:
+        return branch
+    locator = {
+        "run_id": store.run_id,
+        "path": f"lifecycle/data/source_{branch.name}.parquet",
+        "tracking_uri": tracking_uri,
+        "receipt": receipt,
+    }
+    spec = replace(branch.spec, source_snapshot_json=json.dumps(locator, sort_keys=True))
+    return replace(branch, spec=spec)
 
 
 def _create_parent(store: PhaseStore, request: dict, experiment_name: str) -> None:
@@ -151,7 +188,7 @@ def run_branch_training(
         with TemporaryDirectory(prefix="skyulf-branch-task-") as directory:
             result = train_branch(
                 spark,
-                branches[name],
+                _with_saved_source(store, branches[name], tracking_uri),
                 run=store.run,
                 digest=store.request["plan_sha256"],
                 path=Path(directory) / "model",

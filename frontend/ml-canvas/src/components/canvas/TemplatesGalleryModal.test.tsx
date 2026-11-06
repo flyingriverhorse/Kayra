@@ -4,7 +4,8 @@ import { initializeRegistry } from '../../core/registry/init';
 import { useGraphStore } from '../../core/store/useGraphStore';
 import { TemplatesGalleryModal } from './TemplatesGalleryModal';
 
-const boundary = vi.hoisted(() => ({ confirm: vi.fn(), refetch: vi.fn(), schemaError: false }));
+const boundary = vi.hoisted(() => ({ confirm: vi.fn(), refetch: vi.fn(), schemaError: false, demoMode: false }));
+vi.mock('../../core/hooks/useUploadConfig', () => ({ useDemoMode: () => boundary.demoMode }));
 vi.mock('../shared', () => ({ useConfirm: () => boundary.confirm }));
 vi.mock('../../core/toast', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('../../core/hooks/useDatasets', () => ({ useUsableDatasets: () => ({
@@ -18,6 +19,7 @@ vi.mock('../../core/hooks/useDatasetSchema', () => ({ useDatasetSchema: () => ({
 beforeAll(() => initializeRegistry());
 beforeEach(() => {
   boundary.schemaError = false;
+  boundary.demoMode = false;
   boundary.confirm.mockResolvedValue(true);
   useGraphStore.setState({ nodes: [], edges: [] });
 });
@@ -78,5 +80,17 @@ describe('template setup', () => {
     fireEvent.change(screen.getByLabelText('Dataset'), { target: { value: '1' } });
     expect(screen.getByRole('alert')).toHaveTextContent('Could not load columns');
     expect(screen.getByRole('button', { name: 'Open in Canvas' })).toBeDisabled();
+  });
+
+  it('offers upload only outside the public demo', () => {
+    // The demo server refuses uploads, so the setup must not offer one there.
+    const { unmount } = render(<TemplatesGalleryModal isOpen onClose={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('template-card-tabular_classification'));
+    expect(screen.getByRole('button', { name: /upload a dataset/i })).toBeInTheDocument();
+    unmount();
+    boundary.demoMode = true;
+    render(<TemplatesGalleryModal isOpen onClose={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('template-card-tabular_classification'));
+    expect(screen.queryByRole('button', { name: /upload a dataset/i })).toBeNull();
   });
 });

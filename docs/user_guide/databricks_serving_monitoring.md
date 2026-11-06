@@ -77,12 +77,75 @@ enrollments together and use the existing report, policy and dashboard.
 For manually enrolled endpoints with two served versions, add a separate entry
 for each concrete version and endpoint. A model-set branch needs its own entry with `model_set_name`,
 `model_set_version` and `model_set_branch` identifying the parent release and
-output. Labels are provided independently in a Delta table keyed by
-`databricks_request_id` and zero-based `request_row_index`, with the actual target
-column and UTC `available_at`. Skyulf does not generate outcomes or write them
-back to the training table. Missing or late labels remain unavailable until an
-eligible observation; choose `mode: report` first and make any retraining policy
-an explicit later decision.
+output. Skyulf does not generate outcomes or write them back to the training
+table. Missing or late labels remain unavailable until an eligible observation;
+choose `mode: report` first and make any retraining policy an explicit later decision.
+
+#### How labels join an endpoint
+
+Skyulf picks the join from the label table's columns; there is no setting.
+
+| Label table has | Join | Endpoints |
+| --- | --- | --- |
+| `databricks_request_id` and `request_row_index` | each request row | all endpoints |
+| the training record keys (for example silver) | latest request per key | model-set endpoints; single-model endpoints whose callers pass the keys |
+
+A model-set endpoint already receives its record keys in every request, so the
+payload log has them. A single-model endpoint receives them when callers pass
+them (see below). With a record-key table:
+
+- When one key was requested more than once in the window (for example daily
+  re-scoring of one company-month), only the latest request counts. The report's
+  performance evidence counts the prediction rows left out as `duplicate_key_rows`.
+- Requests without keys are left out of performance and counted as
+  `unkeyed_requests`. Drift still uses every request.
+- One label row can carry every target; each component reads its own target column.
+- Keys are compared as text. A DATE key in the label table matches a
+  `'yyyy-MM-dd'` request value.
+
+Callers should use the Skyulf SQL function from `config/serving.yml`
+(`sql_function.name`) instead of `ai_query` with the endpoint name, so the
+endpoint can be renamed without breaking callers. Pass the record keys as
+arguments; for a model set they are function inputs:
+
+```sql
+SELECT s.company_id, s.month_end,
+       main.ml.company_score(
+         `company_id` => s.`company_id`,
+         `month_end` => date_format(s.`month_end`, 'yyyy-MM-dd'),
+         `employees` => s.`employees`) AS result
+FROM main.silver.companies AS s;
+```
+
+For a single-model endpoint the SQL function takes the training record keys as
+optional arguments after the model inputs (`DEFAULT NULL`); the model ignores
+them. Pass them by name:
+
+```sql
+SELECT main.ml.risk_score(`amount` => s.`amount`, `order_id` => s.`order_id`) AS result
+FROM main.source.orders AS s;
+```
+
+REST callers add the same key names as extra fields in each `dataframe_records`
+row. Calls without keys work as before; their requests are counted as
+`unkeyed_requests`. A label table with `databricks_request_id` and
+`request_row_index` (a request-outcomes table) remains an option for every
+endpoint and needs no keys in the request.
+
+The label table may be a Streaming Table, materialized view or view. Those are
+read as they are now, without a Delta version pin; the availability column
+alone decides which labels a run may use. The availability column may be a
+DATE, meaning 00:00 UTC on that day. If the label table does not exist yet
+but its schema does, the endpoint job still enrolls the monitor and prints a
+warning naming the table, and monitoring reports performance as `unavailable`
+with reason `awaiting_labels: <table> does not exist yet` while drift runs
+normally. A schema that does not exist is a configuration error and fails.
+Batch monitors still fail when their label table is missing.
+
+Upgrade: a monitor that switches to a record-key label table starts a new
+performance population, so earlier degraded windows do not count toward
+`consecutive_windows`, and a `production_window` baseline from before the switch
+no longer matches. Request-keyed label tables keep their history.
 
 Keep performance in `report` mode initially. The inline online policy determines its measured
 verdict; automatic requests also require the deployment gate described in

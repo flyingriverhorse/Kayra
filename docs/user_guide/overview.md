@@ -32,6 +32,16 @@ keeps a fitted model artifact in memory and can run `fit_predict()` on a `SplitD
 
 ## How `fit` / `transform` works in Skyulf
 
+![SkyulfPipeline lifecycle](../assets/diagrams/core/pipeline_lifecycle.svg)
+
+[Editable draw.io source](../assets/diagrams/core/pipeline_lifecycle.drawio)
+
+`fit()` runs the leakage check before any step learns from the data. Each preprocessing step
+learns its params from the train rows only, then reuses them on test and validation rows and on
+new rows at `predict()`. `predict()` never refits; it skips the split, resampling and the
+row-drop filters (`Deduplicate`, `DropMissingRows`, `RowFilterFunction`). See
+[Leakage Safety - Core & Backend](leakage_core_backend.md) for the check.
+
 At a high level:
 
 - `SkyulfPipeline.fit(data, target_column=...)`

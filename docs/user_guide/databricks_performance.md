@@ -36,7 +36,7 @@ Detailed setup offers a simple initial policy through these answers:
   "performance_classification_metric": "accuracy",
   "performance_tolerance_mode": "relative",
   "performance_tolerance": "0.2",
-  "performance_baseline_version": "1"
+  "performance_baseline_version": ""
 }
 ```
 
@@ -49,11 +49,13 @@ The initial policy uses 24-hour windows, a six-hour label delay, at least 20
 labeled rows, 80% coverage and two consecutive failing windows for retraining.
 These are editable policy fields, not additional hidden runtime rules.
 
-Verify the concrete baseline version before activation. Different model-set
-components may need different versions: edit their JSON entries independently.
-Changing the baseline is an explicit policy change; promoting a new champion
-does not automatically advance the baseline. `report` can show a degraded
-first window but never requests training.
+A `training_holdout` baseline without `model_version` (the default) compares each
+enrolled version with its own training holdout, so a new champion needs no policy
+edit. Set `performance_baseline_version` (or `baseline.model_version` in the JSON) to
+pin one version instead; pinning is an explicit policy change, and a pinned baseline
+does not advance when a new champion is promoted. Different model-set components may
+need different pinned versions: edit their JSON entries independently. `report` can
+show a degraded first window but never requests training.
 
 For a more specific classification policy, set a target override:
 
@@ -126,8 +128,10 @@ or `{"mode":"off"}` for an explicitly disabled model. An active policy needs
 the label table and UTC availability column shown above. Select a
 `training_holdout` baseline or pin an existing production observation with
 `{"kind":"production_window","model_version":"2","report_id":"<64 hex characters>"}`.
+`model_version` is required for `production_window` and optional for `training_holdout`,
+where it defaults to the enrolled version (enrollment by alias must set it).
 The baseline version must match the observed version; a mismatch is unavailable
-and cannot request training. No metric, direction, tolerance or baseline is
+and cannot request training. No metric, direction, tolerance or baseline kind is
 inferred. Fixed UTC windows wait `label_delay_hours` after their end, then count
 only labels available at the cutoff. A 00:00–24:00 UTC window with a six-hour
 delay can first be evaluated at 06:00 UTC the next day. Replays do not advance
@@ -204,10 +208,8 @@ table/availability settings from the complete example above. With baseline WAPE
 0.05, the limit is 0.06: this is a 20% relative increase, not 20 percentage points.
 WAPE suits this example when actual values can be zero because it uses the whole
 population's absolute actual total; MAPE divides by each individual actual.
-`report` never requests training. Spark monitoring reads cached holdout metrics
-from its prepared reference; an older cache without WAPE produces unavailable
-policy evidence until a compatible reference exists. The in-memory path measures
-the verified holdout with the fitted model. Neither path rewrites historical
+`report` never requests training. Spark and in-memory monitoring both measure the
+verified holdout from the training run's saved rows with the fitted model. Neither path rewrites historical
 training-run metrics.
 
 ```python

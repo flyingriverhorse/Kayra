@@ -81,7 +81,7 @@ served version/context. Training charts and SHAP are available in the MLflow run
 and performance-loss policies off. The shared loader's `trips_labels` uses
 `trip_id`; online monitoring needs `databricks_request_id` and zero-based
 `request_row_index` to match each prediction. Do not bind that table directly.
-See [serving monitoring](https://www.skyulf.com/manual/user_guide/databricks_serving_monitoring.html)
+See [serving monitoring](https://kayra.skyulf.com/manual/user_guide/databricks_serving_monitoring.html)
 to supply matched labels and configure a performance policy.
 
 Automatic champion following replaces the endpoint's single served version; it

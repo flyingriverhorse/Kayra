@@ -6,6 +6,7 @@ import traceback
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.data_ingestion.demo import demo_dataset_ids
 from backend.exceptions.core import SkyulfException
 from backend.utils.logging_utils import redact_credentials, sanitize_for_log
 
@@ -31,8 +32,10 @@ async def list_models(
     limit: int = Query(default=10, ge=1, le=100),
     session: AsyncSession = Depends(get_async_session),
 ):
-    """List all models in the registry."""
-    return await ModelRegistryService.list_models(session, skip=skip, limit=limit)
+    """List all models in the registry; demo mode keeps Iris models only."""
+    return await ModelRegistryService.list_models(
+        session, skip=skip, limit=limit, dataset_ids=await demo_dataset_ids(session)
+    )
 
 
 @router.get("/models/{model_type}/versions", response_model=list[ModelVersion])

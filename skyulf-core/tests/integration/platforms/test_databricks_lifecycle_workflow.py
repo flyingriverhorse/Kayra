@@ -60,6 +60,7 @@ def test_training_failure_retains_once_selected_version_and_window(
         raise failure
 
     monkeypatch.setattr(candidate, "read_training_snapshot", fail_read)
+    monkeypatch.setattr(candidate, "read_live_snapshot", fail_read)
     with pytest.raises(RuntimeError) as caught:
         workflow.run_action(
             spark,

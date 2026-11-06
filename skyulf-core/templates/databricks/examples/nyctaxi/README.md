@@ -19,7 +19,7 @@ Pick the closest one: Spark scoring, `taxi_fare`; endpoint without batch scoring
 `taxi_fare_endpoint`; online feature lookup, `taxi_fare_online`; excluded/missing rows through Spark, REST and SQL,
 `taxi_fare_robust`; several candidate algorithms, `taxi_high_fare`; several
 targets approved together, `taxi_trips`. Copying one is the fastest start; the
-[project setup guide](https://www.skyulf.com/manual/user_guide/databricks_project_setup.html#start-from-the-closest-example)
+[project setup guide](https://kayra.skyulf.com/manual/user_guide/databricks_project_setup.html#start-from-the-closest-example)
 shows the same path before the setup wizard.
 
 [FEATURES.md](FEATURES.md) explains each project's filters, fitted steps, lookups
@@ -36,7 +36,7 @@ replay. For a new recipe, see the [built-in alternatives](taxi_high_fare/GUIDE.m
 filters, learned clipping, imputation, missing markers, frequency/rare encoding,
 cyclical dates and group deviations. The guide includes runnable YAML and the
 null, dtype and output-name differences to check before retraining. These new
-built-ins require the 0.9.6 development wheel until that release is published.
+built-ins require the 0.9.7 development wheel until that release is published.
 
 ## Run one
 

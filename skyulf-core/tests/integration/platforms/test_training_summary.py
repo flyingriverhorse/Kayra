@@ -286,6 +286,11 @@ def test_real_training_artifacts_populate_summary(workflow_config, tracked, monk
         "read_training_snapshot",
         lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
     )
+    monkeypatch.setattr(
+        training,
+        "read_live_snapshot",
+        lambda spark, spec: _data().loc[:, list(spec.source_columns)].copy(),
+    )
     branch = branches.prepare_training_branches(None, configs)[0]
     experiment = client.get_experiment_by_name("branches")
     parent = client.create_run(experiment.experiment_id)
@@ -315,3 +320,13 @@ def test_real_training_artifacts_populate_summary(workflow_config, tracked, monk
     assert f"Pre-split removed: {filters['excluded_rows']}" in html
     assert probe["status"] in html and shap["status"] in html
     assert "explanations.html" in html and f"/version/{result.model_version}" in html
+
+
+def test_data_cell_names_unversioned_sources_instead_of_a_delta_version():
+    """An ST/MV-trained run has no Delta version; the report must not claim version 0."""
+    from skyulf.integrations.databricks.observability.reports.training_summary import _data_cell
+
+    spec = {"table": "c.s.silver", "version": 0, "source_kind": "STREAMING_TABLE"}
+    cell = _data_cell({"candidate_training_spec.json": spec}, "https://host", "#run")
+    assert "STREAMING_TABLE read once, rows saved" in cell
+    assert "Delta version" not in cell

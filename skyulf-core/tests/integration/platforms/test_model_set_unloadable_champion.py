@@ -34,6 +34,11 @@ def release_case(tmp_path, workflow_config, monkeypatch):
         "read_training_snapshot",
         lambda spark, spec: data.loc[:, list(spec.source_columns)].copy(),
     )
+    monkeypatch.setattr(
+        candidate,
+        "read_live_snapshot",
+        lambda spark, spec: data.loc[:, list(spec.source_columns)].copy(),
+    )
     monkeypatch.setattr(project, "approval_frame", lambda *args: data[["id", "x"]].copy())
     spark = Mock()
     spark.read.option.return_value.table.return_value = SimpleNamespace(dtypes=[("id", "bigint")])

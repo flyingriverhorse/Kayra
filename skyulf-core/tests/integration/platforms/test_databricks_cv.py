@@ -295,6 +295,7 @@ def test_temporal_cv_publishes_same_final_pipeline_and_separate_metrics(
         }
     )
     monkeypatch.setattr(candidate, "read_training_snapshot", lambda *args: frame)
+    monkeypatch.setattr(candidate, "read_live_snapshot", lambda *args: frame)
     uri = f"sqlite:///{(tmp_path / 'registry.db').as_posix()}"
     client = mlflow.MlflowClient(tracking_uri=uri, registry_uri=uri)
     client.create_experiment("cv", artifact_location=(tmp_path / "runs").as_uri())

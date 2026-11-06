@@ -281,8 +281,6 @@ def test_recovery_refuses_run_without_completed_execution_cleanup(authority, sta
 
 def test_recovery_audits_verified_job_before_releasing_exact_token(authority, monkeypatch):
     """Only the confirmed owner in the same workspace can be released, with a durable intent."""
-    from skyulf.integrations.databricks.observability.monitoring import reference_cleanup
-
     owner = _failed_job(authority)
     events = []
 
@@ -290,7 +288,7 @@ def test_recovery_audits_verified_job_before_releasing_exact_token(authority, mo
         """Check audit ordering against the actual persisted control state."""
         events.append((record["status"], authority.rows[0]["status"]))
 
-    monkeypatch.setattr(reference_cleanup, "append_reference_recovery", audit)
+    monkeypatch.setattr(module, "append_reference_recovery", audit)
     workspace = Mock()
     workspace.config.host = HOLDER["workspace_host"]
     task = SimpleNamespace(

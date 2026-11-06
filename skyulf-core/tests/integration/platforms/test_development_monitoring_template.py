@@ -99,7 +99,7 @@ def test_create_gives_test_development_a_dashboard_over_its_own_store(tmp_path):
         monitoring_dashboard_warehouse_id="d047a4d9aa276958",
     )
     targets = _yaml(project, "deployment/targets.yml")["targets"]
-    assert "resources" not in targets["syst_development"]
+    assert set(targets["syst_development"]["resources"]) == {"jobs"}  # cleanup_dev only
     assert "dashboards" not in (targets["syst"].get("resources") or {})
 
     def schema(target):

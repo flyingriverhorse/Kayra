@@ -1,0 +1,960 @@
+{
+ "all_null": {
+  "baseline": {
+   "performance_baseline": {
+    "contract_digest": "contract",
+    "kind": "training_holdout",
+    "label_coverage": 1.0,
+    "labeled_rows": 8,
+    "metric": "f1_weighted",
+    "model_version": "1",
+    "reference": "runs:/run-1/training_filter_evidence.json",
+    "value": 16.0
+   }
+  },
+  "drift": [
+   [
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.37426696030475026
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.21875
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.36880773836103353
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 1.865303270376533
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.3198242513431929
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.36880773836103353,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.3697941449708018
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.21666666666666667
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.38179438050351866
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 2.709884487508251
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.5499223854386878
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.38179438050351866,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.41983210073284705
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.1925925925925926
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.5920268718004181
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 1.381637699419147
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.24410693132056177
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.5920268718004181,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 27,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_cat",
+     "has_issue": false,
+     "metric_name": "psi_categorical",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 0.2518114124126454
+    },
+    {
+     "category": "drift",
+     "column_name": "x_cat",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 1.0,
+      "reason": "Insufficient data: this test cannot attain the Bonferroni-corrected significance level (0.00833333) with these observations.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "insufficient_data",
+      "test": "fisher_category_bonferroni"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "unavailable",
+     "threshold": 0.05,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_bool",
+     "has_issue": false,
+     "metric_name": "psi_categorical",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 0.13343114318396804
+    },
+    {
+     "category": "drift",
+     "column_name": "x_bool",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.19249377519569955,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 28,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "fisher_exact"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_special",
+     "has_issue": false,
+     "metric_name": "unavailable",
+     "status": "unavailable",
+     "threshold": null,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_when",
+     "has_issue": false,
+     "metric_name": "unavailable",
+     "status": "unavailable",
+     "threshold": null,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_late",
+     "has_issue": false,
+     "metric_name": "psi_categorical",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 0.5557170993064078
+    },
+    {
+     "category": "drift",
+     "column_name": "x_late",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.4652109199073146,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 7,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "fisher_category_bonferroni"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_empty",
+     "has_issue": false,
+     "metric_name": "unavailable",
+     "status": "unavailable",
+     "threshold": null,
+     "value": null
+    }
+   ],
+   0,
+   [
+    "Feature x_cat could not be measured with sufficient statistical evidence.",
+    "Feature x_special could not be measured with sufficient statistical evidence.",
+    "Feature x_when could not be measured with sufficient statistical evidence.",
+    "Feature x_empty could not be measured with sufficient statistical evidence."
+   ],
+   true
+  ],
+  "seen_counts_sha256": "771d20e1e4822b1c76d576dbb6df85f5e463be979443eb83f161a0244e62739e",
+  "seen_rows": 40,
+  "train_rows": 32
+ },
+ "random": {
+  "baseline": {
+   "performance_baseline": {
+    "contract_digest": "contract",
+    "kind": "training_holdout",
+    "label_coverage": 1.0,
+    "labeled_rows": 8,
+    "metric": "f1_weighted",
+    "model_version": "1",
+    "reference": "runs:/run-1/training_filter_evidence.json",
+    "value": 16.0
+   }
+  },
+  "drift": [
+   [
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.37426696030475026
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.21875
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.36880773836103353
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 1.865303270376533
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.3198242513431929
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.36880773836103353,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.3697941449708018
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.21666666666666667
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.38179438050351866
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 2.709884487508251
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.5499223854386878
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.38179438050351866,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.41983210073284705
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.1925925925925926
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.5920268718004181
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 1.381637699419147
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.24410693132056177
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.5920268718004181,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 27,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_cat",
+     "has_issue": false,
+     "metric_name": "psi_categorical",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 0.2518114124126454
+    },
+    {
+     "category": "drift",
+     "column_name": "x_cat",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 1.0,
+      "reason": "Insufficient data: this test cannot attain the Bonferroni-corrected significance level (0.00833333) with these observations.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "insufficient_data",
+      "test": "fisher_category_bonferroni"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "unavailable",
+     "threshold": 0.05,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_bool",
+     "has_issue": false,
+     "metric_name": "psi_categorical",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 0.13343114318396804
+    },
+    {
+     "category": "drift",
+     "column_name": "x_bool",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.19249377519569955,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 28,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "fisher_exact"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_special",
+     "has_issue": false,
+     "metric_name": "unavailable",
+     "status": "unavailable",
+     "threshold": null,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_when",
+     "has_issue": false,
+     "metric_name": "unavailable",
+     "status": "unavailable",
+     "threshold": null,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_late",
+     "has_issue": false,
+     "metric_name": "psi_categorical",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 0.5557170993064078
+    },
+    {
+     "category": "drift",
+     "column_name": "x_late",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.4652109199073146,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 7,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "fisher_category_bonferroni"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    }
+   ],
+   0,
+   [
+    "Feature x_cat could not be measured with sufficient statistical evidence.",
+    "Feature x_special could not be measured with sufficient statistical evidence.",
+    "Feature x_when could not be measured with sufficient statistical evidence."
+   ],
+   true
+  ],
+  "seen_counts_sha256": "94454ef3f10681f7891e9e6f1936b0cfb1dae67d8816fd493b4b7a66964eb70a",
+  "seen_rows": 40,
+  "train_rows": 32
+ },
+ "temporal": {
+  "baseline": {
+   "performance_baseline": {
+    "contract_digest": "contract",
+    "kind": "training_holdout",
+    "label_coverage": 1.0,
+    "labeled_rows": 8,
+    "metric": "f1_weighted",
+    "model_version": "1",
+    "reference": "runs:/run-1/training_filter_evidence.json",
+    "value": 19.0
+   }
+  },
+  "drift": [
+   [
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.41750679827459636
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.2375
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.2925343370435851
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 1.8458329238909696
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.3100671942150194
+    },
+    {
+     "category": "drift",
+     "column_name": "x_float",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.2925343370435851,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.45226701686664544
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.21666666666666667
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.38179438050351866
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 1.5443402158690935
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.2614433049028997
+    },
+    {
+     "category": "drift",
+     "column_name": "x_big",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.38179438050351866,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "wasserstein_distance",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.4341215710622296
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "ks_statistic",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.2222222222222222
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "ks_test_p_value",
+     "status": "measured",
+     "threshold": null,
+     "value": 0.41587545921468716
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "psi",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 1.6932023398942808
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "has_issue": false,
+     "metric_name": "kl_divergence",
+     "status": "measured",
+     "threshold": 0.1,
+     "value": 0.28780726323989847
+    },
+    {
+     "category": "drift",
+     "column_name": "x_decimal",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 0.41587545921468716,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 27,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "ks_2samp"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 1.0
+    },
+    {
+     "category": "drift",
+     "column_name": "x_cat",
+     "has_issue": false,
+     "metric_name": "psi_categorical",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 0.3768732325577324
+    },
+    {
+     "category": "drift",
+     "column_name": "x_cat",
+     "evidence": {
+      "adjusted_p_value": 1.0,
+      "current_count": 30,
+      "p_value": 1.0,
+      "reason": "Insufficient data: this test cannot attain the Bonferroni-corrected significance level (0.01) with these observations.",
+      "reference_count": 32,
+      "significance_level": 0.05,
+      "status": "insufficient_data",
+      "test": "fisher_category_bonferroni"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "unavailable",
+     "threshold": 0.05,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_bool",
+     "has_issue": false,
+     "metric_name": "psi_categorical",
+     "status": "measured",
+     "threshold": 0.2,
+     "value": 0.13343114318396804
+    },
+    {
+     "category": "drift",
+     "column_name": "x_bool",
+     "evidence": {
+      "adjusted_p_value": 0.9624688759784977,
+      "current_count": 30,
+      "p_value": 0.19249377519569955,
+      "reason": "No statistical support for a distribution change; equivalence is not established.",
+      "reference_count": 28,
+      "significance_level": 0.05,
+      "status": "not_detected",
+      "test": "fisher_exact"
+     },
+     "has_issue": false,
+     "metric_name": "statistical_evidence",
+     "status": "measured",
+     "threshold": 0.05,
+     "value": 0.9624688759784977
+    },
+    {
+     "category": "drift",
+     "column_name": "x_special",
+     "has_issue": false,
+     "metric_name": "unavailable",
+     "status": "unavailable",
+     "threshold": null,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_when",
+     "has_issue": false,
+     "metric_name": "unavailable",
+     "status": "unavailable",
+     "threshold": null,
+     "value": null
+    },
+    {
+     "category": "drift",
+     "column_name": "x_late",
+     "has_issue": false,
+     "metric_name": "unavailable",
+     "status": "unavailable",
+     "threshold": null,
+     "value": null
+    }
+   ],
+   0,
+   [
+    "Feature x_cat could not be measured with sufficient statistical evidence.",
+    "Feature x_special could not be measured with sufficient statistical evidence.",
+    "Feature x_when could not be measured with sufficient statistical evidence.",
+    "Feature x_late could not be measured with sufficient statistical evidence."
+   ],
+   true
+  ],
+  "seen_counts_sha256": "18610e5577c45ad03d27bb8586e0233cd3056dd77563983a5701dec105d4df6d",
+  "seen_rows": 32,
+  "train_rows": 32
+ }
+}

@@ -20,8 +20,8 @@ This guide walks you through deploying the complete Kayra application by Skyulf 
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/flyingriverhorse/Skyulf.git
-cd Skyulf
+git clone https://github.com/flyingriverhorse/Kayra.git
+cd Kayra
 ```
 
 ---

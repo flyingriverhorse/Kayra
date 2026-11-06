@@ -16,6 +16,18 @@ pages describe the current template; use the [upgrade guide](databricks_project_
 when the installed release differs. Training fits in one bounded Python process;
 [distributed inference](databricks_scoring.md) scores an admitted saved model on Spark workers.
 
+## How the jobs fit together
+
+![Bundle jobs, tables and aliases](../assets/diagrams/databricks/bundle_jobs.svg)
+
+[Editable draw.io source](../assets/diagrams/databricks/bundle_jobs.drawio)
+
+The train job registers a model version in Unity Catalog and manages its `@challenger` and
+`@champion` aliases. The score job reads a pinned version or `@champion` and writes the
+prediction table; the serving_endpoint job puts a version behind an endpoint. Dashed arrows
+are conditional runs: for example, monitoring requests retraining only with
+`on_drift=retrain`, and its schedule stays paused until you unpause it.
+
 ## Configuration and operations
 
 | Task | Detailed guide |

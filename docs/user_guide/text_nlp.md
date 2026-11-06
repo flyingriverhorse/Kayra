@@ -7,7 +7,7 @@ exactly that, plus two text-friendly classifiers.
 
 This page explains each node, when to reach for it, and how they combine. For a runnable,
 end-to-end tour on real data see the notebook
-[`examples/07_text_nlp_real_data.ipynb`](https://github.com/flyingriverhorse/Skyulf/blob/main/skyulf-core/examples/07_text_nlp_real_data.ipynb)
+[`examples/07_text_nlp_real_data.ipynb`](https://github.com/flyingriverhorse/Kayra/blob/main/skyulf-core/examples/07_text_nlp_real_data.ipynb)
 and the script `examples/06_text_nlp_vectorization.py`.
 
 ---

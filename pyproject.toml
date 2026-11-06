@@ -2,7 +2,7 @@
 
 [project]
 name = "skyulf"
-version = "0.9.6"
+version = "0.9.7"
 description = "MLOps web application for privacy-preserving ML workflows"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -129,7 +129,7 @@ dev = [
     "jupyter>=1.1.1",
     "jupyterlab>=4.6.4,<5.0.0",  # Patched notebook rendering and clipboard handling
     "notebook>=7.6.3,<8.0.0",
-    "tornado>=6.5.9,<7.0.0",  # Security floor for the notebook server stack
+    "tornado>=6.6,<7.0.0",  # Security floor for the notebook server stack
     "jupyter-server>=2.21.0,<3.0.0",  # Redact token-bearing request headers in logs
 
     # Security scanners

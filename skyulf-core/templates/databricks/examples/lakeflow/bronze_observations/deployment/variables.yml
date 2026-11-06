@@ -4,6 +4,19 @@ variables:
   pipeline_owner:
     description: User with CAN_MANAGE on every target besides the deployer; CI may pass --var pipeline_owner
     default: "${workspace.current_user.userName}"
+  # Access groups: set per shared target in deployment/targets.yml; blank = not applied.
+  access_viewers:
+    description: Group with CAN_VIEW on jobs, dashboard, project folder, experiment and endpoint
+    default: ""
+  access_runners:
+    description: Group with CAN_RUN on the target's jobs
+    default: ""
+  access_serving_callers:
+    description: Group with endpoint CAN_QUERY and SQL function EXECUTE when serving.yml lists nobody
+    default: ""
+  access_data_readers:
+    description: Group granted SELECT on the prediction tables and views after every score run
+    default: ""
   job_tags:
     description: Optional job attribution tags for either compute mode
     type: complex
@@ -59,15 +72,6 @@ variables:
   monitoring_pause_status:
     description: Explicitly unpause after reference preparation and verification
     default: "PAUSED"
-  monitoring_cleanup_cron:
-    description: Independent UTC schedule for old reference cleanup
-    default: "0 0 4 ? * SUN"
-  monitoring_cleanup_confirm:
-    description: Set false to report eligible references without deleting them
-    default: "true"
-  monitoring_cleanup_pause_status:
-    description: Pause reference cleanup independently of observation and retraining
-    default: "PAUSED"
   monitoring_enabled:
     description: Enroll activated models and measure drift after scoring; set true only with catalog and schema
     default: "false"
@@ -119,9 +123,6 @@ variables:
     description: Optional monitoring job email events; measured drift needs a separate SQL alert
     type: complex
     default: {}
-  monitoring_reference_retention_days:
-    description: Minimum reference age in days for scheduled or manual cleanup; 1 to 3650
-    default: "90"
   monitoring_webhook_notifications:
     description: Optional monitoring job events with existing notification destination IDs
     type: complex

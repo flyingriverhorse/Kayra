@@ -5,7 +5,13 @@ from datetime import UTC, datetime, timedelta
 from functools import reduce
 from typing import Any
 
-from ....data.delta_io.delta import table_identity
+from ....data.delta_io.delta import (
+    UNVERSIONED_KINDS,
+    source_table_identity,
+    table_identity,
+    table_kind,
+    unversioned_kind,
+)
 from ....feature_store.monitoring import enrich_observation, validate_observation_snapshot
 from ..monitoring_config import MonitorConfig
 from ..monitoring_sources import (
@@ -165,6 +171,42 @@ def read_spark_observation(
     return current, selected.drop("run_id"), evidence, observed
 
 
+def label_table_kind(spark: Any, table: str) -> str:
+    """Return the catalog type; dedicated compute may name an ST only in its error."""
+    try:
+        return table_kind(spark, table)
+    except Exception as error:  # noqa: BLE001 - dedicated compute may refuse DESCRIBE on an ST
+        kind = unversioned_kind(spark, table, error)
+        if kind is None:
+            raise
+        return kind
+
+
+def read_label_source(spark: Any, table: str, kind: str, as_of: datetime) -> tuple[Any, dict]:
+    """Pin a Delta label table; read a Streaming Table, view or MV as it is now."""
+    if kind in UNVERSIONED_KINDS:
+        # shortcut: no history pin, so a corrected label is read with its latest value;
+        # add a first-seen ledger if label corrections matter.
+        return spark.table(table), {
+            "label_table": table,
+            "label_table_id": source_table_identity(spark, table, kind),
+            "label_version": None,
+        }
+    label_id = table_identity(spark, table)
+    version = snapshot_at(spark, table, as_of)
+    evidence = {"label_table": table, "label_table_id": label_id, "label_version": version}
+    return read_snapshot(spark, table, version), evidence
+
+
+def _text_key(frame: Any, key: str) -> Any:
+    """Match request JSON text: DATE keys as yyyy-MM-dd, other keys cast to string."""
+    functions = importlib.import_module("pyspark.sql.functions")
+    column = functions.col(key)
+    if frame.schema[key].dataType.typeName() == "date":
+        return functions.date_format(column, "yyyy-MM-dd").alias(key)
+    return column.cast("string").alias(key)
+
+
 def read_spark_labels(
     spark: Any,
     config: MonitorConfig,
@@ -172,22 +214,29 @@ def read_spark_labels(
     target: str,
     predictions: Any,
     as_of: datetime,
+    *,
+    text_keys: bool = False,
 ) -> tuple[Any | None, dict]:
-    """Pin and join relevant outcomes without constructing a driver-side key list."""
-    if config.label_table is None:
+    """Join relevant outcomes without constructing a driver-side key list.
+
+    ``text_keys`` compares keys as request text, for joins on keys taken from serving payloads.
+    """
+    table = config.label_table
+    if table is None:
         return None, {"label_table": None, "label_version": None}
-    label_id = table_identity(spark, config.label_table)
-    version = snapshot_at(spark, config.label_table, as_of)
-    source = read_snapshot(spark, config.label_table, version)
+    kind = label_table_kind(spark, table)
+    source, evidence = read_label_source(spark, table, kind, as_of)
     available = str(config.result_available_at_column)
-    if source.schema[available].dataType.typeName() not in {"timestamp", "string"}:
-        raise ValueError("Label availability requires a UTC timestamp or aware ISO string.")
+    missing = sorted({*keys, target, available} - set(source.columns))
+    if missing:
+        raise ValueError(f"Label table {table} lacks columns: {', '.join(missing)}.")
+    if source.schema[available].dataType.typeName() not in {"timestamp", "string", "date"}:
+        raise ValueError("Label availability requires a UTC timestamp, aware ISO string or date.")
+    if text_keys:
+        source = source.select(*(_text_key(source, key) for key in keys), target, available)
     selected = source.join(predictions.select(*keys), list(keys), "left_semi").select(
         *dict.fromkeys((*keys, target, available))
     )
-    _unchanged_identity(spark, config.label_table, label_id)
-    return selected, {
-        "label_table": config.label_table,
-        "label_table_id": label_id,
-        "label_version": version,
-    }
+    if evidence["label_version"] is not None:
+        _unchanged_identity(spark, table, evidence["label_table_id"])
+    return selected, evidence

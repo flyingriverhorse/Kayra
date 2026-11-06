@@ -38,7 +38,7 @@ Its Spark and raw-input endpoint examples retain row identity and explain
 `excluded` status, null predictions and the resulting monitoring coverage.
 
 For endpoint delivery without a batch prediction table, copy
-[taxi_fare_endpoint](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint).
+[taxi_fare_endpoint](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi/taxi_fare_endpoint).
 Its serving job follows champion and enrolls the endpoint's telemetry logs for
 monitoring. Its guide includes a SQL request and the **Online serving** dashboard.
 

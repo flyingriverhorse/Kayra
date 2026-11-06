@@ -826,9 +826,12 @@ def _migrate_selection_policy(migrated: dict[str, Any]) -> None:
 
 def validate_deployed_contract(config: dict[str, Any], parameters: dict[str, str]) -> None:
     """Require notebook/job generation to agree with handoff and recovery policy."""
-    if parameters.get("workflow_contract") not in {"2", "3"} or parameters.get(
-        "deployed_score_handoff"
-    ) != config.get("score_handoff"):
+    if parameters.get("workflow_contract") != "3":
+        raise ValueError(
+            "Job definitions use an unsupported workflow contract; regenerate the project "
+            "with Skyulf 0.9.7 and redeploy the Bundle."
+        )
+    if parameters.get("deployed_score_handoff") != config.get("score_handoff"):
         raise ValueError(
             "Project and job definitions disagree; regenerate/redeploy the Bundle together."
         )

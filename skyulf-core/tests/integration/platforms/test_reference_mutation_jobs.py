@@ -449,9 +449,9 @@ def test_project_prepare_carries_generated_holder(monkeypatch, admission):
     monkeypatch.setattr(spark_monitoring_job, "project_configs", lambda *args: [config])
 
     def prepare(*args, **kwargs):
-        """Reference publication receives owner metadata without locking its expensive reads."""
+        """Reference verification reads saved rows only; it takes no lock and no owner."""
         assert not admission.held
-        assert kwargs["reference_holder"]["task_key"] == "monitor_model"
+        assert "reference_holder" not in kwargs
 
     monkeypatch.setattr(spark_monitoring_job, "prepare_spark_monitoring_reference", prepare)
     assert spark_monitoring_job.prepare_project_references("spark", values)["models"] == 1
@@ -484,9 +484,9 @@ def test_activation_enrollment_does_not_lock_expensive_reference_preparation(
         events.append("enrolled")
 
     def prepare(*args, **kwargs):
-        """Inner preparation receives provenance and acquires only at publication."""
+        """Verification after enrollment writes nothing, so it needs no owner provenance."""
         assert not admission.held
-        assert kwargs["reference_holder"]["task_key"] == "register_monitor"
+        assert "reference_holder" not in kwargs
         events.append("prepare")
 
     monkeypatch.setattr(monitoring_registration, "enroll_monitor", enroll)

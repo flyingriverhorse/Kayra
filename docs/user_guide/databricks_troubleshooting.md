@@ -29,12 +29,18 @@ The linked section explains the cause and the fix.
 | `Initial scoring source exceeds the configured max_rows budget.` or `Source increment exceeds max_rows.` | [Scoring](databricks_scoring.md#common-errors-and-fixes) |
 | `<node>.apply on pandas: <reason>`, for example `project_scoring.apply on pandas: Custom scoring and reused pre-split rules are unsupported.` (Spark admission) | [Distributed inference](databricks_spark_scoring.md) |
 | An online endpoint returns `Encountered an unexpected error while evaluating the model. ... Error ''` | [Online features](databricks_online_features.md#check-missing-and-stale-features): read the served model logs |
-| A Unity Catalog permission error in a job run | [Deployment](databricks_deployment.md#common-errors-and-fixes); test the job's `run_as` identity |
+| A Unity Catalog permission error in a job run (`PERMISSION_DENIED`, `INSUFFICIENT_PERMISSIONS`) | [Below](#permission-denied-in-a-job-run); test the job's `run_as` identity |
 | `Set both monitoring_catalog and monitoring_schema.` | Set both in `deployment/variables.yml`, or leave both blank with `monitoring_enabled: "false"`. See [if no destination is set](databricks_monitoring_setup.md#if-no-destination-is-set) |
-| `Local artifact runtime mismatch for skyulf-core: requires ..., found ...` or report reason `champion_runtime_unavailable` | The model was produced by another runtime. Approve a reviewed replacement with `allow_unloadable_champion=true`, or run with the producing release. See [champion from an older Core release](databricks_lifecycle.md#champion-from-an-older-core-release). |
+| `Local artifact runtime mismatch for skyulf-core: requires ..., found ...` or report reason `champion_runtime_unavailable` | The model was produced by another runtime. Approve a reviewed replacement with `allow_unloadable_champion=true`, or run with the producing release. See [below](#champion-saved-by-another-core-release). |
 | `bundle init` fails with `ERROR_monitoring_schema_is_required_with_monitoring_catalog` | A monitoring catalog was answered without a schema. Answer both, or leave both blank to start without monitoring. See [project setup](databricks_project_setup.md#monitoring-destination). |
-| `Spark reference is not prepared; run prepare_spark_monitoring_reference first.` | [Monitoring enrollment](databricks_monitoring_enrollment.md#common-errors-and-fixes) |
+| `Monitoring cannot read training rows saved at runs:/...` or `... retrain it with the current project.` | [Training references](databricks_monitoring_enrollment.md#verify-training-references) |
 | `Serving endpoint is not ready or its config update is pending.` | [Serving](databricks_serving.md#common-errors-and-fixes) |
+| `Serving endpoint config update failed: UPDATE_FAILED.` | [Below](#serving-endpoint-update-failed) |
+| `Owned serving endpoint must have exactly one served entity.` | [Below](#serving-endpoint-does-not-serve-one-entity) |
+| `on_drift must be disabled or retrain.` | [Below](#on-drift-value-is-not-supported) |
+| `Active performance_policy requires label_table and result_available_at_column.` | [Below](#performance-policy-without-a-label-table) |
+| `Initialize the central monitoring store before reading.` (or `before writing.`) | [Below](#monitoring-store-is-not-initialized) |
+| `STREAMING_TABLE_OPERATION_NOT_ALLOWED` | [Below](#streaming-table-operation-not-allowed) |
 
 ### Common errors on each topic page
 
@@ -66,6 +72,97 @@ The linked section explains the cause and the fix.
 | [Serving monitoring](databricks_serving_monitoring.md#common-errors-and-fixes) | `awaiting_logs`, `failed`, blank counts or latency |
 | [Daily rollout](databricks_serving_rollout.md#common-errors-and-fixes) | Retries, stops and recovery of traffic updates |
 | [Remove a project](databricks_teardown.md#common-errors-and-fixes) | Unexpected deletions, shared dashboard, endpoints left running |
+
+## Job task failures
+
+A failed job task prints `FAILED`, the source line and, for the messages below,
+a `Fix:` line and a `Docs:` link to this section. Other failures print
+"Inspect the traceback below and this task's inputs before retrying."
+
+### Serving endpoint update failed
+
+**Cause.** Model Serving could not build or start the new served entity. The error
+continues with `Served entity <name>: <state message>` and the tail of the build
+and server logs. A failed build is usually a package install: a missing or
+unreachable package, or a pin without a wheel for the serving platform.
+
+**Fix.** Correct that cause, for example the requirement pin or the
+[private package index](databricks_serving.md#operational-rules), then rerun
+the same job. The job retries the same endpoint; you do not need to delete it.
+
+### Serving endpoint does not serve one entity
+
+**Cause.** The job manages an endpoint it owns only while that endpoint (and any
+pending config) serves exactly one version of this model with all traffic. Someone
+added or removed a served entity outside the job, for example in the Serving UI.
+
+**Fix.** Restore a single served entity of this model with a 100 percent traffic
+route, then rerun the job. To return to an earlier version, rerun with
+`model_version=<previous_version>`. See [serving](databricks_serving.md).
+
+### Champion saved by another Core release
+
+**Cause.** A saved model loads only under the exact runtime that produced it. After
+a Core upgrade the old champion cannot be loaded, so comparison reports
+`champion_runtime_unavailable` and scoring it fails with
+`Local artifact runtime mismatch`.
+
+**Fix.** Review the candidate's own metrics in its training report, then run the
+approve action the report prints with `allow_unloadable_champion: true`. No
+retraining is needed. To keep using the old champion, run it with the Core release
+that produced it. See [champion from an older Core release](databricks_lifecycle.md#champion-from-an-older-core-release).
+
+### On drift value is not supported
+
+**Cause.** The `on_drift` Bundle variable is neither `disabled` nor `retrain`.
+
+**Fix.** Set `on_drift: disabled` or `on_drift: retrain` in
+`deployment/variables.yml` and in every target override in
+`deployment/targets.yml`, then redeploy. `smoke.py` checks both files. See
+[retraining](databricks_retraining.md#what-to-edit).
+
+### Performance policy without a label table
+
+**Cause.** `monitoring_performance_policies` has a policy in `report` or `retrain`
+mode, but no outcome table is bound.
+
+**Fix.** Set `monitoring_label_table` and `monitoring_result_available_at_column`
+for the target, or set `monitoring_performance_policies: '{}'` to turn
+performance monitoring off. Redeploy. See [performance](databricks_performance.md#what-to-edit).
+
+### Monitoring store is not initialized
+
+**Cause.** The central monitoring tables do not exist yet in
+`monitoring_catalog.monitoring_schema`, and this job only reads or writes them.
+
+**Fix.** Have the store owner run
+`initialize_monitoring_store(spark, monitoring_catalog, monitoring_schema)` once,
+or give this job's identity the privileges to create them, then rerun. See
+[monitoring store setup](databricks_monitoring_setup.md#the-command).
+
+### Streaming table operation not allowed
+
+**Cause.** A streaming table or materialized view has no Delta history, so its
+version cannot be pinned (Databricks refuses `DESCRIBE HISTORY` and time travel on
+them from dedicated compute).
+
+**Fix.** Training reads such a `training_table` (or `training_label_table`)
+directly: the run reads it once, saves the rows with the training run in MLflow,
+and registration, comparison, approval and monitoring replay those saved rows. A
+features-job copy is no longer needed for
+training. The batch score job, monitoring and `feature_lookup` (which stops with
+"feature_lookup needs Delta history") still need a regular Delta table: read the
+source through the features job and use its `output_table` there. See
+[streaming tables as sources](databricks_features.md#lakeflow-streaming-tables-and-materialized-views-as-sources).
+
+### Permission denied in a job run
+
+**Cause.** The job's `run_as` identity lacks a Unity Catalog grant on a catalog,
+schema, table, volume or model named in the error. The deployer's own access does
+not count.
+
+**Fix.** Grant the missing privilege to the `run_as` identity, then rerun. See
+[data, model and experiment access](databricks_deployment.md#data-model-and-experiment-access).
 
 <!-- diagnostic:target-pre-split -->
 ## A pre-split step reads the target

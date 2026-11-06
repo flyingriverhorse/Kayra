@@ -8,6 +8,80 @@ from typing import Any
 
 _CONTEXT_FIELDS = ("job_id", "job_run_id", "task_key", "model_key", "bundle_target")
 _DETAIL_FIELDS = {"reference", "reference_json", "config", "pipeline", "request"}
+_DOCS = "https://kayra.skyulf.com/manual/user_guide/databricks_troubleshooting.html#"
+# (exception type name, message substring, fix, docs anchor); the first match wins, so
+# specific messages precede bare error codes that can appear inside their log tails.
+_KNOWN_FAILURES: tuple[tuple[str | None, str | None, str, str], ...] = (
+    (
+        None,
+        "Serving endpoint config update failed",
+        "Read the 'Served entity' line and the build/server log tails printed with this "
+        "error; a failed build is usually a package install. Fix that cause and rerun "
+        "the same job; the endpoint does not need to be deleted.",
+        "serving-endpoint-update-failed",
+    ),
+    (
+        None,
+        "Owned serving endpoint must have exactly one served entity",
+        "This project's endpoint (or its pending config) no longer serves exactly one "
+        "entity, usually after a served entity was added or removed outside the job. "
+        "Restore a single served entity of this model with all traffic, then rerun.",
+        "serving-endpoint-does-not-serve-one-entity",
+    ),
+    (
+        "ArtifactRuntimeMismatchError",
+        None,
+        "The saved model was produced by another runtime, such as an older Core release. "
+        "Review the candidate's own metrics in its training report, then run the approve "
+        "action the report prints with allow_unloadable_champion: true (no retraining), "
+        "or run with the release that produced the model.",
+        "champion-saved-by-another-core-release",
+    ),
+    (
+        None,
+        "on_drift must be disabled or retrain",
+        "Set on_drift to disabled or retrain in deployment/variables.yml and every "
+        "target override in deployment/targets.yml, then redeploy.",
+        "on-drift-value-is-not-supported",
+    ),
+    (
+        None,
+        "Active performance_policy requires label_table",
+        "Set monitoring_label_table and monitoring_result_available_at_column, or set "
+        "monitoring_performance_policies to '{}', then redeploy.",
+        "performance-policy-without-a-label-table",
+    ),
+    (
+        None,
+        "Initialize the central monitoring store",
+        "Have the store owner run initialize_monitoring_store(spark, monitoring_catalog, "
+        "monitoring_schema) once, or let this job's identity create the store, then rerun.",
+        "monitoring-store-is-not-initialized",
+    ),
+    (
+        None,
+        "STREAMING_TABLE_OPERATION_NOT_ALLOWED",
+        "Streaming tables and materialized views have no Delta history here. Training "
+        "reads them directly and saves the rows it reads. The score job, monitoring and "
+        "feature_lookup still need a regular Delta table, such as the features job's "
+        "output_table.",
+        "streaming-table-operation-not-allowed",
+    ),
+    (
+        None,
+        "PERMISSION_DENIED",
+        "The job's run_as identity lacks a Unity Catalog grant on an object named in the "
+        "error. Grant it to that identity, not only the deployer, then rerun.",
+        "permission-denied-in-a-job-run",
+    ),
+    (
+        None,
+        "INSUFFICIENT_PERMISSIONS",
+        "The job's run_as identity lacks a Unity Catalog grant on an object named in the "
+        "error. Grant it to that identity, not only the deployer, then rerun.",
+        "permission-denied-in-a-job-run",
+    ),
+)
 
 
 def _visible_items(payload: dict) -> Iterator[tuple[str, Any]]:
@@ -78,6 +152,20 @@ def result_summary(payload: dict[str, Any]) -> str:
     )
 
 
+def known_fix(error: BaseException) -> tuple[str, str] | None:
+    """Return the fix text and docs URL for the first known failure in the cause chain."""
+    current: BaseException | None = error
+    for _ in range(5):  # Bounded: a cyclic __cause__ chain must not hang failure reporting.
+        if current is None:
+            return None
+        name, text = type(current).__name__, str(current)
+        for kind, part, fix, anchor in _KNOWN_FAILURES:
+            if (kind is None or kind == name) and (part is None or part in text):
+                return fix, _DOCS + anchor
+        current = current.__cause__
+    return None
+
+
 def _task_context(dbutils: Any) -> str:
     """Read only diagnostic identifiers; missing widgets must not mask task failures."""
     try:
@@ -107,8 +195,16 @@ def notebook_task(name: str, dbutils: Any) -> Iterator[None]:
             cause = exc.__cause__
             print(f"Caused by: {type(cause).__name__}: {cause}", flush=True)
             print(f"Cause source: {_error_location(cause)}", flush=True)
-        print("Inspect the traceback below and this task's inputs before retrying.", flush=True)
+        known = known_fix(exc)
+        advice = (
+            f"Fix: {known[0]}\nDocs: {known[1]}"
+            if known
+            else "Inspect the traceback below and this task's inputs before retrying."
+        )
+        print(advice, flush=True)
         exc.add_note(f"Skyulf task: {name}; {context}; source: {location}")
+        if known:
+            exc.add_note(advice)
         raise
     else:
         print(f"COMPLETED | {name} | Elapsed: {monotonic() - started:.2f}s", flush=True)

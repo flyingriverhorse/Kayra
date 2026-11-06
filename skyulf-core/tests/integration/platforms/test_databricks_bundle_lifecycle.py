@@ -26,6 +26,7 @@ def test_bundle_nomination_comparison_and_promotion_are_separate(
         }
     )
     monkeypatch.setattr(candidate, "read_training_snapshot", lambda *args: frame)
+    monkeypatch.setattr(candidate, "read_live_snapshot", lambda *args: frame)
     monkeypatch.setattr(workflow, "read_training_snapshot", lambda *args: frame)
     store = f"sqlite:///{(tmp_path / 'registry.db').as_posix()}"
     client = mlflow.MlflowClient(tracking_uri=store, registry_uri=store)

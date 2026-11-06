@@ -1,0 +1,34 @@
+{{- define "access_permissions" }}
+      # Access groups: the group names are in this target's variables below.
+{{- if .viewers}}
+      - level: CAN_VIEW
+        group_name: ${var.access_viewers}
+{{- else}}
+      # - level: CAN_VIEW # uncomment after setting access_viewers below
+      #   group_name: ${var.access_viewers}
+{{- end}}
+{{- if .runners}}
+      - level: CAN_RUN
+        group_name: ${var.access_runners}
+{{- else}}
+      # - level: CAN_RUN # uncomment after setting access_runners below
+      #   group_name: ${var.access_runners}
+{{- end}}
+{{- end}}
+
+{{- define "access_variables" }}
+      # Access groups for this target: one company group each, different per
+      # environment. Blank = not applied.
+      #   access_viewers: CAN_VIEW on jobs, dashboard and the project folder (the
+      #     MLflow experiment inherits it) and on the serving endpoint.
+      #   access_runners: CAN_RUN on jobs (start and cancel runs).
+      #   access_serving_callers: endpoint CAN_QUERY and SQL function EXECUTE.
+      #   access_data_readers: SELECT on the prediction tables and views the score
+      #     job writes, granted after every score run.
+      # Bundle permissions cannot skip a blank group, so after setting
+      # access_viewers or access_runners here, uncomment its entry under permissions.
+      access_viewers: {{printf "%q" .viewers}}
+      access_runners: {{printf "%q" .runners}}
+      access_serving_callers: {{printf "%q" .callers}}
+      access_data_readers: {{printf "%q" .readers}}
+{{- end}}

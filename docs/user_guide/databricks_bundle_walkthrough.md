@@ -8,7 +8,7 @@ same lifecycle. The [glossary](databricks_glossary.md) defines the terms; the
 [troubleshooting guide](databricks_troubleshooting.md) starts from error messages.
 
 Four finished projects built from this template on `samples.nyctaxi.trips` are in the
-[NYC taxi examples](https://github.com/flyingriverhorse/Skyulf/tree/master/skyulf-core/templates/databricks/examples/nyctaxi):
+[NYC taxi examples](https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples/nyctaxi):
 a single model with Spark scoring, a single model served online with feature lookups,
 a model competition, and a model set with combined scoring. Each has its setup answers,
 and one SQL file creates their tables. To copy the closest one instead of following
@@ -615,22 +615,23 @@ After scoring has committed, or when delayed labels make a later observation use
 ### What to edit
 
 Configure the shared monitoring catalog/schema and optional label source in
-deployment variables. Keep schedules paused until references are prepared. The
-[monitoring overview](databricks_monitoring.md) covers store setup, reference
-preparation, label joins, drift/performance policies and the dashboard. A first
-pinned candidate that was never activated can need reference preparation after
-scoring enrollment.
+deployment variables. Keep schedules paused until a first observation succeeds. The
+[monitoring overview](databricks_monitoring.md) covers store setup, training
+references, label joins, drift/performance policies and the dashboard. Monitoring
+rebuilds each model's reference from its training run's saved rows, so the
+monitoring job identity needs read access to the training experiment.
 
 ### The command
 
-When an enrolled identity lacks its reference, prepare it explicitly:
+To check that monitoring can read every enrolled model's saved training rows:
 
 ```powershell
 databricks bundle run monitoring -t test --profile YOUR_PROFILE --params monitoring_action=prepare_references
 ```
 
-Then retry the same score run to finish its monitoring handoff, or run the separate
-monitoring job with its ordinary observe action. Do not delete committed predictions.
+After fixing a failure, retry the same score run to finish its monitoring handoff, or
+run the separate monitoring job with its ordinary observe action. Do not delete committed
+predictions.
 
 ### What you should see
 
@@ -639,7 +640,7 @@ monitoring job with its ordinary observe action. Do not delete committed predict
 Open the score run's `monitor_model` child link when monitoring is enabled. In
 the separate monitoring job, inspect `monitor_model`, `monitoring_report` and
 `evaluate_retraining`. The last task can legitimately decide not to retrain.
-An initial inventory needs the project's central store and reference setup;
+An initial inventory needs the project's central store;
 follow [store setup](databricks_monitoring_setup.md) before unpausing its schedule.
 
 Without a label source, drift may be available while observed performance is
@@ -650,8 +651,9 @@ Use model/version/context filters to inspect the newly enrolled identity.
 ### Common errors and fixes
 
 If scoring committed but the monitoring child failed, inspect both stages.
-`Spark reference is not prepared; run prepare_spark_monitoring_reference first.`
-means the reference setup above is missing, not that the predictions disappeared.
+`Monitoring cannot read training rows saved at runs:/...` means the monitoring
+identity lacks read access to the training experiment, not that the predictions
+disappeared; a model trained before 0.9.7 must be retrained.
 Retries must retain the saved source/model identity and receipt. No labels means
 performance is unavailable. Dashboard refresh rereads stored observations and cannot
 create absent measurements. Retraining needs its explicit policy and freshness,

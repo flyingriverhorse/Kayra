@@ -276,6 +276,14 @@ def test_nullable_model_set_and_fresh_process(tmp_path):
     pd.testing.assert_frame_equal(pd.read_pickle(tmp_path / "output.pkl"), expected)
 
 
+def test_pyfunc_ignores_record_keys_added_to_the_request(nullable_model):
+    """Single-model callers may send record keys for monitoring; predictions must not change."""
+    _, query, model, _ = nullable_model
+    wire = _prepare(query, model)
+    keyed = wire.assign(order_id=["a", None, "c", "d"], day="2026-09-01")
+    pd.testing.assert_frame_equal(model.predict(keyed), model.predict(wire))
+
+
 @pytest.mark.parametrize("case", ["empty", "all_missing", "reordered_extra"])
 def test_empty_missing_and_column_order_inputs(nullable_model, case):
     """Boundary batches retain their row count, exact schema and caller column order."""

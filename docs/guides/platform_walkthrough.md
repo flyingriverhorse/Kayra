@@ -6,6 +6,20 @@ This guide walks through the full Skyulf web platform — from uploading a CSV t
 
 ---
 
+## App map
+
+![Kayra sidebar pages in the order of a typical project](../assets/diagrams/app/app_map.svg)
+
+[Editable draw.io source](../assets/diagrams/app/app_map.drawio)
+
+A typical project moves through the sidebar pages from 1 to 8: load data, explore it, build and
+run a pipeline, then compare the finished jobs. Each completed training or tuning job appears as
+a version in **Model Registry**, where it can be deployed or exported; only one model is active.
+Inference is a view inside **ML Canvas**, and **Data Drift** compares a new file with a trained
+job's reference data. The four pages in the bottom row are useful at any stage.
+
+---
+
 ## Architecture overview
 
 ```
@@ -159,6 +173,16 @@ You can build pipelines with **multiple branches**:
 ---
 
 ## Step 4: Execute the pipeline
+
+![ML Canvas: Preview data versus training jobs](../assets/diagrams/app/canvas_how_it_works.svg)
+
+[Editable draw.io source](../assets/diagrams/app/canvas_how_it_works.drawio)
+
+**Preview data** runs the graph on up to 1,000 rows, skips model nodes and saves no job. **Train
+model** or **Tune model** in a model node's settings, or **Run All Experiments** in the toolbar,
+creates background jobs whose results appear on the model node, in the Jobs drawer and page, in
+the Experiments view and in Model Registry. A leakage problem blocks both actions before anything
+runs, and the canvas shows what to fix.
 
 **From the canvas:** Click the **Run Preview** button to preview the pipeline, or use **Train** on an individual training node.
 

@@ -371,17 +371,29 @@ def test_deployed_contract_refuses_json_only_handoff_changes(workflow_config):
 
     with pytest.raises(ValueError, match="redeploy"):
         validate_deployed_contract(
-            workflow_config, {"workflow_contract": "2", "deployed_score_handoff": "disabled"}
+            workflow_config, {"workflow_contract": "3", "deployed_score_handoff": "disabled"}
         )
     with pytest.raises(ValueError, match="regenerate|redeploy"):
         validate_deployed_contract(workflow_config, {})
     assert (
         validate_deployed_contract(
             workflow_config,
-            {"workflow_contract": "2", "deployed_score_handoff": "after_alias_change"},
+            {"workflow_contract": "3", "deployed_score_handoff": "after_alias_change"},
         )
         is None
     )
+
+
+@pytest.mark.parametrize("contract", ["1", "2", None])
+def test_deployed_contract_rejects_every_workflow_contract_but_3(workflow_config, contract):
+    """Jobs generated before 0.9.7 must fail with a regenerate message, not run."""
+    from skyulf.integrations.databricks.projects.workflow_config import validate_deployed_contract
+
+    parameters = {"deployed_score_handoff": "after_alias_change"}
+    if contract is not None:
+        parameters["workflow_contract"] = contract
+    with pytest.raises(ValueError, match="regenerate the project with Skyulf 0.9.7"):
+        validate_deployed_contract(workflow_config, parameters)
 
 
 @pytest.mark.parametrize(

@@ -18,6 +18,7 @@ from .monitoring_store import (
     persist_report,
     result_row,
 )
+from .serving.serving_labels import read_serving_labels, serving_record_keys
 from .serving.serving_observation import (
     add_serving_report_details,
     observation_keys,
@@ -81,7 +82,11 @@ def observe_model(
     observation_reader = bind_observation_reader(observation_reader, config, artifact)
     keys = observation_keys(config, spec)
     if config.serving_endpoint:
-        observation_reader = partial(read_serving_observation, artifact=artifact)
+        observation_reader = partial(
+            read_serving_observation,
+            artifact=artifact,
+            record_keys=serving_record_keys(config, spec),
+        )
     version = evidence["model_version"]
     probabilities = len(manifest.classes) if manifest.classification_probabilities else 0
     current, predictions, observed_evidence, observed_at = observation_reader(
@@ -95,14 +100,13 @@ def observe_model(
         start=window_start,
         end=window_end,
     )
-    labels, label_evidence = label_reader(
-        spark,
-        config,
-        keys,
-        spec.target_column,
-        predictions,
-        as_of,
-    )
+    if config.serving_endpoint:
+        # Drift keeps every request row; labels arrive keyed by request rows in both modes.
+        _, labels, label_evidence = read_serving_labels(spark, config, spec, predictions, as_of)
+    else:
+        labels, label_evidence = label_reader(
+            spark, config, keys, spec.target_column, predictions, as_of
+        )
     evidence |= observed_evidence | label_evidence | {"as_of": as_of.isoformat()}
     report = report_builder(
         reference,

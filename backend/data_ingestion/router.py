@@ -8,6 +8,9 @@ creation, status, cancel). Upload and creation are rate-limited to 10/minute.
 Authorization is not wired up yet — the handlers list with ``user_id=None`` and
 create with a hardcoded ``user_id=1``, so every source is visible to every
 caller. Each site carries a ``KNOWN-GAP`` comment to that effect.
+
+In demo mode (``DEMO_MODE``) upload, creation and deletion answer 403 and the
+service finds only the Iris source; see ``backend.data_ingestion.demo``.
 """
 
 from typing import Annotated
@@ -28,6 +31,7 @@ from backend.config import get_settings
 from backend.middleware.rate_limiter import limiter
 from backend.pagination import MAX_SAMPLE_ROWS, validate_query_limit
 
+from .demo import forbid_in_demo_mode
 from .dependencies import get_data_service
 from .schemas.ingestion import (
     DataSourceCreate,
@@ -90,7 +94,7 @@ async def get_source_sample(
     return DataSourceSampleResponse(data=data)
 
 
-@sources_router.delete("/sources/{source_id}")
+@sources_router.delete("/sources/{source_id}", dependencies=[Depends(forbid_in_demo_mode)])
 async def delete_source(source_id: str, service: DataIngestionService = Depends(get_data_service)):
     """Delete a data source."""
     success = await service.delete_source(source_id)
@@ -139,7 +143,11 @@ async def export_source_data(
     )
 
 
-@router.post("/upload", response_model=IngestionJobResponse)
+@router.post(
+    "/upload",
+    response_model=IngestionJobResponse,
+    dependencies=[Depends(forbid_in_demo_mode)],
+)
 @limiter.limit("10/minute")
 async def upload_file(
     request: Request,
@@ -154,7 +162,11 @@ async def upload_file(
     return await service.handle_file_upload(file, user_id, background_tasks)
 
 
-@router.post("/database", response_model=IngestionJobResponse)
+@router.post(
+    "/database",
+    response_model=IngestionJobResponse,
+    dependencies=[Depends(forbid_in_demo_mode)],
+)
 @limiter.limit("10/minute")
 async def create_source(
     request: Request,

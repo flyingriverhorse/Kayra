@@ -3,315 +3,469 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skyulf · Open-source visual MLOps for scikit-learn — self-hosted ML pipelines</title>
-<meta name="description" content="Skyulf turns scikit-learn into pipelines you can trust. Build them visually on a canvas or with the Apache-2.0 skyulf-core Python library. Automated EDA, tuning, deployment and monitoring - self-hosted.">
-<meta name="keywords" content="Machine Learning Pipeline, Visual ML, scikit-learn, AutoML, Data Leakage Prevention, Feature Engineering, Model Registry, MLOps, Python, FastAPI, Polars, Self-Hosted, Data Science, Optuna, SHAP, MLflow, Databricks, open source MLOps, visual machine learning, no-code ML, low-code ML, ML pipeline builder, sklearn pipeline, data drift monitoring, automated EDA, Jupyter notebook export, model deployment, self-hosted AutoML, KNIME alternative, Dataiku alternative">
-<meta name="author" content="Skyulf Team">
+<title>Kayra by Skyulf · Open-source, self-hosted ML pipelines you can verify</title>
+<meta name="description" content="Machine learning pipelines you can verify. Build them visually on a canvas or with the Apache-2.0 skyulf-core Python library. Automated EDA, tuning, deployment and monitoring - self-hosted.">
+<meta name="keywords" content="Kayra, Skyulf, Machine Learning Pipeline, Visual ML, scikit-learn, AutoML, Data Leakage Prevention, Feature Engineering, Model Registry, MLOps, Python, FastAPI, Polars, Self-Hosted, Data Science, Optuna, SHAP, MLflow, Databricks, open source MLOps, visual machine learning, no-code ML, low-code ML, ML pipeline builder, sklearn pipeline, data drift monitoring, automated EDA, Jupyter notebook export, model deployment, self-hosted AutoML, KNIME alternative, Dataiku alternative">
+<meta name="author" content="Skyulf">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-<meta name="theme-color" content="#12081f">
-<meta name="application-name" content="Skyulf">
-<meta name="apple-mobile-web-app-title" content="Skyulf">
-<link rel="canonical" href="https://www.skyulf.com/">
-<link rel="alternate" hreflang="en" href="https://www.skyulf.com/">
-<link rel="alternate" hreflang="x-default" href="https://www.skyulf.com/">
-<link rel="icon" type="image/png" href="./static/img/logo.png">
-<link rel="apple-touch-icon" href="./static/img/logo.png">
+<meta name="theme-color" content="#f5f4f0">
+<meta name="application-name" content="Kayra">
+<meta name="apple-mobile-web-app-title" content="Kayra">
+<link rel="canonical" href="https://kayra.skyulf.com/">
+<link rel="alternate" hreflang="en" href="https://kayra.skyulf.com/">
+<link rel="alternate" hreflang="x-default" href="https://kayra.skyulf.com/">
+<link rel="icon" type="image/png" href="./static/img/app_logo/logo-192.png?v=20261106">
+<link rel="apple-touch-icon" href="./static/img/app_logo/logo-192.png?v=20261106">
 
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Skyulf">
+<meta property="og:site_name" content="Kayra">
 <meta property="og:locale" content="en_US">
-<meta property="og:url" content="https://www.skyulf.com/">
-<meta property="og:title" content="Skyulf · Stop trusting your pipeline. Verify it.">
-<meta property="og:description" content="Build machine learning pipelines visually on a canvas, or in plain Python with skyulf-core. Skyulf catches the data leakage that quietly inflates your scores.">
-<meta property="og:image" content="https://www.skyulf.com/static/img/og-image.jpg">
+<meta property="og:url" content="https://kayra.skyulf.com/">
+<meta property="og:title" content="Kayra · Stop trusting your pipeline. Verify it.">
+<meta property="og:description" content="Build machine learning pipelines visually on a canvas, or in plain Python with skyulf-core. Kayra catches the data leakage that quietly inflates your scores.">
+<meta property="og:image" content="https://kayra.skyulf.com/static/img/og-image.jpg?v=20261106">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Skyulf — visual ML pipeline canvas over scikit-learn">
-<meta property="og:video" content="https://www.skyulf.com/static/video/wolf.mp4">
+<meta property="og:image:alt" content="Kayra — visual machine learning pipeline canvas">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Skyulf · Stop trusting your pipeline. Verify it.">
+<meta name="twitter:title" content="Kayra · Stop trusting your pipeline. Verify it.">
 <meta name="twitter:description" content="Build machine learning pipelines visually on a canvas, or in plain Python with skyulf-core.">
-<meta name="twitter:image" content="https://www.skyulf.com/static/img/og-image.jpg">
-<meta name="twitter:image:alt" content="Skyulf — visual ML pipeline canvas over scikit-learn">
+<meta name="twitter:image" content="https://kayra.skyulf.com/static/img/og-image.jpg?v=20261106">
+<meta name="twitter:image:alt" content="Kayra — visual machine learning pipeline canvas">
 
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.skyulf.com/#org","name":"Skyulf","url":"https://www.skyulf.com/","logo":"https://www.skyulf.com/static/img/logo.png","founder":{"@type":"Person","name":"Murat Unsal","sameAs":["https://www.linkedin.com/in/murat-u/"]},"sameAs":["https://github.com/flyingriverhorse/Skyulf","https://pypi.org/project/skyulf-core/","https://flyingriverhorse.github.io/Skyulf/"]},{"@type":"WebSite","@id":"https://www.skyulf.com/#website","url":"https://www.skyulf.com/","name":"Skyulf","description":"Open-source, self-hosted visual MLOps platform and Python library for scikit-learn pipelines.","publisher":{"@id":"https://www.skyulf.com/#org"},"inLanguage":"en"},{"@type":"SoftwareApplication","name":"Skyulf","operatingSystem":"Windows, Linux, macOS","applicationCategory":"DeveloperApplication","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR","availability":"https://schema.org/InStock"},"description":"Skyulf turns scikit-learn into pipelines you can trust. Build them visually on a canvas or with the Apache-2.0 skyulf-core Python library.","author":{"@id":"https://www.skyulf.com/#org"},"featureList":"Visual ML Canvas, 36 pipeline nodes, Automated EDA, Data Leakage Detection, Hyperparameter Tuning, Optuna, SHAP Explainability, Model Registry, Model Deployment, Drift Monitoring, Notebook Export, Multi-Branch Pipelines, Audit Log, Ensembles, Text and NLP nodes, MLflow and Databricks templates","softwareRequirements":"Python 3.12","screenshot":"https://www.skyulf.com/static/img/canvas.jpg","sameAs":["https://github.com/flyingriverhorse/Skyulf","https://pypi.org/project/skyulf-core/"]},{"@type":"SoftwareSourceCode","name":"skyulf-core","codeRepository":"https://github.com/flyingriverhorse/Skyulf","programmingLanguage":"Python","runtimePlatform":"Python 3.12","license":"https://www.apache.org/licenses/LICENSE-2.0","keywords":"mlops, scikit-learn, machine learning pipeline, data leakage, automl, eda, polars, fastapi, mlflow, databricks","author":{"@id":"https://www.skyulf.com/#org"}},{"@type":"VideoObject","name":"Skyulf","description":"Skyulf hero video","thumbnailUrl":"https://www.skyulf.com/static/img/wolf-hero.png","contentUrl":"https://www.skyulf.com/static/video/wolf.mp4","uploadDate":"2026-01-01"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Skyulf?","acceptedAnswer":{"@type":"Answer","text":"Skyulf is two things that share one engine: skyulf-core, a Python library that gives you a single pipeline API over scikit-learn, and a self-hosted workspace where you build that same pipeline on a canvas. It covers the parts a notebook leaves to you: ordering steps so the test set stays untouched, versioning every run, comparing experiments, serving a model and watching it drift."}},{"@type":"Question","name":"What is the meaning of Skyulf?","acceptedAnswer":{"@type":"Answer","text":"Sky is the open space above Earth, where the sun, moon, stars, and clouds live. Ulf means \"wolf\", with Nordic roots, and the wolf is also a strong symbol in Turkic tradition. Together it fits the project: independent and community-driven."}},{"@type":"Question","name":"Do I have to self-host Skyulf?","acceptedAnswer":{"@type":"Answer","text":"You can try the hosted demo first, with nothing to install. For real work you run it yourself with docker compose up, which takes a few minutes and needs no account, no credit card and no per-prediction bill. Because it runs on your machine or your server, your data never has to leave it, which is what makes it usable in hospitals, banks and anywhere else the data legally cannot go to a third party."}},{"@type":"Question","name":"How is Skyulf different from cloud MLOps platforms?","acceptedAnswer":{"@type":"Answer","text":"Cloud platforms require uploading your data to third-party servers and charge based on usage. Skyulf runs on your own hardware or inside your private cloud. No data leaves your network, no usage-based pricing, and no vendor dependencies. You own the infrastructure and the workflow."}},{"@type":"Question","name":"Is Skyulf really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Skyulf is open source under a split license. skyulf-core, the Python library, is Apache 2.0, so you can use it in anything, including closed-source commercial products. The platform (backend and canvas) is AGPLv3, so improvements to the application itself are shared back."}},{"@type":"Question","name":"Can I use Skyulf in production?","acceptedAnswer":{"@type":"Answer","text":"It is perfect for internal tools, research, and experimentation. The team is working towards a stable v1.0 for critical production workloads."}},{"@type":"Question","name":"How can I contribute to Skyulf?","acceptedAnswer":{"@type":"Answer","text":"Contributions are welcome on GitHub at github.com/flyingriverhorse/Skyulf. Whether it is code, documentation, bug reports, or feature ideas, every contribution helps shape Skyulf."}},{"@type":"Question","name":"Does Skyulf offer a commercial license?","acceptedAnswer":{"@type":"Answer","text":"Building on skyulf-core (Apache 2.0) is free for any use, commercial included. The platform is AGPLv3: running it internally, unmodified, needs nothing from you, but offering a modified version as a public network service means publishing your source, or asking for a commercial exception."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.skyulf.com/#org","name":"Skyulf","url":"https://www.skyulf.com/","logo":"https://kayra.skyulf.com/static/img/logo-192.png?v=20261106","founder":{"@type":"Person","name":"Murat Unsal","sameAs":["https://www.linkedin.com/in/murat-u/"]},"sameAs":["https://kayra.skyulf.com/","https://koloni.skyulf.com/","https://github.com/flyingriverhorse/Kayra","https://pypi.org/project/skyulf-core/"]},{"@type":"WebSite","@id":"https://kayra.skyulf.com/#website","url":"https://kayra.skyulf.com/","name":"Kayra","description":"Kayra by Skyulf: open-source, self-hosted machine learning pipelines you can verify.","publisher":{"@id":"https://www.skyulf.com/#org"},"inLanguage":"en"},{"@type":"SoftwareApplication","name":"Kayra","operatingSystem":"Windows, Linux, macOS","applicationCategory":"DeveloperApplication","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR","availability":"https://schema.org/InStock"},"description":"Machine learning pipelines you can verify. Build them visually on a canvas or with the Apache-2.0 skyulf-core Python library.","author":{"@id":"https://www.skyulf.com/#org"},"featureList":"Visual ML Canvas, 36 pipeline nodes, Automated EDA, Data Leakage Detection, Hyperparameter Tuning, Optuna, SHAP Explainability, Model Registry, Model Deployment, Model Project Export, Drift Monitoring, Notebook Export, Multi-Branch Pipelines, Audit Log, Ensembles, Text and NLP nodes, MLflow and Databricks templates","softwareRequirements":"Python 3.12","screenshot":"https://kayra.skyulf.com/static/img/canvas.jpg?v=20261106","sameAs":["https://github.com/flyingriverhorse/Kayra","https://pypi.org/project/skyulf-core/"],"url":"https://kayra.skyulf.com/","image":"https://kayra.skyulf.com/static/img/app_logo/logo-192.png?v=20261106"},{"@type":"SoftwareSourceCode","name":"skyulf-core","codeRepository":"https://github.com/flyingriverhorse/Kayra","programmingLanguage":"Python","runtimePlatform":"Python 3.12","license":"https://www.apache.org/licenses/LICENSE-2.0","keywords":"mlops, scikit-learn, machine learning pipeline, data leakage, automl, eda, polars, fastapi, mlflow, databricks","author":{"@id":"https://www.skyulf.com/#org"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Kayra?","acceptedAnswer":{"@type":"Answer","text":"Kayra is two things that share one engine: skyulf-core, a Python library that gives you a single pipeline API over scikit-learn, and a self-hosted workspace where you build that same pipeline on a canvas. It covers the parts a notebook leaves to you: ordering steps so the test set stays untouched, versioning every run, comparing experiments, serving a model and watching it drift."}},{"@type":"Question","name":"What is the meaning of Skyulf?","acceptedAnswer":{"@type":"Answer","text":"Sky is the open space above Earth, where the sun, moon, stars, and clouds live. Ulf means \"wolf\", with Nordic roots, and the wolf is also a strong symbol in Turkic tradition. Together it fits the project: independent and community-driven."}},{"@type":"Question","name":"Do I have to self-host it?","acceptedAnswer":{"@type":"Answer","text":"You can try the hosted demo first, with nothing to install. For real work you run it yourself with docker compose up, which takes a few minutes and needs no account, no credit card and no per-prediction bill. Because it runs on your machine or your server, your data never has to leave it, which is what makes it usable in hospitals, banks and anywhere else the data legally cannot go to a third party."}},{"@type":"Question","name":"How is this different from cloud MLOps platforms?","acceptedAnswer":{"@type":"Answer","text":"Cloud platforms require uploading your data to third-party servers and charge based on usage. Kayra runs on your own hardware or inside your private cloud. No data leaves your network, no usage-based pricing, and no vendor dependencies."}},{"@type":"Question","name":"Is this really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. skyulf-core, the Python library, is Apache 2.0, so you can use it in anything, including closed-source commercial products. The platform (backend and canvas) is AGPLv3, so improvements to the application itself are shared back."}},{"@type":"Question","name":"Can I run a trained model outside Kayra?","acceptedAnswer":{"@type":"Answer","text":"Yes. In the Model Registry, Export project downloads a ZIP with the fitted model and its preprocessing, a FastAPI service and a batch command for CSV or Parquet files. It installs from its own pinned requirements and needs no Kayra server or database. Pipelines that depend on other rows, such as lag or rolling-window features, are exported as a notebook instead. See the project export quickstart."}},{"@type":"Question","name":"Can I use this in production?","acceptedAnswer":{"@type":"Answer","text":"It is perfect for internal tools, research, and experimentation. We are working towards a stable v1.0 for critical production workloads."}},{"@type":"Question","name":"How can I contribute?","acceptedAnswer":{"@type":"Answer","text":"Contributions are welcome. Start at GitHub. Whether it's code, documentation, bug reports, or feature ideas, every contribution helps."}},{"@type":"Question","name":"Do you offer a commercial license?","acceptedAnswer":{"@type":"Answer","text":"Building on skyulf-core (Apache 2.0) is free for any use, commercial included. The platform is AGPLv3: running it internally, unmodified, needs nothing from you, but offering a modified version as a public network service means publishing your source, or asking for a commercial exception."}}]}</script>
 
-<script>
-(function () {
-  var saved = null;
-  try { saved = localStorage.getItem('skyulf-theme'); } catch (e) {}
-  var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-  if (saved === 'light' || (!saved && prefersLight)) document.documentElement.classList.add('light');
-})();
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600;1,700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-<link rel="preload" as="image" href="./static/img/wolf-hero.png">
-
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="./static/img/canvas.jpg?v=20261106">
 <style>
-:root{--bg:#12081f;--bg-soft:#1a0b2e;--panel:#1d1033;--panel-60:rgba(26,11,46,.62);--line:rgba(237,220,255,.14);--ink:#f5f5ff;--soft:#c9bde4;--faint:#9a8fb8;--gold:#f2c025;--gold-text:#ffd75e;--rose:#ffdad9;--peri:#c7d0ff;--code-bg:#150629;--glow:rgba(242,192,37,.10);--shade-top:rgba(18,8,31,.50);--shade-mid:rgba(18,8,31,.22);--edge:clamp(20px,5vw,72px);--mono:'JetBrains Mono',ui-monospace,monospace}
-html.light{--bg:#f5f6fc;--bg-soft:#fff;--panel:#fff;--panel-60:rgba(255,255,255,.72);--line:rgba(23,16,43,.12);--ink:#17102b;--soft:#4c4560;--faint:#6b6485;--gold:#96690a;--gold-text:#8a5b00;--rose:#b4455c;--peri:#3b4bc4;--glow:rgba(150,105,10,.08);--shade-top:rgba(245,246,252,.30);--shade-mid:rgba(245,246,252,.08)}
+:root{--bg:#f5f4f0;--ink:#1a1a19;--soft:#55544f;--mid:#3a3935;--faint:#7a786f;--line:#e2e0d9;--amber:oklch(0.80 0.13 65);--amber-deep:oklch(0.50 0.12 65);--sand:oklch(0.94 0.022 75);--sand-line:oklch(0.86 0.03 70);--cream:oklch(0.90 0.06 72);--green:oklch(0.48 0.11 160);--red:oklch(0.52 0.16 35);--koloni:oklch(0.80 0.13 160);--edge:clamp(16px,4vw,56px);--sans:'Instrument Sans',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif;--mono:'JetBrains Mono',ui-monospace,monospace}
 *,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:radial-gradient(1100px 700px at 85% -120px,var(--glow),transparent 60%),var(--bg);color:var(--soft);font:16px/1.6 'Hanken Grotesk',system-ui,sans-serif;text-wrap:pretty;-webkit-font-smoothing:antialiased}
-h1,h2,h3,h4{color:var(--ink);margin:0;font-weight:700}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-wrap:break-word}
+a{color:inherit;text-decoration:none}
+a:hover{opacity:.75}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+img{max-width:100%}
+pre{margin:0}
+h1,h2,h3{margin:0;font-weight:400}
+h1,h2{font-family:var(--serif)}
 p{margin:0}
-img{display:block;max-width:100%}
-a{color:var(--gold-text);text-decoration:none}
-a:hover{color:var(--rose)}
-::selection{background:#f2c025;color:#17102b}
-:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.skip:focus{position:fixed;top:8px;left:8px;width:auto;height:auto;clip:auto;z-index:200;padding:8px 14px;background:var(--panel);border-radius:8px}
-.wrap{max-width:1200px;margin:0 auto;padding-inline:var(--edge)}
-.section{padding-block:clamp(72px,9vw,120px)}
-.soft-bg{background:var(--bg-soft)}
-.rule{height:1px;background:linear-gradient(to right,transparent,var(--line) 48px calc(100% - 48px),transparent)}
-.rule-top{background:linear-gradient(to right,transparent,var(--line) 48px calc(100% - 48px),transparent) no-repeat top/100% 1px}
+ol,ul{margin:0;padding:0;list-style:none}
+button{font-family:inherit;color:inherit}
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:12px;top:12px;z-index:100;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px}
 .mono{font-family:var(--mono)}
-.kicker{display:flex;align-items:center;gap:12px;font:11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--rose);margin-bottom:14px}
-.kicker::before{content:"";width:28px;height:1px;background:currentColor}
-.h2{font-weight:800;font-size:clamp(30px,4.2vw,52px);line-height:1.08;letter-spacing:-.025em;margin-bottom:16px}
-.lede{max-width:58ch;margin-bottom:56px}
-.gold{color:var(--gold-text)}.rose{color:var(--rose)}.peri{color:var(--peri)}
-.grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--min,420px)),1fr));gap:var(--gap,clamp(32px,4vw,64px));align-items:start}
-/* buttons (Nocturne: outlined primary) */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 14px/1.2 'Hanken Grotesk',sans-serif;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:8px;padding:9px 14px;cursor:pointer;text-decoration:none;transition:background .2s ease,border-color .2s ease}
-.btn i{font-size:18px}
-.btn-lg{padding:12px 20px;font-size:15px}
-.btn-primary{color:var(--gold-text);border-color:var(--gold)}
-.btn-primary:hover{color:var(--gold-text);background:color-mix(in srgb,var(--gold) 12%,transparent)}
-.btn-primary:active{background:color-mix(in srgb,var(--gold) 22%,transparent)}
-.btn-secondary{border-color:var(--line)}
-.btn-secondary:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent)}
-.btn-ghost{color:var(--soft);padding-inline:8px}
-.btn-ghost:hover{color:var(--gold-text);background:color-mix(in srgb,var(--gold) 10%,transparent)}
-.btn-icon{width:38px;height:38px;padding:0}
-.row{display:flex;flex-wrap:wrap;gap:10px}
-.tag{display:inline-flex;align-items:center;font:11px var(--mono);letter-spacing:.08em;padding:3px 10px;border-radius:6px}
-/* nav */
-.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:28px;padding:14px var(--edge);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:700;font-size:19px;letter-spacing:-.01em}
-.brand img{width:28px;height:28px;border-radius:7px}
-.nav-links{flex:1 1 0;min-width:0;height:24px;overflow:hidden;display:flex;flex-wrap:wrap;gap:0 28px;font-size:14px}
-.nav-links a{color:var(--soft);line-height:24px}
-.nav-links a:hover{color:var(--gold-text)}
-.nav-actions{display:flex;align-items:center;gap:8px;flex:none}
-html.light .icon-sun,html:not(.light) .icon-moon{display:none}
+.eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.06em;color:var(--amber-deep)}
+.h2{font-size:clamp(40px,5.5vw,84px);line-height:.95}
+.lede{color:var(--soft);line-height:1.55;text-wrap:pretty}
+.pill{display:inline-block;padding:14px 22px;border-radius:999px;font-weight:500;font-size:16px}
+.pill.dark{background:var(--ink);color:var(--bg)}
+.pill.line{border:1px solid var(--ink)}
+.dot{display:inline-block;flex-shrink:0;border-radius:50%;background:var(--amber)}
+.dot.koloni{background:var(--koloni)}
+.shot{padding:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--ink);cursor:zoom-in;display:block;width:100%}
+.shot img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+.code{background:var(--ink);color:#e8e6df;border-radius:4px;padding:18px 20px;font-family:var(--mono);font-size:14px;line-height:1.7;overflow-x:auto;max-width:100%}
+.code .c{color:#9a968a}.code .k{color:var(--amber)}.code .s{color:oklch(0.82 0.09 150)}.code .p{color:#9a968a;user-select:none}
+
+/* header: a thin Skyulf product strip above the Kayra page header */
+.sky{background:var(--ink);color:#bdbbb3;font-size:13px}
+.sky .in{display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px;padding:7px var(--edge)}
+.sky .home{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--bg)}
+.sky .home img{width:18px;height:18px;object-fit:contain}
+.sky .sep{width:1px;height:14px;background:#4a4842}
+.sky .label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#8a887f}
+.sky nav{display:flex;gap:4px}
+.sky nav a{display:flex;align-items:center;gap:7px;padding:4px 10px;border-radius:999px}
+.sky nav a[aria-current]{background:#34332f;color:var(--bg)}
+.sky .dot{width:7px;height:7px}
+.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 32px;padding:14px var(--edge);border-bottom:1px solid var(--line);font-size:15px;position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:box-shadow .2s}
+.top.scrolled{box-shadow:0 6px 24px -14px rgba(26,26,25,.35)}
+section[id]{scroll-margin-top:72px}
+.brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:600}
+.brand img{width:30px;height:30px;object-fit:contain}
+.top nav{display:flex;align-items:center;flex-wrap:wrap;gap:10px 26px}
+.top nav a{padding:4px 0;border-bottom:1.5px solid transparent}
+.top nav a:hover{border-bottom-color:currentColor;opacity:1}
+.top nav a.demo{background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:500;border:0}
+
 /* hero */
-.hero{position:relative;overflow:hidden;min-height:calc(100vh - 66px);display:flex;align-items:center}
-.hero-video,.hero-shade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.hero-video{object-fit:cover;object-position:center 30%}
-.hero-shade{background:linear-gradient(to bottom,var(--shade-top),var(--shade-mid) 45%,var(--bg) 98%),linear-gradient(to right,var(--shade-top),transparent 65%)}
-.hero-inner{position:relative;width:100%;padding-block:clamp(72px,10vw,140px) clamp(64px,8vw,112px)}
-.badge{display:inline-flex;align-items:center;gap:10px;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin-bottom:32px}
-.badge:hover{color:var(--rose)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
-.hero h1{font-weight:800;font-size:clamp(42px,6.6vw,88px);line-height:1.08;letter-spacing:-.03em;margin-bottom:28px;max-width:14ch}
-.hero h1 span{display:block}
-.hero h1 em{color:var(--gold-text)}
-.hero .sub{max-width:56ch;font-size:clamp(16px,1.4vw,19px);margin-bottom:32px}
-.hero .note{font-size:14px;color:var(--faint);margin:14px 0 40px;max-width:60ch}
-.install{display:flex;align-items:center;gap:14px;background:var(--code-bg);border:1px solid rgba(237,220,255,.12);border-radius:8px;padding:10px 12px 10px 16px;min-width:min(100%,320px)}
-.install code{font:14px var(--mono);color:#d8cdf0;flex:1}
-.install .btn{color:#c9bde4;font-size:12px}
-.stats-pills{display:flex;flex-wrap:wrap;gap:18px;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase}
-.stats-pills a{display:inline-flex;align-items:center;gap:6px;color:var(--soft)}
-.stats-pills a:hover{color:var(--ink)}
-.trust{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-/* proof */
-.proof{background:radial-gradient(800px 360px at 85% -40%,color-mix(in srgb,var(--gold) 14%,transparent),transparent 64%),var(--bg-soft)}
-.proof dl{margin:0 auto;padding-block:48px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px}
-.proof dd{margin:0;font-size:clamp(36px,3.6vw,52px);font-weight:800;line-height:1.05;letter-spacing:-.02em;color:var(--gold-text);white-space:nowrap}
-.proof dt{margin-top:8px;font:11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-.proof div{display:flex;flex-direction:column-reverse}
-/* products */
-.product{display:flex;flex-direction:column;gap:20px}
-.product-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-.product-head i{font-size:22px}
-.product-head h3{font-size:24px}
-.checks{list-style:none;padding:0;margin:0;display:grid;gap:8px;font-size:15px}
-.checks li{display:flex;gap:10px}
-.checks i{margin-top:4px}
-.shot{display:block;padding:0;border:0;background:none;cursor:zoom-in;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line),0 16px 40px rgba(0,0,0,.35);width:100%}
-.shot img{width:100%}
-.code{margin:0;background:var(--code-bg);border:1px solid rgba(237,220,255,.12);border-radius:8px;padding:16px 18px;font:12.5px/1.7 var(--mono);color:#d8cdf0;overflow-x:auto}
-.code .c{color:#9a8fb8}.code .k{color:#c7d0ff}.code .s{color:#ffd75e}
-/* path stepper */
-.steps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column}
-.step-btn{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:40px 1fr;gap:4px 12px;width:100%;padding:14px 16px;border-left:2px solid var(--line);border-radius:0 8px 8px 0;transition:background .2s ease}
-.step-btn:hover{background:color-mix(in srgb,var(--gold) 6%,transparent)}
-.step-btn:focus-visible{outline:2px solid var(--gold)}
-.step-num{font:600 12px var(--mono);color:var(--faint);padding-top:4px}
-.step-title{font-size:17px;font-weight:700;color:var(--soft);line-height:1.35}
-.step-copy{grid-column:2;font-size:14.5px;display:none}
-.step.active .step-btn{border-left-color:var(--gold);background:color-mix(in srgb,var(--gold) 7%,transparent)}
-.step.active .step-num{color:var(--gold-text)}
-.step.active .step-title{color:var(--ink)}
-.step.active .step-copy{display:block}
-.stage-view{position:sticky;top:96px}
-.panel{display:none;gap:10px}
-.panel.active{display:grid}
-.thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.thumbs .shot{border-radius:6px;box-shadow:0 0 0 1px var(--line)}
-.thumbs img{aspect-ratio:16/10;object-fit:cover;object-position:top}
-/* why */
-.why-title{font-weight:800;font-size:clamp(32px,5vw,64px);line-height:1.06;letter-spacing:-.03em;margin-bottom:18px}
-.why-title span{display:block}
-.warn{background:var(--code-bg);border:1px solid rgba(242,192,37,.35);border-left:2px solid #f2c025;border-radius:8px;padding:18px 20px;font:13.5px/1.7 var(--mono);color:#d8cdf0}
-.warn .s{color:#ffd75e}
-.warn-head{display:flex;align-items:center;gap:8px;color:#ffd75e;font-weight:600;margin-bottom:10px}
-.point{display:grid;grid-template-columns:32px 1fr;gap:6px 12px;padding:26px 0}
-.point:first-child{padding-top:0}
-.point i{font-size:22px}
-.point h4{font-size:18px}
-.point p{grid-column:2;font-size:15px}
-.table{width:100%;border-collapse:collapse;font-size:15px}
-.table th{text-align:left;font:11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding:12px 8px}
-.table td{padding:18px 8px;vertical-align:top}
-.table td:first-child{color:var(--ink);font-weight:700;width:30%}
-.table tr{background:linear-gradient(to right,transparent,var(--line) 48px calc(100% - 48px),transparent) no-repeat bottom/100% 1px}
+.hero{background:var(--amber);padding:clamp(28px,4.5vw,64px) var(--edge) 0;display:flex;flex-direction:column;gap:40px}
+.hero .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:32px 64px;align-items:end}
+.hero .col{display:flex;flex-direction:column;gap:24px;min-width:0}
+.hero .release{align-self:flex-start;font-family:var(--mono);font-size:13px;border:1px solid rgba(26,26,25,.4);padding:6px 12px;border-radius:999px;display:flex;gap:8px;align-items:center}
+.hero .release .dot{width:7px;height:7px;background:var(--ink)}
+.hero h1{font-size:clamp(56px,8.5vw,136px);line-height:.9;letter-spacing:-.02em;text-wrap:balance}
+.hero p{font-size:clamp(18px,1.5vw,21px);line-height:1.5;text-wrap:pretty}
+.hero .ctas{display:flex;gap:10px;flex-wrap:wrap}
+.hero .ctas .plain{padding:14px 10px;font-weight:500;font-size:16px}
+.hero .note{font-size:14px;line-height:1.5;margin-top:-8px}
+.hero .pip{display:flex;align-items:center;gap:12px;background:rgba(26,26,25,.08);border:0;padding:14px 18px;border-radius:999px;font-family:var(--mono);font-size:14px;cursor:pointer;align-self:flex-start;max-width:100%}
+.hero .pip span{opacity:.6}
+.hero .stats{display:flex;gap:10px 24px;flex-wrap:wrap;font-family:var(--mono);font-size:13px}
+.hero .tag{font-family:var(--mono);font-size:13px;line-height:1.6;border-top:1px solid rgba(26,26,25,.3);padding-top:14px}
+.hero .frame{border-radius:6px 6px 0 0;overflow:hidden;box-shadow:0 -10px 60px -20px rgba(26,26,25,.45);background:var(--ink);aspect-ratio:16/8}
+.hero .frame img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+
+/* hairline grids: 1px gaps over a line-coloured background, so stacking never leaves stray borders */
+.cells{display:grid;gap:1px;background:var(--line)}
+.cells > *{background:var(--bg)}
+.proof{grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.proof > div{padding:28px var(--edge);display:flex;flex-direction:column;gap:6px}
+.proof dd{margin:0;font-family:var(--serif);font-size:clamp(40px,4.4vw,56px);line-height:1;order:-1;white-space:nowrap}
+.proof dt{font-size:15px;color:var(--soft)}
+
+.section{padding:clamp(52px,6.5vw,96px) var(--edge);display:flex;flex-direction:column;gap:40px}
+.section.sand{background:var(--sand)}
+.intro{display:flex;flex-direction:column;gap:16px;max-width:760px}
+.intro p{font-size:19px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.card{border:1px solid var(--ink);border-radius:6px;padding:clamp(20px,3vw,40px);display:flex;flex-direction:column;gap:20px;min-width:0}
+.card.cream{background:var(--cream);border:0}
+.card .meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:13px;color:var(--soft)}
+.card h3{font-family:var(--serif);font-size:clamp(40px,4vw,52px);line-height:1}
+.card h3.mono{font-family:var(--mono);font-size:clamp(32px,3.4vw,44px);line-height:1.1;color:oklch(0.45 0.11 60)}
+.card p{font-size:17px;line-height:1.55;color:var(--soft);text-wrap:pretty}
+.card.cream p{color:var(--mid)}
+.card .checks{display:flex;flex-direction:column;gap:8px;font-size:16px}
+.card .checks li::before{content:"✓ "}
+.card .shot{border:0;border-radius:4px;aspect-ratio:16/9}
+.card .links{display:flex;gap:12px 20px;flex-wrap:wrap;font-weight:500;margin-top:auto}
+.card .links a{border-bottom:1px solid}
+.card.cream .code{background:#2a2622;color:#efe9dd;font-size:12px;line-height:1.65;padding:18px 16px;flex:1}
+
+/* tour video */
+.tour{gap:32px}
+.tour-frame{border-radius:6px;overflow:hidden;background:var(--ink);box-shadow:0 20px 60px -30px rgba(26,26,25,.5);aspect-ratio:16/9}
+.tour-frame video{display:block;width:100%;height:100%;object-fit:cover}
+
+/* path */
+.path{gap:40px}
+.path .head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;padding-bottom:20px;border-bottom:1px solid var(--ink)}
+.path .head h2{max-width:800px}
+.path .head p{font-size:16px;max-width:420px}
+.path .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px 56px;align-items:start}
+.steps li{border-bottom:1px solid var(--line)}
+.steps h3 button{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:baseline;width:100%;text-align:left;background:none;border:0;padding:18px 0;cursor:pointer;opacity:.45;transition:opacity .15s}
+.steps h3 button:hover,.steps li.active h3 button{opacity:1}
+.steps .n{font-family:var(--mono);font-size:13px;color:var(--faint)}
+.steps li.active .n{color:var(--amber-deep)}
+.steps .t{font-family:var(--serif);font-size:clamp(24px,2.2vw,28px);line-height:1.1}
+.steps li > p{display:none}
+.stage{display:flex;flex-direction:column;gap:20px;position:sticky;top:24px;min-width:0}
+.stage > .shot{aspect-ratio:16/10}
+.thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.thumbs[hidden]{display:none}
+.thumbs button{padding:0;border:2px solid transparent;border-radius:4px;overflow:hidden;aspect-ratio:16/10;background:var(--ink);cursor:pointer}
+.thumbs button[aria-pressed=true]{border-color:var(--amber)}
+.thumbs img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+.stage .cap{display:flex;gap:16px;align-items:baseline}
+.stage .cap .n{font-family:var(--mono);font-size:13px;color:var(--amber-deep);white-space:nowrap;flex-shrink:0}
+.stage .cap p{font-size:18px;line-height:1.55;color:var(--mid);text-wrap:pretty}
+
+/* leakage */
+.leak{background:var(--cream);gap:48px}
+.leak h2{font-size:clamp(46px,8vw,128px);line-height:.92;letter-spacing:-.02em}
+.leak .good{color:var(--green)}
+.leak .bad{color:var(--red)}
+.leak .lede{font-size:clamp(18px,1.6vw,20px);color:var(--mid);max-width:640px}
+.leak .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px 64px;align-items:start}
+.leak .text{display:flex;flex-direction:column;gap:16px}
+.leak .text h3{font-family:var(--serif);font-size:36px;line-height:1.1}
+.leak .text p{font-size:17px;line-height:1.6;color:var(--mid);text-wrap:pretty}
+.leak .more{align-self:flex-start;font-weight:500;border-bottom:1px solid}
+.checks-out{display:flex;flex-direction:column;gap:14px;min-width:0}
+.warn{border:1px solid var(--red);border-radius:6px;overflow:hidden;background:var(--bg);font-family:var(--mono);min-width:0}
+.warn .bar{display:flex;justify-content:space-between;gap:12px;background:var(--red);color:var(--bg);padding:10px 16px;font-size:13px}
+.warn .where{opacity:.75;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.warn .body{padding:20px 18px;font-size:14px;line-height:1.7}
+.warn.canvas{border-color:rgba(26,26,25,.25)}
+.warn.canvas .bar{background:transparent;color:var(--red);border-bottom:1px solid rgba(26,26,25,.12)}
+.warn.canvas .body{font-family:var(--sans);font-size:15px;line-height:1.6;color:var(--mid)}
+.leak .three{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px 64px;border-top:1px solid rgba(26,26,25,.25);padding-top:40px}
+.leak .three > div{display:flex;flex-direction:column;gap:12px}
+.leak .three h3{font-family:var(--serif);font-size:30px;line-height:1.1}
+.leak .three p{font-size:16px;line-height:1.6;color:#4a4842}
+
+/* databricks */
+.dbx{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px 64px;align-items:center}
+.dbx > *{min-width:0}
+.dbx .text{display:flex;flex-direction:column;gap:20px}
+.dbx p{font-size:18px}
+.dbx .text a{align-self:flex-start;font-weight:500;border-bottom:1px solid}
+.dbx .code{border-radius:6px;padding:24px;line-height:1.8}
+
+/* compare */
+.compare{grid-template-columns:repeat(3,1fr);background:var(--sand-line)}
+.compare > div{background:var(--sand);padding:44px var(--edge);display:flex;flex-direction:column;gap:12px}
+.compare .vs{font-family:var(--mono);font-size:13px;color:var(--amber-deep)}
+.compare h3{font-family:var(--serif);font-size:clamp(28px,2.4vw,32px);line-height:1.1;text-wrap:balance}
+.compare p{font-size:16px;line-height:1.6;color:var(--soft)}
+
 /* features */
-.features{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:0 40px}
-.feature{display:grid;grid-template-columns:28px 1fr;gap:4px 12px;padding:22px 0}
-.feature i{font-size:20px;margin-top:2px}
-.feature h3{font-size:16.5px}
-.feature p{grid-column:2;font-size:14.5px}
+.feat{gap:40px}
+.feat .head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px}
+.feat .head span{font-size:17px;color:var(--soft)}
+.feat .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0 40px}
+.feat .grid li{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--ink);padding:22px 0 32px}
+.feat .grid h3{font-size:20px;font-weight:500}
+.feat .grid p{font-size:16px;line-height:1.55;color:var(--soft)}
+.feat .grid p a{border-bottom:1px solid;color:var(--ink)}
+.feat .shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.feat .shots .shot{aspect-ratio:16/9}
+
 /* evidence */
-.card{display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:8px;background:var(--panel-60);box-shadow:0 0 0 1px var(--line)}
-.card-head{display:flex;align-items:center;gap:10px}
-.card-head i{font-size:20px}
-.card h3{font-size:17px}
-.card p{font-size:14.5px}
-.card code{color:var(--gold-text);font:13px var(--mono)}
-/* updates */
-.release{display:grid;grid-template-columns:110px 90px minmax(0,1fr) 20px;gap:16px;align-items:baseline;padding:16px 8px;color:var(--soft)}
-.release:hover{color:var(--soft);background-color:color-mix(in srgb,var(--gold) 5%,transparent)}
-.release .tagname{font:600 14px var(--mono);color:var(--gold-text)}
-.release .date{font-size:13px;color:var(--faint)}
-.release .sum{font-size:14.5px;overflow:hidden;text-overflow:ellipsis}
-@media (max-width:640px){.release{grid-template-columns:1fr auto}.release .sum{grid-column:1/-1}.release i{display:none}}
+.evidence{background:var(--sand);padding:clamp(52px,6.5vw,96px) var(--edge);display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px 64px;align-items:start}
+.evidence .lead{display:flex;flex-direction:column;gap:18px;position:sticky;top:24px}
+.evidence h2{font-size:clamp(40px,4.6vw,72px);line-height:.95}
+.evidence .lead p{font-size:18px;max-width:420px}
+.evidence ol{border-top:1px solid var(--ink)}
+.evidence li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:26px 0;border-bottom:1px solid var(--sand-line)}
+.evidence .num{font-family:var(--mono);font-size:13px;color:var(--amber-deep);padding-top:6px}
+.evidence .body{display:flex;flex-direction:column;gap:10px;min-width:0}
+.evidence h3{font-family:var(--serif);font-size:clamp(24px,2.2vw,30px);line-height:1.1}
+.evidence li p{font-size:16px;line-height:1.6;color:var(--soft);text-wrap:pretty}
+.evidence li p .mono{font-size:13px;color:var(--ink)}
+.evidence .src{align-self:flex-start;font-weight:500;font-size:15px;border-bottom:1px solid}
+
+/* releases */
+.rel{gap:32px}
+.rel .head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px}
+.rel .head > div{display:flex;flex-direction:column;gap:12px}
+.rel .head em{color:var(--amber-deep)}
+.rel .head span{font-size:17px;color:var(--soft)}
+.rel .head a{border:1px solid var(--ink);padding:12px 20px;border-radius:999px;font-weight:500;font-size:15px}
+.rel .list{display:flex;flex-direction:column;border-top:1px solid var(--ink)}
+.rel .list a{display:grid;grid-template-columns:minmax(80px,120px) minmax(70px,100px) minmax(0,1fr) 20px;gap:16px;align-items:baseline;padding:18px 0;border-bottom:1px solid var(--line)}
+.rel .list .tag{font-family:var(--mono);font-size:15px;font-weight:500}
+.rel .list a:first-child .tag{color:var(--amber-deep)}
+.rel .list .date{font-size:14px;color:var(--faint)}
+.rel .list .sum{font-size:16px;color:var(--mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rel .list .arr{color:var(--faint)}
+
 /* faq */
-.faq-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:40px clamp(32px,5vw,80px);align-items:start}
-@media (max-width:860px){.faq-grid{grid-template-columns:1fr}}
-.faq details summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 4px;font-size:17px;font-weight:700;color:var(--ink)}
-.faq details summary::-webkit-details-marker{display:none}
-.faq details summary:hover,.faq details[open] summary{color:var(--gold-text)}
-.faq summary i{font-size:18px;color:var(--faint);flex:none;transition:transform .2s ease}
-.faq details[open] summary i{transform:rotate(45deg)}
-.faq details p{padding:0 4px 22px;max-width:68ch}
-.faq strong{color:var(--ink)}
-/* stack + cta + footer */
-.stack{display:flex;flex-wrap:wrap;gap:8px 28px;font:600 17px var(--mono)}
-.cta{position:relative;overflow:hidden;margin-top:72px}
-.cta-bg{position:absolute;inset:0;background:url('./static/img/wolf-hero.png') center 65%/cover no-repeat;opacity:.5}
-.cta-shade{position:absolute;inset:0;background:linear-gradient(to bottom,var(--bg),color-mix(in srgb,var(--bg) 30%,transparent) 45%,var(--bg)),linear-gradient(to right,var(--bg) 10%,transparent 70%)}
-.cta-inner{position:relative;padding-block:clamp(88px,11vw,150px)}
-footer h3{font:500 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
-.foot-links{display:flex;flex-direction:column;gap:8px;font-size:14px}
-.foot-links a{color:var(--soft)}
-.foot-links a:hover{color:var(--gold-text)}
+.faq{background:var(--sand);padding:clamp(52px,6.5vw,96px) var(--edge);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:40px 64px;align-items:start}
+.faq .head{display:flex;flex-direction:column;gap:14px}
+.faq .head span{font-size:17px;color:var(--soft)}
+.faq .list{border-top:1px solid var(--ink)}
+.faq details{border-bottom:1px solid var(--sand-line)}
+.faq summary{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:22px 0;cursor:pointer;font-size:19px;font-weight:500;list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-family:var(--mono);font-size:18px;flex-shrink:0}
+.faq details[open] summary::after{content:"−"}
+.faq details p{margin:0 0 24px;font-size:16px;line-height:1.65;color:var(--soft);max-width:640px;text-wrap:pretty}
+.faq details p a{border-bottom:1px solid;color:var(--ink)}
+
+/* stack + cta */
+.stack{margin:0 var(--edge) 48px;padding-top:clamp(48px,6vw,80px);display:flex;flex-direction:column;gap:18px}
+.stack .eyebrow{font-size:12px;letter-spacing:.14em;color:var(--faint)}
+.stack ul{display:flex;flex-wrap:wrap;gap:10px 28px;font-family:var(--serif);font-size:clamp(24px,2.6vw,38px);line-height:1.1;color:var(--mid)}
+.stack .hl{color:var(--amber-deep)}
+.cta{margin:0 var(--edge) clamp(56px,7vw,96px);border-top:1px solid var(--ink);padding-top:40px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:32px}
+.cta > div{display:flex;flex-direction:column;gap:12px}
+.cta h2{font-size:clamp(52px,7vw,112px);line-height:.9}
+.cta span{font-size:18px;line-height:1.5;color:var(--soft)}
+.cta .btns{flex-direction:row;gap:10px;flex-wrap:wrap}
+.cta .pill{padding:16px 24px;font-size:17px}
+.cta .pill.amber{background:var(--amber)}
+
+/* footer */
+footer{background:var(--ink);color:#d8d6cf;padding:72px var(--edge) 32px;display:flex;flex-direction:column;gap:64px}
+footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:40px 24px}
+footer .cols > :first-child{grid-column:1/-1}
+@media (min-width:861px){footer .cols > :first-child{grid-column:auto}}
+footer .col{display:flex;flex-direction:column;gap:12px;font-size:15px}
+footer .logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:20px;color:var(--bg)}
+footer .logo img{width:26px;height:26px;object-fit:contain}
+footer .line{font-family:var(--serif);font-size:24px;line-height:1.2;color:var(--bg);max-width:280px}
+footer .k{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#8a887f}
+footer .col a{display:flex;align-items:center;gap:8px}
+footer .col .dot{width:7px;height:7px}
+footer .bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:24px;border-top:1px solid #34332f;font-size:13px;color:#8a887f}
+
 /* lightbox */
-.lightbox{position:fixed;inset:0;z-index:100;display:none;place-items:center;padding:24px;background:rgba(10,4,18,.88);backdrop-filter:blur(6px)}
-.lightbox.open{display:grid}
-.lightbox img{max-width:92vw;max-height:88vh;border-radius:8px;box-shadow:0 0 0 1px rgba(237,220,255,.14),0 16px 40px rgba(0,0,0,.65)}
-.lightbox .btn{position:absolute;top:20px;right:20px;color:#f5f5ff}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+.lb{position:fixed;inset:0;z-index:50;background:rgba(15,16,18,.9);display:none;align-items:center;justify-content:center;padding:clamp(16px,4vw,56px);cursor:zoom-out}
+.lb.open{display:flex}
+.lb img{max-width:100%;max-height:100%;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.lb button{position:absolute;top:14px;right:16px;background:none;border:0;color:var(--bg);font-family:var(--mono);font-size:14px;padding:8px 12px;cursor:pointer}
+
+/* tablet */
+@media (max-width:1000px){
+  .proof{grid-template-columns:repeat(2,1fr)}
+  .compare{grid-template-columns:1fr}
+  .compare > div{padding:40px var(--edge)}
+}
+/* phone: the stage sits under the active step instead of in a far-away sticky column */
+@media (max-width:860px){
+  .path .grid,.evidence{grid-template-columns:minmax(0,1fr)}
+  .evidence .lead{position:static}
+  .stage{position:static;padding:4px 0 24px}
+  .steps .stage .cap{display:none}
+  .steps li.active > p{display:block;font-size:16px;line-height:1.55;color:var(--mid);padding:0 0 20px 56px;margin-top:-6px}
+  .steps li.active:has(.stage) > p{padding-bottom:0}
+}
+@media (max-width:600px){
+  .top{padding-block:16px}
+  .top nav{gap:8px 18px;font-size:14px}
+  .top nav a.demo{padding:8px 14px}
+  .top nav .sec,.top nav .gh-link{display:none}
+  .top{flex-wrap:nowrap}
+  .brand{font-size:19px}
+  .sky .label{display:none}
+  .hero .ctas .pill{flex:1 1 auto;text-align:center}
+  .hero .ctas .plain{display:none}
+  .hero .frame{aspect-ratio:4/3}
+  .proof{grid-template-columns:1fr 1fr}
+  .proof > div{padding:24px var(--edge) 24px 16px}
+  .proof > div:nth-child(odd){padding-left:var(--edge)}
+  .proof dd{font-size:clamp(28px,8vw,40px)}
+  .proof dt{font-size:14px}
+  .code{font-size:12.5px;padding:16px}
+  .card.cream .code{font-size:12px}
+  .steps h3 button{grid-template-columns:36px 1fr}
+  .steps li.active > p{padding-left:48px}
+  .rel .list a{grid-template-columns:auto 1fr auto;gap:4px 14px}
+  .rel .list .sum{grid-column:1/-1;grid-row:2;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical}
+  .faq summary{font-size:17px}
+  .cta .btns{width:100%}
+  .cta .pill{flex:1 1 auto;text-align:center}
+}
+
+/* hero, audience, tour modal and evidence layout */
+.hero .frame{aspect-ratio:8/3}
+.hero .frame img{object-position:center}
+.hero .stats .big{font-size:15px}
+.hero .note{font-size:13px;opacity:.8}
+.who{gap:32px}
+.who-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+.who-grid > div{border:1px solid var(--line);border-radius:6px;padding:24px;display:flex;flex-direction:column;gap:10px;background:#fff}
+.who-grid h3{font-family:var(--serif);font-size:26px;line-height:1.1}
+.who-grid p{font-size:16px;line-height:1.55;color:var(--soft)}
+.tour-btn{align-self:flex-start;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:12px 18px;font-size:15px;font-weight:500;cursor:pointer}
+#tourLb video{max-width:100%;max-height:100%;border-radius:6px;background:#000}
+.vs-list{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding-top:16px;border-top:1px solid var(--sand-line)}
+.evidence .vs-list li{display:block;padding:0;border:0;font-size:15px;line-height:1.5;color:var(--soft)}
+.vs-list b{color:var(--ink);font-weight:600}
+footer .col a.prod{flex-direction:column;align-items:flex-start;gap:2px}
+footer .col a.prod > span{display:flex;align-items:center;gap:8px}
+footer .col small{font-size:12px;color:#8a887f;padding-left:15px}
+
+.evidence .lead{position:static}
+.evidence .vs-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:28px 40px;border-top:1px solid var(--ink);padding-top:32px;margin-top:8px}
+.evidence .vs-row > div{display:flex;flex-direction:column;gap:8px}
+.evidence .vs-row .vs{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--amber-deep)}
+.evidence .vs-row h3{font-size:24px}
+.evidence .vs-row p{font-size:15px;line-height:1.55;color:var(--soft)}
+
+/* evidence: heading on top, the six items in a compact three-column grid */
+.evidence{grid-template-columns:minmax(0,1fr);gap:28px;padding:clamp(48px,6vw,84px) var(--edge)}
+.evidence .lead{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:end;gap:10px 56px}
+.evidence .lead .eyebrow{grid-column:1/-1}
+.evidence .lead p{max-width:none}
+.evidence ol{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0 36px;border-top:0}
+.evidence li{grid-template-columns:32px minmax(0,1fr);border-top:1px solid var(--ink);border-bottom:0;padding:18px 0 22px}
+.evidence h3{font-size:22px}
+.evidence li p{font-size:15px}
+@media (max-width:860px){.evidence .lead{grid-template-columns:minmax(0,1fr)}}
+.leak .src{font-size:14px;line-height:1.55;color:var(--soft);max-width:68ch}
+.leak .src a{color:inherit;text-decoration:underline;text-underline-offset:3px}
 </style>
 </head>
 <body>
-<a href="#content" class="sr-only skip">Skip to content</a>
+<a class="skip" href="#content">Skip to content</a>
 
-<nav class="nav" aria-label="Main">
-  <a href="#" class="brand"><img src="./static/img/logo.png" alt="Skyulf Logo" width="28" height="28">Skyulf</a>
-  <div class="nav-links">
-    <a href="#products">Canvas or code</a>
-    <a href="#how">How it works</a>
-    <a href="#why">Why Skyulf</a>
-    <a href="#features">Features</a>
-    <a href="#updates">Updates</a>
-    <a href="#faq">FAQ</a>
+<div class="sky">
+  <div class="in">
+    <a class="home" href="https://www.skyulf.com/"><img src="./static/img/logo-192.png?v=20261106" alt="" width="18" height="18">Skyulf</a>
+    <span class="sep" aria-hidden="true"></span>
+    <span class="label">PRODUCTS</span>
+    <nav aria-label="Skyulf products">
+      <a href="./" aria-current="page"><span class="dot" aria-hidden="true"></span>Kayra</a>
+      <a href="https://koloni.skyulf.com/"><span class="dot koloni" aria-hidden="true"></span>Koloni</a>
+    </nav>
   </div>
-  <div class="nav-actions">
-    <a href="./manual/index.html" class="btn btn-ghost">Docs</a>
-    <button type="button" id="theme-toggle" class="btn btn-secondary btn-icon" aria-label="Switch theme"><i class="ph ph-sun icon-sun"></i><i class="ph ph-moon icon-moon"></i></button>
-    <a href="https://api.skyulf.com/" target="_blank" rel="noopener" class="btn btn-primary">Live demo</a>
-  </div>
-</nav>
+</div>
+<header class="top">
+  <a class="brand" href="./"><img src="./static/img/app_logo/logo-192.png?v=20261106" alt="" width="30" height="30">Kayra</a>
+  <nav aria-label="Kayra">
+    <a class="sec" href="#how">How it works</a>
+    <a class="sec" href="#features">Features</a>
+    <a href="./manual/index.html">Docs</a>
+    <a class="gh-link" href="https://github.com/flyingriverhorse/Kayra">GitHub</a>
+    <a class="demo" href="https://api.skyulf.com/" target="_blank" rel="noopener">Try the demo</a>
+  </nav>
+</header>
 
 <main id="content">
-  <section class="hero" aria-label="Introduction">
-    <video class="hero-video" src="./static/video/wolf.mp4" poster="./static/img/wolf-hero.png" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
-    <div class="hero-shade" aria-hidden="true"></div>
-    <div class="wrap hero-inner">
-      <a id="version-badge" href="https://github.com/flyingriverhorse/Skyulf/releases" target="_blank" rel="noopener" class="badge"><span class="dot"></span><span data-version-label>v0.8.11 — live now</span></a>
-      <h1><span>Stop trusting your pipeline.</span><span><em>Verify</em> it.</span></h1>
-      <p class="sub">Draw it. Code it. Ship it. Skyulf keeps scikit-learn as the engine and adds what notebooks never gave you: reproducible artifacts, honest validation scores, and a path to production.</p>
-      <div class="row">
-        <a href="https://api.skyulf.com/" target="_blank" rel="noopener" class="btn btn-primary btn-lg"><i class="ph ph-play-circle"></i>Try the live demo</a>
-        <a href="#run-locally" class="btn btn-secondary btn-lg"><i class="ph ph-terminal-window"></i>Run it locally</a>
-        <a href="https://github.com/flyingriverhorse/skyulf" target="_blank" rel="noopener" class="btn btn-ghost btn-lg"><i class="ph ph-github-logo"></i>GitHub</a>
-      </div>
-      <p class="note">No signup and no install — the demo runs the real app in your browser. (Free instance, so the first load can take ~30s to wake.)</p>
-      <div class="row" style="align-items:center;gap:20px">
-        <div class="install">
-          <code><span style="color:#9a8fb8">$ </span>pip install skyulf-core</code>
-          <button type="button" class="btn btn-ghost" data-copy="pip install skyulf-core" aria-label="Copy install command"><i class="ph ph-copy"></i><span>Copy</span></button>
-        </div>
-        <div class="stats-pills">
-          <a href="https://github.com/flyingriverhorse/skyulf" target="_blank" rel="noopener"><i class="ph ph-star gold"></i><span data-github-stars>47</span> stars</a>
-          <a href="https://pypistats.org/packages/skyulf-core" target="_blank" rel="noopener"><i class="ph ph-download-simple peri"></i><span data-pypi-monthly>1.1k</span> / month</a>
-          <a href="https://pepy.tech/projects/skyulf-core" target="_blank" rel="noopener"><i class="ph ph-cloud-arrow-down rose"></i><span data-pepy-total>22k</span> total</a>
-        </div>
-      </div>
-      <div class="trust"><i class="ph ph-lock-simple peri"></i>Self-hosted · Apache-2.0 library · your data stays on your machine</div>
+<section class="hero" aria-label="Introduction">
+  <div class="grid">
+    <div class="col">
+      <a class="release" href="https://github.com/flyingriverhorse/Kayra/releases"><span class="dot" aria-hidden="true"></span><span id="latest">v0.9.6</span> · <span id="liveLabel">live now</span> ↗</a>
+      <h1>Stop trusting your pipeline. <em>Verify</em> it.</h1>
     </div>
-  </section>
+    <div class="col" style="padding-bottom:8px">
+      <p>Draw it. Code it. Ship it. Kayra keeps scikit-learn as the engine and adds what notebooks never gave you: reproducible artifacts, honest validation scores, and a path to production.</p>
+      <div class="ctas">
+        <a class="pill dark" href="https://api.skyulf.com/" target="_blank" rel="noopener">Try the live demo</a>
+        <a class="pill line" href="#run">Run it locally</a>
+      </div>
+      <span class="note">Runs in your browser, no signup.</span>
+      <button type="button" class="pip" id="pip" aria-label="Copy install command">$ pip install skyulf-core <span id="pipLabel">Copy</span></button>
+      <div class="stats">
+        <a class="big" href="https://pepy.tech/projects/skyulf-core"><b><span id="total">22k</span></b> downloads</a>
+        <a href="https://pypistats.org/packages/skyulf-core"><span id="monthly">1.1k</span> / month</a>
+        <a href="https://github.com/flyingriverhorse/Kayra">★ <span id="stars">47</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="frame"><img src="./static/img/canvas-hero.jpg?v=20261106b" alt="Kayra visual pipeline canvas with connected nodes" fetchpriority="high"></div>
+</section>
 
-  <section id="proof" class="proof" aria-label="Skyulf in numbers">
-    <div class="rule"></div>
-    <dl class="wrap">
-      <div><dt>built-in pipeline nodes</dt><dd>36</dd></div>
-      <div><dt>workspaces, EDA to audit log</dt><dd>11</dd></div>
-      <div><dt>skyulf-core, use it anywhere</dt><dd>Apache&#8209;2.0</dd></div>
-      <div><dt>on scikit-learn, pandas &amp; Polars</dt><dd>Python&nbsp;3.12</dd></div>
-    </dl>
-    <div class="rule"></div>
-  </section>
+<dl class="proof cells" aria-label="Kayra in numbers">
+  <div><dt>built-in pipeline nodes</dt><dd>36</dd></div>
+  <div><dt>workspaces, EDA to audit log</dt><dd>11</dd></div>
+  <div><dt>skyulf-core, use it anywhere</dt><dd>Apache&#8209;2.0</dd></div>
+  <div><dt>on scikit-learn, pandas &amp; Polars</dt><dd>Python&nbsp;3.12</dd></div>
+</dl>
 
-  <section id="products" class="wrap section">
-    <p class="kicker">One engine</p>
+<section id="who" class="section who" aria-labelledby="who-title">
+  <div class="intro">
+    <span class="eyebrow">WHO IT'S FOR</span>
+    <h2 class="h2" id="who-title">Built for teams who can't afford a wrong score.</h2>
+  </div>
+  <div class="who-grid">
+    <div><h3>Data that can't leave your network</h3><p>Hospitals, banks and public bodies run Kayra on their own servers. Nothing is uploaded, nothing is billed per prediction.</p></div>
+    <div><h3>Notebook users who need to ship</h3><p>Keep scikit-learn, get leakage checks, versioned runs, a model registry and a REST endpoint, and export back to a notebook any time.</p></div>
+    <div><h3>Databricks teams</h3><p>Start locally, then generate a Databricks bundle with training, scoring, monitoring and serving jobs on Unity Catalog.</p></div>
+  </div>
+</section>
+
+<section id="run" class="section sand">
+  <div class="intro">
+    <span class="eyebrow">ONE ENGINE</span>
     <h2 class="h2">Two ways to drive it.</h2>
     <p class="lede">Prefer clicking or typing? Both produce the same kind of pipeline, and the canvas exports to a notebook whenever you want to drop back into code.</p>
-    <div class="grid-auto" style="--min:440px">
-      <article class="product">
-        <div class="product-head"><i class="ph ph-tree-structure gold"></i><h3>Skyulf Platform</h3><span class="tag" style="background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold-text)">Self-hosted workspace · AGPLv3</span></div>
-        <p style="max-width:52ch">The full application: a node canvas, automated EDA, background training, experiment comparison, a model registry, deployment and monitoring, all running on your own machine or server.</p>
-        <ul class="checks">
-          <li><i class="ph ph-check gold"></i>Drag, connect and configure 36 node types</li>
-          <li><i class="ph ph-check gold"></i>Training runs in the background while you keep working</li>
-          <li><i class="ph ph-check gold"></i>Export any pipeline to a runnable Jupyter notebook</li>
-        </ul>
-        <button type="button" class="shot zoomable"><img src="./static/img/canvas.jpg" alt="Skyulf visual pipeline canvas with connected nodes" loading="lazy" decoding="async"></button>
-        <div id="run-locally" style="scroll-margin-top:96px;display:grid;gap:14px">
-          <div class="code" style="font-size:13.5px;line-height:1.8;white-space:nowrap"><span class="c">$</span> git clone https://github.com/flyingriverhorse/Skyulf<br><span class="c">$</span> docker compose up</div>
-          <div class="row">
-            <a href="https://api.skyulf.com/" target="_blank" rel="noopener" class="btn btn-primary">Open the live demo</a>
-            <a href="./manual/guides/platform_setup.html" class="btn btn-secondary">Setup guide</a>
-          </div>
-        </div>
-      </article>
-      <article class="product">
-        <div class="product-head"><i class="ph ph-package peri"></i><h3>skyulf-core</h3><span class="tag" style="background:color-mix(in srgb,var(--peri) 14%,transparent);color:var(--peri)">Standalone Python library · Apache-2.0</span></div>
-        <p style="max-width:52ch">No server, no UI, no lock-in. A pip-installable library that gives your scripts and notebooks one consistent pipeline API over scikit-learn, with the leakage checks and artifacts built in.</p>
-        <ul class="checks">
-          <li><i class="ph ph-check peri"></i>Works standalone in any notebook or script</li>
-          <li><i class="ph ph-check peri"></i>Accepts pandas or Polars frames directly</li>
-          <li><i class="ph ph-check peri"></i>Permissive license, ship it inside your own product</li>
-        </ul>
+  </div>
+  <div class="two">
+    <article class="card">
+      <div class="meta"><span>Self-hosted workspace</span><span>AGPLv3</span></div>
+      <h3>Kayra Platform</h3>
+      <p>The full application: a node canvas, automated EDA, background training, experiment comparison, a model registry, deployment and monitoring, all running on your own machine or server.</p>
+      <ul class="checks"><li>Drag, connect and configure 36 node types</li><li>Training runs in the background while you keep working</li><li>Export any pipeline to a runnable Jupyter notebook</li></ul>
+      <button type="button" class="shot" data-zoom="./static/img/dashboard.jpg?v=20261106" aria-label="Enlarge dashboard screenshot"><img src="./static/img/dashboard.jpg?v=20261106" alt="Kayra dashboard with jobs, deployments and data sources" loading="lazy" decoding="async"></button>
+      <pre class="code"><span class="p">$ </span>git clone https://github.com/flyingriverhorse/Kayra
+<span class="p">$ </span>docker compose up</pre>
+      <div class="links"><a href="./manual/guides/platform_setup.html">Setup guide →</a></div>
+    </article>
+    <article class="card cream">
+      <div class="meta"><span>Standalone Python library</span><span>Apache-2.0</span></div>
+      <h3 class="mono">skyulf-core</h3>
+      <p>No server, no UI, no lock-in. A pip-installable library that gives your scripts and notebooks one consistent pipeline API over scikit-learn, with the leakage checks and artifacts built in.</p>
+      <ul class="checks"><li>Works standalone in any notebook or script</li><li>Accepts pandas or Polars frames directly</li><li>Permissive license, ship it inside your own product</li></ul>
 <pre class="code"><code><span class="c"># Runs as-is: the dataset ships with scikit-learn.</span>
 <span class="k">from</span> sklearn.datasets <span class="k">import</span> load_breast_cancer
 <span class="k">from</span> skyulf <span class="k">import</span> SkyulfPipeline
@@ -337,286 +491,381 @@ print(results[<span class="s">"modeling"</span>][<span class="s">"splits"</span>
 <span class="c"># {'roc_auc': 0.9954, 'f1': 0.9722, 'pr_auc': 0.9972, ...}</span>
 
 pipeline.save(<span class="s">"tumour.pkl"</span>)  <span class="c"># save fitted preprocessing and model</span></code></pre>
-        <div class="row">
-          <a href="https://pypi.org/project/skyulf-core/" target="_blank" rel="noopener" class="btn btn-primary">pip install skyulf-core</a>
-          <a href="./manual/index.html" class="btn btn-secondary">Library docs</a>
-        </div>
-      </article>
-    </div>
-  </section>
+      <div class="links"><a href="https://pypi.org/project/skyulf-core/">PyPI →</a><a href="./manual/index.html">Library docs →</a></div>
+    </article>
+  </div>
+</section>
 
-  <section id="how" class="soft-bg">
-    <div class="rule"></div>
-    <div class="wrap section">
-      <p class="kicker">The path</p>
-      <h2 class="h2" style="max-width:20ch">From a raw file to a monitored model.</h2>
-      <p class="lede">Every stage lives in one workspace, so nothing gets lost between a notebook, a spreadsheet of results and whatever is actually running in production.</p>
-      <div class="grid-auto" style="--min:340px">
-        <ol class="steps" id="steps">
-          <li class="step active"><button type="button" class="step-btn" aria-controls="panel-1" aria-expanded="true"><span class="step-num">01</span><h3 class="step-title">Point it at a file and start working</h3><p class="step-copy">Upload CSV, Excel, JSON or Parquet, or connect an S3-compatible bucket. Skyulf reads it with Polars, profiles the columns and keeps every version you load, so you can always tell which data produced which model.</p></button></li>
-          <li class="step"><button type="button" class="step-btn" aria-controls="panel-2" aria-expanded="false"><span class="step-num">02</span><h3 class="step-title">Understand the data before you model it</h3><p class="step-copy">One click profiles every column: distributions, correlations, outliers, interactions and clusters. Surrogate decision trees and causal discovery show which relationships actually drive your target.</p></button></li>
-          <li class="step"><button type="button" class="step-btn" aria-controls="panel-3" aria-expanded="false"><span class="step-num">03</span><h3 class="step-title">Design the pipeline instead of retyping it</h3><p class="step-copy">Drag nodes onto the canvas and connect them. Branch a pipeline to try two feature strategies side by side, preview any node's output as a table, and let validation block a run before it wastes your time.</p></button></li>
-          <li class="step"><button type="button" class="step-btn" aria-controls="panel-4" aria-expanded="false"><span class="step-num">04</span><h3 class="step-title">Train in the background, tune when it matters</h3><p class="step-copy">Runs execute as background jobs, so a long training run never freezes the UI. Switch on hyperparameter search — grid, random, halving or Optuna — and watch each trial report as it finishes.</p></button></li>
-          <li class="step"><button type="button" class="step-btn" aria-controls="panel-5" aria-expanded="false"><span class="step-num">05</span><h3 class="step-title">Compare runs and pick a winner on evidence</h3><p class="step-copy">Every run keeps its metrics, curves and confusion matrix. Put runs next to each other, see which change actually helped, and tune decision thresholds rather than accepting whatever 0.5 gives you.</p></button></li>
-          <li class="step"><button type="button" class="step-btn" aria-controls="panel-6" aria-expanded="false"><span class="step-num">06</span><h3 class="step-title">Promote a version, serve predictions</h3><p class="step-copy">Trained models land in a registry with their versions and artifacts. Promote one to active and it is served behind a REST endpoint you can call from anything, or export it as a standalone API and batch project that runs without Skyulf. The full deployment history is kept for audit.</p></button></li>
-          <li class="step"><button type="button" class="step-btn" aria-controls="panel-7" aria-expanded="false"><span class="step-num">07</span><h3 class="step-title">Find out before your users do</h3><p class="step-copy">Models decay because the world moves. Skyulf compares live data against the training baseline column by column and flags what shifted — plus an error log, a slow-node profiler and an audit trail.</p></button></li>
-        </ol>
-        <div class="stage-view">
-          <div class="panel active" id="panel-1"><button type="button" class="shot zoomable"><img src="./static/img/datasource.jpg" alt="Skyulf data sources screen listing uploaded datasets" loading="lazy" decoding="async"></button></div>
-          <div class="panel" id="panel-2"><button type="button" class="shot zoomable"><img src="./static/img/eda/dashboardeda.jpg" alt="EDA overview dashboard" loading="lazy" decoding="async"></button>
-            <div class="thumbs"><button type="button" class="shot zoomable"><img src="./static/img/eda/correlations.jpg" alt="Correlation matrix" loading="lazy"></button><button type="button" class="shot zoomable"><img src="./static/img/eda/decisiontree.jpg" alt="Surrogate decision tree" loading="lazy"></button><button type="button" class="shot zoomable"><img src="./static/img/eda/causal.jpg" alt="Causal discovery graph" loading="lazy"></button></div></div>
-          <div class="panel" id="panel-3"><button type="button" class="shot zoomable"><img src="./static/img/canvas.jpg" alt="Skyulf visual pipeline canvas with connected nodes" loading="lazy" decoding="async"></button></div>
-          <div class="panel" id="panel-4"><button type="button" class="shot zoomable"><img src="./static/img/jobs.jpg" alt="Skyulf jobs list showing background training runs" loading="lazy" decoding="async"></button></div>
-          <div class="panel" id="panel-5"><button type="button" class="shot zoomable"><img src="./static/img/experiments.jpg" alt="Experiment comparison view with metrics and charts" loading="lazy" decoding="async"></button></div>
-          <div class="panel" id="panel-6"><button type="button" class="shot zoomable"><img src="./static/img/deployments.jpg" alt="Deployments screen with the active model version and history" loading="lazy" decoding="async"></button>
-            <div class="thumbs"><button type="button" class="shot zoomable"><img src="./static/img/export/registry_export.jpg" alt="Model Registry version list with an Export project button for each version" loading="lazy"></button><button type="button" class="shot zoomable"><img src="./static/img/export/exported_api.jpg" alt="Exported model API answering a prediction request, with one outlier row marked as excluded" loading="lazy"></button></div></div>
-          <div class="panel" id="panel-7"><button type="button" class="shot zoomable"><img src="./static/img/drift/drift.jpg" alt="Drift monitoring dashboard" loading="lazy" decoding="async"></button>
-            <div class="thumbs"><button type="button" class="shot zoomable"><img src="./static/img/drift/drift_report.jpg" alt="Detailed drift report per column" loading="lazy"></button><button type="button" class="shot zoomable"><img src="./static/img/errors.jpg" alt="Error log with pipeline failures" loading="lazy"></button><button type="button" class="shot zoomable"><img src="./static/img/slow_nodes.jpg" alt="Slow node profiling view" loading="lazy"></button></div></div>
-        </div>
-      </div>
-    </div>
-    <div class="rule"></div>
-  </section>
-
-  <section id="why" class="wrap section">
-    <h2 class="why-title"><span>Your model says 94%.</span><span class="rose">Production says 71%.</span></h2>
-    <p style="max-width:56ch;margin-bottom:64px;font-size:18px">Usually nothing is broken. The score was just measured wrong, and nothing in a normal notebook tells you that.</p>
-    <div class="grid-auto" style="--gap:clamp(32px,5vw,80px);margin-bottom:72px">
-      <div>
-        <h3 style="font-size:24px;margin-bottom:14px">The bug that doesn't raise an error</h3>
-        <p style="margin-bottom:14px">Fill missing values, scale a column or encode a category <em>before</em> you split into train and test, and those steps quietly learn from the test rows. Your validation score now includes answers it was supposed to be guessing. The code runs fine. The number just isn't real.</p>
-        <p style="margin-bottom:22px">Skyulf checks the order of your pipeline and tells you in plain language, both on the canvas and in the library:</p>
-        <div class="warn">
-          <div class="warn-head"><i class="ph ph-warning" style="font-size:18px"></i>validate_leakage_safety()</div>
-          Step 0 (<span class="s">'SimpleImputer'</span>) is configured before the train/test split (step 1, <span class="s">'TrainTestSplitter'</span>) and will fit its statistics on the full dataset including the test set &mdash; move it after the splitter.
-        </div>
-      </div>
-      <div>
-        <div class="point"><i class="ph ph-seal-check gold"></i><h4>Honest scores by construction</h4><p>Every node is split into a part that <em>learns</em> and a part that <em>applies</em>. Learning only ever sees training data, and what it learned is saved as explicit parameters, so inference can never accidentally refit on new data.</p></div>
-        <div class="point rule-top"><i class="ph ph-fingerprint rose"></i><h4>Reproducible six months later</h4><p>Each pipeline gets a fingerprint and an exportable model card. When someone asks which preprocessing produced a prediction, you answer with a record instead of a guess, and hand over a notebook that re-runs it.</p></div>
-        <div class="point rule-top"><i class="ph ph-heartbeat peri"></i><h4>Operations, not just training</h4><p>Most visual ML tools stop at the model. Skyulf keeps going: drift reports, an error log that links to the failing node, slow-node profiling and an audit trail of every pipeline change.</p></div>
-      </div>
-    </div>
-    <table class="table">
-      <thead><tr><th scope="col">Compared with</th><th scope="col">What changes</th></tr></thead>
-      <tbody>
-        <tr><td>vs. hand-written scikit-learn</td><td>Same estimators, none of the glue. You stop re-implementing split-transform-fit wiring for every project, and the ordering mistakes get caught for you.</td></tr>
-        <tr><td>vs. cloud AutoML</td><td>No upload, no per-prediction bill, no black box. You keep the data, you can read every step of the pipeline, and you can export it and walk away.</td></tr>
-        <tr><td>vs. other visual tools</td><td>The canvas isn't a dead end. It exports to a real notebook, and the same pipelines run from the Apache-2.0 library with no UI at all.</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section id="features" class="soft-bg">
-    <div class="rule"></div>
-    <div class="wrap section">
-      <h2 class="h2">Everything else <span class="gold">in the box</span></h2>
-      <p style="margin-bottom:48px">Shipped and documented, not on a roadmap.</p>
-      <div class="features">
-        <div class="feature rule-top"><i class="ph ph-archive-box gold"></i><h3>Model registry</h3><p>Versioned models with their artifacts and history, so you always know what is live.</p></div>
-        <div class="feature rule-top"><i class="ph ph-sliders-horizontal peri"></i><h3>Hyperparameter tuning</h3><p>Grid, random and halving search built in; Optuna available as an optional extra with live trial output.</p></div>
-        <div class="feature rule-top"><i class="ph ph-chart-bar-horizontal rose"></i><h3>SHAP explanations</h3><p>Optional explainability extra: see which features moved a prediction, globally or row by row.</p></div>
-        <div class="feature rule-top"><i class="ph ph-notebook gold"></i><h3>Notebook export</h3><p>Turn any pipeline into a runnable Jupyter notebook, compact or full, including a serving snippet.</p></div>
-        <div class="feature rule-top"><i class="ph ph-git-fork peri"></i><h3>Multi-branch pipelines</h3><p>Split one canvas into independent paths and run them as parallel jobs to compare approaches.</p></div>
-        <div class="feature rule-top"><i class="ph ph-stack rose"></i><h3>Ensembles</h3><p>Voting and stacking for classification and regression, with nested tuning of the base models.</p></div>
-        <div class="feature rule-top"><i class="ph ph-text-aa gold"></i><h3>Text &amp; NLP nodes</h3><p>TF-IDF, count and hashing vectorizers, tokenisation, and optional dense sentence embeddings.</p></div>
-        <div class="feature rule-top"><i class="ph ph-globe-hemisphere-west peri"></i><h3>Time-series &amp; geo features</h3><p>Lag and rolling windows, date parts, H3 indexing and distance features for spatial data.</p></div>
-        <div class="feature rule-top"><i class="ph ph-receipt rose"></i><h3>Audit log</h3><p>Every pipeline save recorded with what was added, removed or changed, and by whom.</p></div>
-        <div class="feature rule-top"><i class="ph ph-plugs-connected gold"></i><h3>MLflow &amp; Databricks</h3><p>Integration templates for MLflow and Databricks, with more on the way.</p></div>
-        <div class="feature rule-top"><i class="ph ph-package peri"></i><h3>Model project export</h3><p>Download a trained model as a standalone project: an HTTP API and CSV/Parquet batch scoring that run without the Skyulf server. <a href="./manual/user_guide/model_project_export_quickstart.html" class="peri">Quickstart</a></p></div>
-      </div>
-      <div class="grid-auto" style="--min:380px;--gap:20px;margin-top:40px">
-        <button type="button" class="shot zoomable"><img src="./static/img/registry.jpg" alt="Model registry listing models and versions" loading="lazy" decoding="async"></button>
-        <button type="button" class="shot zoomable"><img src="./static/img/audit.jpg" alt="Audit log of pipeline changes" loading="lazy" decoding="async"></button>
-      </div>
-    </div>
-    <div class="rule"></div>
-  </section>
-
-  <section id="updates" class="wrap section">
-    <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:28px">
-      <div>
-        <h2 style="font-weight:800;font-size:clamp(28px,3.4vw,40px);line-height:1.1;letter-spacing:-.02em;margin-bottom:8px">Always <span class="gold">shipping</span></h2>
-        <p>Live from the GitHub releases feed, every version, newest first.</p>
-      </div>
-      <a href="https://github.com/flyingriverhorse/skyulf/releases" target="_blank" rel="noopener" class="btn btn-ghost" style="color:var(--gold-text)">All releases <i class="ph ph-arrow-up-right"></i></a>
-    </div>
-    <div id="updates-list">
-      <a class="release rule-top" href="https://github.com/flyingriverhorse/skyulf/releases" target="_blank" rel="noopener"><span class="tagname">v0.8.11</span><span class="date">Sep 2026</span><span class="sum">Latest release — see the full notes on GitHub.</span><i class="ph ph-arrow-up-right" style="color:var(--faint)"></i></a>
-    </div>
-  </section>
-
-  <section id="faq" class="soft-bg faq">
-    <div class="rule"></div>
-    <div class="wrap section faq-grid">
-      <div>
-        <h2 class="h2" style="margin-bottom:12px">Questions, answered.</h2>
-        <p>The questions people actually ask before trying it.</p>
-      </div>
-      <div>
-        <details class="rule-top"><summary>What is Skyulf?<i class="ph ph-plus"></i></summary><p>Skyulf is two things that share one engine: <strong>skyulf-core</strong>, a Python library that gives you a single pipeline API over scikit-learn, and a self-hosted workspace where you build that same pipeline on a canvas. It covers the parts a notebook leaves to you: ordering steps so the test set stays untouched, versioning every run, comparing experiments, serving a model and watching it drift.</p></details>
-        <details class="rule-top"><summary>What is the meaning of Skyulf?<i class="ph ph-plus"></i></summary><p>Sky is the open space above Earth, where the sun, moon, stars, and clouds live. Ulf means “wolf,” with Nordic roots, and the wolf is also a strong symbol in Turkic tradition. Together it fits the project: independent and community-driven.</p></details>
-        <details class="rule-top"><summary>Do I have to self-host it?<i class="ph ph-plus"></i></summary><p>You can try the hosted demo first, with nothing to install. For real work you run it yourself with <code class="peri mono">docker compose up</code>, which takes a few minutes and needs no account, no credit card and no per-prediction bill. Because it runs on your machine or your server, your data never has to leave it — which is what makes it usable in hospitals, banks and anywhere else the data legally cannot go to a third party.</p></details>
-        <details class="rule-top"><summary>How is this different from cloud MLOps platforms?<i class="ph ph-plus"></i></summary><p>Cloud platforms require uploading your data to third-party servers and charge based on usage. Skyulf runs on your own hardware or inside your private cloud. No data leaves your network, no usage-based pricing, and no vendor dependencies. You own the infrastructure and the workflow.</p></details>
-        <details class="rule-top"><summary>Is this really free?<i class="ph ph-plus"></i></summary><p>Yes. Skyulf is open source under a split license. <strong>skyulf-core</strong>, the Python library, is <strong>Apache&nbsp;2.0</strong>, so you can use it in anything, including closed-source commercial products. The platform (backend and canvas) is <strong>AGPLv3</strong>, so improvements to the application itself are shared back.</p></details>
-        <details class="rule-top"><summary>Can I run a trained model outside Skyulf?<i class="ph ph-plus"></i></summary><p>Yes. In the Model Registry, <strong>Export project</strong> downloads a ZIP with the fitted model and its preprocessing, a FastAPI service and a batch command for CSV or Parquet files. It installs from its own pinned requirements and needs no Skyulf server or database. Pipelines that depend on other rows, such as lag or rolling-window features, are exported as a notebook instead. See the <a href="./manual/user_guide/model_project_export_quickstart.html" class="peri">project export quickstart</a>.</p></details>
-        <details class="rule-top"><summary>Can I use this in production?<i class="ph ph-plus"></i></summary><p>It is perfect for internal tools, research, and experimentation. We are working towards a stable v1.0 for critical production workloads.</p></details>
-        <details class="rule-top"><summary>How can I contribute?<i class="ph ph-plus"></i></summary><p>Contributions are welcome. Start at <a href="https://github.com/flyingriverhorse/skyulf" class="peri">GitHub</a>. Whether it's code, documentation, bug reports, or feature ideas, every contribution helps shape Skyulf.</p></details>
-        <details class="rule-top"><summary>Do you offer a commercial license?<i class="ph ph-plus"></i></summary><p>Building on <strong>skyulf-core</strong> (Apache&nbsp;2.0) is free for any use, commercial included. The platform is AGPLv3: running it internally, unmodified, needs nothing from you, but offering a modified version as a public network service means publishing your source, or asking for a commercial exception.</p></details>
-      </div>
-    </div>
-  </section>
-
-  <section class="wrap" style="padding-top:56px" aria-label="Technology stack">
-    <p class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:16px">Powered by modern open source</p>
-    <div class="stack">
-      <span class="gold">Scikit-learn</span><span class="peri">Pandas</span><span class="rose">FastAPI</span><span class="gold">React</span><span class="peri">Optuna</span><span class="rose">Celery</span><span class="gold">Redis</span><span class="peri">Polars</span><span class="rose">NumPy</span><span class="gold">Imbalanced-learn</span><span class="peri">SQLAlchemy</span><span class="rose">MLflow</span><span class="gold">Databricks</span>
-    </div>
-  </section>
-
-  <section class="cta" aria-label="Get started">
-    <div class="cta-bg" aria-hidden="true"></div>
-    <div class="cta-shade" aria-hidden="true"></div>
-    <div class="wrap cta-inner">
-      <h2 style="font-weight:800;font-size:clamp(36px,5vw,64px);line-height:1.04;letter-spacing:-.03em;margin-bottom:16px">Ready to build?</h2>
-      <p style="margin-bottom:32px;font-size:18px;max-width:46ch">Try the demo in your browser, or install the library and start from your next notebook.</p>
-      <div class="row">
-        <a href="https://api.skyulf.com/" target="_blank" rel="noopener" class="btn btn-primary btn-lg">Try the live demo</a>
-        <a href="https://github.com/flyingriverhorse/skyulf" target="_blank" rel="noopener" class="btn btn-secondary btn-lg" style="background:var(--panel-60)">View on GitHub</a>
-      </div>
-    </div>
-  </section>
-</main>
-
-<footer class="soft-bg">
-  <div class="rule"></div>
-  <div class="wrap" style="padding-block:56px 40px">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;margin-bottom:48px">
-      <div>
-        <div class="brand" style="margin-bottom:14px"><img src="./static/img/logo.png" alt="Skyulf Logo" width="28" height="28"><span style="font-weight:800">Skyulf</span></div>
-        <p style="font-size:14px;max-width:30ch">Build ML pipelines you can trust, visually or in plain Python.</p>
-      </div>
-      <nav aria-label="Product"><h3>Product</h3><div class="foot-links"><a href="#features">Features</a><a href="#how">Workflow</a><a href="#faq">FAQ</a><a href="https://pypi.org/project/skyulf-core/" target="_blank" rel="noopener">PyPI package</a></div></nav>
-      <nav aria-label="Resources"><h3>Resources</h3><div class="foot-links"><a href="https://github.com/flyingriverhorse/skyulf" target="_blank" rel="noopener">GitHub repository</a><a href="./manual/index.html">Documentation</a><a href="./manual/guides/platform_setup.html">Quick start</a><a href="https://github.com/flyingriverhorse/skyulf/discussions" target="_blank" rel="noopener">Community</a></div></nav>
-      <nav aria-label="Project"><h3>Project</h3><div class="foot-links"><a href="https://github.com/flyingriverhorse/skyulf/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a><a href="https://github.com/flyingriverhorse/skyulf/blob/master/SECURITY.md" target="_blank" rel="noopener">Security</a><a href="https://github.com/flyingriverhorse/skyulf/blob/master/LICENSE" target="_blank" rel="noopener">License</a></div></nav>
-    </div>
-    <div class="rule-top" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding-top:24px">
-      <span style="font-size:14px">&copy; 2025–2026 Murat Unsal. Platform AGPLv3 &middot; skyulf-core Apache&nbsp;2.0.</span>
-      <div style="display:flex;gap:6px">
-        <a href="https://www.linkedin.com/in/murat-u/" target="_blank" rel="noopener" aria-label="Skyulf author on LinkedIn" class="btn btn-ghost btn-icon"><i class="ph ph-linkedin-logo" style="font-size:20px"></i></a>
-        <a href="https://github.com/flyingriverhorse/skyulf" target="_blank" rel="noopener" aria-label="Skyulf on GitHub" class="btn btn-ghost btn-icon"><i class="ph ph-github-logo" style="font-size:20px"></i></a>
+<section id="how" class="section path">
+  <div class="head">
+    <h2 class="h2">From a raw file to a monitored model.</h2>
+    <button type="button" class="tour-btn" id="tourBtn"><span aria-hidden="true">▶</span> Watch the 30-second tour</button>
+    <p class="lede">Every stage lives in one workspace, so nothing gets lost between a notebook, a spreadsheet of results and whatever is actually running in production.</p>
+  </div>
+  <div class="grid">
+    <ol class="steps" id="steps">
+      <li data-imgs='[["datasource.jpg","Kayra data sources screen listing uploaded datasets"]]'><h3><button type="button"><span class="n">01</span><span class="t">Point it at a file and start working</span></button></h3><p>Upload CSV, Excel, JSON or Parquet, or connect an S3-compatible bucket. Kayra reads it with Polars, profiles the columns and keeps every version you load, so you can always tell which data produced which model.</p></li>
+      <li data-imgs='[["eda/dashboardeda.jpg","EDA overview dashboard"],["eda/correlations.jpg","Correlation matrix"],["eda/decisiontree.jpg","Surrogate decision tree"],["eda/causal.jpg","Causal discovery graph"]]'><h3><button type="button"><span class="n">02</span><span class="t">Understand the data before you model it</span></button></h3><p>One click profiles every column: distributions, correlations, outliers, interactions and clusters. Surrogate decision trees and causal discovery show which relationships actually drive your target.</p></li>
+      <li data-imgs='[["canvas.jpg","Kayra visual pipeline canvas with connected nodes"]]'><h3><button type="button"><span class="n">03</span><span class="t">Design the pipeline instead of retyping it</span></button></h3><p>Drag nodes onto the canvas and connect them. Branch a pipeline to try two feature strategies side by side, preview any node's output as a table, and let validation block a run before it wastes your time.</p></li>
+      <li data-imgs='[["jobs.jpg","Kayra jobs list showing background training runs"]]'><h3><button type="button"><span class="n">04</span><span class="t">Train in the background, tune when it matters</span></button></h3><p>Runs execute as background jobs, so a long training run never freezes the UI. Switch on hyperparameter search (grid, random, halving or Optuna) and watch each trial report as it finishes.</p></li>
+      <li data-imgs='[["experiments.jpg","Experiment comparison view with metrics and charts"]]'><h3><button type="button"><span class="n">05</span><span class="t">Compare runs and pick a winner on evidence</span></button></h3><p>Every run keeps its metrics, curves and confusion matrix. Put runs next to each other, see which change actually helped, and tune decision thresholds rather than accepting whatever 0.5 gives you.</p></li>
+      <li data-imgs='[["deployments.jpg","Deployments screen with the active model version and history"],["export/registry_export.jpg","Model Registry version list with an Export project button for each version"],["export/exported_api.jpg","Exported Kayra model API answering a prediction request with predictions and probabilities"]]'><h3><button type="button"><span class="n">06</span><span class="t">Promote a version, serve predictions</span></button></h3><p>Trained models land in a registry with their versions and artifacts. Promote one to active and it is served behind a REST endpoint you can call from anything, or export it as a standalone API and batch project that runs without Kayra. The full deployment history is kept for audit.</p></li>
+      <li data-imgs='[["drift/drift.jpg","Drift monitoring dashboard"],["drift/drift_report.jpg","Detailed drift report per column"],["errors.jpg","Error log with pipeline failures"],["slow_nodes.jpg","Slow node profiling view"]]'><h3><button type="button"><span class="n">07</span><span class="t">Find out before your users do</span></button></h3><p>Models decay because the world moves. Kayra compares live data against the training baseline column by column and flags what shifted, plus an error log, a slow-node profiler and an audit trail.</p></li>
+    </ol>
+    <div id="stageHome">
+      <div class="stage" id="stage">
+        <button type="button" class="shot" id="stageShot" aria-label="Enlarge screenshot"><img id="stageImg" src="./static/img/datasource.jpg?v=20261106" alt="Kayra data sources screen listing uploaded datasets" loading="lazy" decoding="async"></button>
+        <div class="thumbs" id="thumbs" hidden></div>
+        <div class="cap"><span class="n" id="stageN">01 / 07</span><p id="stageBody" aria-live="polite"></p></div>
       </div>
     </div>
   </div>
+</section>
+
+<section id="why" class="section leak">
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <h2>Your model says <span class="good">88%.</span><br>Production says <span class="bad">75%.</span></h2>
+    <p class="lede">Usually nothing is broken. The score was just measured wrong, and nothing in a normal notebook tells you that.</p>
+    <p class="src">Where these numbers come from: one model, trained twice on the same data. When feature selection peeked at the test rows, the test score said 88% but 5,000 new rows gave 75%. In the correct order, the test score said 72% and the new rows gave 69%, close to the truth. Average of 10 runs. <a href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/10_leakage_score_gap.ipynb">Run the notebook yourself →</a></p>
+  </div>
+  <div class="grid">
+    <div class="text">
+      <h3>The bug that doesn't raise an error</h3>
+      <p>Fill missing values, scale a column, encode a category or pick features <em>before</em> you split into train and test, and those steps quietly learn from the test rows. Your validation score now includes answers it was supposed to be guessing. The code runs fine. The number just isn't real.</p>
+      <p>Kayra reads the order of your steps before anything trains. In the library you get the step, the splitter and the fix by name. On the canvas the run is stopped before it starts.</p>
+      <a class="more" href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/09_leakage_safety.ipynb">Walk through it in the leakage notebook →</a>
+    </div>
+    <div class="checks-out">
+      <div class="warn" role="note">
+        <div class="bar"><span>⚠ validate_leakage_safety()</span><span class="where">library</span></div>
+        <div class="body">Step 0 ('SimpleImputer') is configured before the train/test split (step 1, 'TrainTestSplitter') and fits its statistics on the full dataset including the test set - move it after the splitter.</div>
+      </div>
+      <div class="warn canvas" role="note">
+        <div class="bar"><span>⚠ Leakage check blocked this run</span><span class="where">canvas</span></div>
+        <div class="body">The same check runs on Preview and on Run. By default nothing trains until the step order is safe, and the notice links to the preprocessing guide.</div>
+      </div>
+    </div>
+  </div>
+  <div class="three">
+    <div><h3>Honest scores by construction</h3><p>Every node is split into a part that <em>learns</em> and a part that <em>applies</em>. Learning only ever sees training rows, and what it learned is saved as explicit parameters, so scoring new data never refits anything.</p></div>
+    <div><h3>Cross-validation that doesn't peek</h3><p>During cross-validation and tuning, preprocessing is refit on each fold's training rows only. The held-out fold stays unseen, so a tuning score never includes rows the preprocessing already learned from.</p></div>
+    <div><h3>Reproducible six months later</h3><p>Each pipeline gets a fingerprint and an exportable model card. When someone asks which preprocessing produced a prediction, you answer with a record instead of a guess, and hand over a notebook that re-runs it.</p></div>
+    <div><h3>Operations, not just training</h3><p>Most visual ML tools stop at the model. Kayra keeps going: drift reports, an error log that links to the failing node, slow-node profiling and an audit trail of every pipeline change.</p></div>
+  </div>
+</section>
+
+<section class="section dbx sand" aria-labelledby="dbx-title">
+  <div class="text">
+    <span class="eyebrow">LOCAL TO CLUSTER</span>
+    <h2 class="h2" id="dbx-title">Start on your laptop. Scale out to Databricks.</h2>
+    <p class="lede">The same pipeline ships as a Databricks asset bundle with training, feature tables, scoring and monitoring jobs. Models register to Unity Catalog, and drift, performance loss and serving rollouts are watched on the cluster.</p>
+    <a href="./manual/user_guide/databricks_choose.html">Databricks guides →</a>
+  </div>
+  <pre class="code"><span class="p">$ </span>databricks bundle init skyulf-core/templates/databricks
+<span class="p">$ </span>databricks bundle validate --strict -t test
+<span class="p">$ </span>databricks bundle deploy -t test
+<span class="p">$ </span>databricks bundle run features -t test
+<span class="p">$ </span>databricks bundle run train -t test
+<span class="p">$ </span>databricks bundle run monitoring -t test</pre>
+</section>
+
+
+<section id="features" class="section feat">
+  <div class="head">
+    <h2 class="h2">Everything else in the box.</h2>
+    <span>Shipped and documented, not on a roadmap.</span>
+  </div>
+  <ul class="grid">
+    <li><h3>Model registry</h3><p>Versioned models with their artifacts and history, so you always know what is live.</p></li>
+    <li><h3>Model project export</h3><p>Download a trained model as a standalone project: an HTTP API and CSV/Parquet batch scoring that run without the Kayra server. <a href="./manual/user_guide/model_project_export_quickstart.html">Quickstart</a></p></li>
+    <li><h3>Hyperparameter tuning</h3><p>Grid, random and halving search built in; Optuna available as an optional extra with live trial output.</p></li>
+    <li><h3>SHAP explanations</h3><p>Optional explainability extra: see which features moved a prediction, globally or row by row.</p></li>
+    <li><h3>Notebook export</h3><p>Turn any pipeline into a runnable Jupyter notebook, compact or full, including a serving snippet.</p></li>
+    <li><h3>Multi-branch pipelines</h3><p>Split one canvas into independent paths and run them as parallel jobs to compare approaches.</p></li>
+    <li><h3>Ensembles</h3><p>Voting and stacking for classification and regression, with nested tuning of the base models.</p></li>
+    <li><h3>Text &amp; NLP nodes</h3><p>TF-IDF, count and hashing vectorizers, tokenisation, and optional dense sentence embeddings.</p></li>
+    <li><h3>Time-series &amp; geo features</h3><p>Lag and rolling windows, date parts, H3 indexing and distance features for spatial data.</p></li>
+    <li><h3>Audit log</h3><p>Every pipeline save recorded with what was added, removed or changed, and by whom.</p></li>
+    <li><h3>MLflow &amp; Databricks</h3><p>Integration templates for MLflow and Databricks, with more on the way.</p></li>
+  </ul>
+  <div class="shots">
+    <button type="button" class="shot" data-zoom="./static/img/registry.jpg?v=20261106" aria-label="Enlarge model registry screenshot"><img src="./static/img/registry.jpg?v=20261106" alt="Model registry listing models and versions" loading="lazy" decoding="async"></button>
+    <button type="button" class="shot" data-zoom="./static/img/audit.jpg?v=20261106" aria-label="Enlarge audit log screenshot"><img src="./static/img/audit.jpg?v=20261106" alt="Audit log of pipeline changes" loading="lazy" decoding="async"></button>
+  </div>
+</section>
+
+<section class="evidence" aria-labelledby="ev-title">
+  <div class="lead">
+    <span class="eyebrow">OPEN SOURCE, CHECK IT YOURSELF</span>
+    <h2 id="ev-title">Claims are cheap. Here is the evidence.</h2>
+    <p class="lede">Every line below points to the code, notebook or demo that backs it. Nothing here is a roadmap item.</p>
+  </div>
+  <ol>
+    <li>
+      <span class="num">01</span>
+      <div class="body">
+        <h3>Leakage check you can break on purpose</h3>
+        <p><span class="mono">validate_leakage_safety()</span> reads the step order and names any imputer, scaler or encoder that would learn from test rows. The leakage notebook builds a leaking pipeline and shows the warning, then the fix.</p>
+        <a class="src" href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/examples/09_leakage_safety.ipynb">Open the notebook ↗</a>
+      </div>
+    </li>
+    <li>
+      <span class="num">02</span>
+      <div class="body">
+        <h3>Drift checks per column</h3>
+        <p>Numeric columns get Kolmogorov-Smirnov, Population Stability Index, Wasserstein distance and KL divergence, each with its own threshold. Categorical columns get PSI and the share of unseen categories. A column whose type changed is flagged on its own.</p>
+        <a class="src" href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/skyulf/profiling/drift.py">Read the drift code ↗</a>
+      </div>
+    </li>
+    <li>
+      <span class="num">03</span>
+      <div class="body">
+        <h3>Data expectations that stop the run</h3>
+        <p><span class="mono">expect_columns_exist · expect_no_nulls · expect_value_range · expect_unique</span> fail fast with a clear ExpectationError instead of training on bad data.</p>
+        <a class="src" href="https://github.com/flyingriverhorse/Kayra/blob/master/skyulf-core/skyulf/profiling/expect.py">Read the checks ↗</a>
+      </div>
+    </li>
+    <li>
+      <span class="num">04</span>
+      <div class="body">
+        <h3>Ten notebooks on real datasets</h3>
+        <p>skyulf-core runs end to end on house prices, disaster tweets, mall customers, forest cover, Santander, credit-card fraud, Spaceship Titanic and online retail, plus a quickstart and the leakage walkthrough.</p>
+        <a class="src" href="https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/examples">Browse the notebooks ↗</a>
+      </div>
+    </li>
+    <li>
+      <span class="num">05</span>
+      <div class="body">
+        <h3>Five starter templates on the canvas</h3>
+        <p>Tabular Classification, Tabular Regression, Text Classification, Customer Segmentation and Ensemble Classification open as ready pipelines you can run and then change.</p>
+        <a class="src" href="https://api.skyulf.com/" target="_blank" rel="noopener">Try them in the demo ↗</a>
+      </div>
+    </li>
+    <li>
+      <span class="num">06</span>
+      <div class="body">
+        <h3>A Databricks bundle with worked examples</h3>
+        <p>Ready configs for guided classification, tuning, serverless and time-based setups, plus three example projects: NYC Taxi, a real air-quality dataset and a Lakeflow pipeline.</p>
+        <a class="src" href="https://github.com/flyingriverhorse/Kayra/tree/master/skyulf-core/templates/databricks/examples">See the examples ↗</a>
+      </div>
+    </li>
+  </ol>
+  <div class="vs-row" aria-label="How Kayra compares">
+    <div><span class="vs">vs. a plain scikit-learn Pipeline</span><h3>Same estimators, plus everything around them.</h3><p>The step-order check, run records, comparison, serving and drift reports you would otherwise write by hand.</p></div>
+    <div><span class="vs">vs. managed cloud ML</span><h3>Your data stays on your machine.</h3><p>Nothing is uploaded and nothing is billed per prediction; a trained model exports as a standalone project.</p></div>
+    <div><span class="vs">vs. drag-and-drop tools</span><h3>The canvas is not a dead end.</h3><p>Every pipeline exports to a runnable notebook and runs from the Apache-2.0 library with no UI.</p></div>
+  </div>
+</section>
+
+<section id="updates" class="section rel">
+  <div class="head">
+    <div>
+      <h2 class="h2">Always <em>shipping.</em></h2>
+      <span>Live from the GitHub releases feed, every version, newest first.</span>
+    </div>
+    <a href="https://github.com/flyingriverhorse/Kayra/releases">All releases ↗</a>
+  </div>
+  <!-- Static seed so the list is never empty; the script below refreshes it from GitHub, then PyPI. -->
+  <div class="list" id="releases">
+    <a href="https://github.com/flyingriverhorse/Kayra/releases/tag/v0.9.6"><span class="tag">v0.9.6</span><span class="date">Oct 2026</span><span class="sum">Security: generated projects pin mlflow==3.17.2 (was 3.16.1; GHSA-wqmh-qccw-pqwf, GHSA-2wqp-q3c6-ccj5). The lock file also moves pillow, certifi, filelock, gitpython, nbconvert and virtualenv to patched releases.</span><span class="arr" aria-hidden="true">↗</span></a>
+    <a href="https://github.com/flyingriverhorse/Kayra/releases/tag/v0.9.5"><span class="tag">v0.9.5</span><span class="date">Oct 2026</span><span class="sum">Require aiohttp 3.14.4 or later and refresh the dependency lock to include fixes for resource exhaustion, initial request timeouts and secure cookies.</span><span class="arr" aria-hidden="true">↗</span></a>
+    <a href="https://github.com/flyingriverhorse/Kayra/releases/tag/v0.9.4"><span class="tag">v0.9.4</span><span class="date">Oct 2026</span><span class="sum">Configure scoring eligibility, prediction bands and combined model outputs in config/scoring.yml, with saved custom Python helpers where needed.</span><span class="arr" aria-hidden="true">↗</span></a>
+    <a href="https://github.com/flyingriverhorse/Kayra/releases/tag/v0.9.3"><span class="tag">v0.9.3</span><span class="date">Oct 2026</span><span class="sum">Exclude scikit-learn text vectorizers' process-specific stop-word validation cache from semantic fingerprints, while retaining their settings, vocabulary and learned weights.</span><span class="arr" aria-hidden="true">↗</span></a>
+    <a href="https://github.com/flyingriverhorse/Kayra/releases/tag/v0.9.2"><span class="tag">v0.9.2</span><span class="date">Oct 2026</span><span class="sum">Raise the fsspec, Mako and Werkzeug security floors and refresh matching locked dependencies for reference-template and Windows path-validation fixes.</span><span class="arr" aria-hidden="true">↗</span></a>
+    <a href="https://github.com/flyingriverhorse/Kayra/releases/tag/v0.9.1"><span class="tag">v0.9.1</span><span class="date">Oct 2026</span><span class="sum">Raise security floors for Sentence Transformers, JupyterLab, Notebook, Tornado, urllib3, and virtualenv and refresh their locked versions.</span><span class="arr" aria-hidden="true">↗</span></a>
+  </div>
+</section>
+
+<section id="faq" class="faq" aria-labelledby="faq-title">
+  <div class="head">
+    <h2 class="h2" id="faq-title">Questions, answered.</h2>
+    <span>The questions people actually ask before trying it.</span>
+  </div>
+  <div class="list">
+    <details open><summary>What is Kayra?</summary><p>Kayra is two things that share one engine: skyulf-core, a Python library that gives you a single pipeline API over scikit-learn, and a self-hosted workspace where you build that same pipeline on a canvas. It covers the parts a notebook leaves to you: ordering steps so the test set stays untouched, versioning every run, comparing experiments, serving a model and watching it drift.</p></details>
+    <details><summary>What is the meaning of Skyulf?</summary><p>Sky is the open space above Earth, where the sun, moon, stars, and clouds live. Ulf means "wolf", with Nordic roots, and the wolf is also a strong symbol in Turkic tradition. Together it fits the project: independent and community-driven.</p></details>
+    <details><summary>Do I have to self-host it?</summary><p>You can try the hosted demo first, with nothing to install. For real work you run it yourself with <span class="mono">docker compose up</span>, which takes a few minutes and needs no account, no credit card and no per-prediction bill. Because it runs on your machine or your server, your data never has to leave it, which is what makes it usable in hospitals, banks and anywhere else the data legally cannot go to a third party.</p></details>
+    <details><summary>How is this different from cloud MLOps platforms?</summary><p>Cloud platforms require uploading your data to third-party servers and charge based on usage. Kayra runs on your own hardware or inside your private cloud. No data leaves your network, no usage-based pricing, and no vendor dependencies.</p></details>
+    <details><summary>Is this really free?</summary><p>Yes. skyulf-core, the Python library, is Apache 2.0, so you can use it in anything, including closed-source commercial products. The platform (backend and canvas) is AGPLv3, so improvements to the application itself are shared back.</p></details>
+    <details><summary>Can I run a trained model outside Kayra?</summary><p>Yes. In the Model Registry, Export project downloads a ZIP with the fitted model and its preprocessing, a FastAPI service and a batch command for CSV or Parquet files. It installs from its own pinned requirements and needs no Kayra server or database. Pipelines that depend on other rows, such as lag or rolling-window features, are exported as a notebook instead. See the <a href="./manual/user_guide/model_project_export_quickstart.html">project export quickstart</a>.</p></details>
+    <details><summary>Can I use this in production?</summary><p>It is perfect for internal tools, research, and experimentation. We are working towards a stable v1.0 for critical production workloads.</p></details>
+    <details><summary>How can I contribute?</summary><p>Contributions are welcome. Start at <a href="https://github.com/flyingriverhorse/Kayra">GitHub</a>. Whether it's code, documentation, bug reports, or feature ideas, every contribution helps.</p></details>
+    <details><summary>Do you offer a commercial license?</summary><p>Building on skyulf-core (Apache 2.0) is free for any use, commercial included. The platform is AGPLv3: running it internally, unmodified, needs nothing from you, but offering a modified version as a public network service means publishing your source, or asking for a commercial exception.</p></details>
+  </div>
+</section>
+
+<section class="stack" aria-label="Technology stack">
+  <span class="eyebrow">POWERED BY MODERN OPEN SOURCE</span>
+  <ul>
+    <li>Scikit-learn</li><li>Pandas</li><li>FastAPI</li><li>React</li><li>Optuna</li><li>Celery</li><li>Redis</li><li>Polars</li><li>NumPy</li><li>Imbalanced-learn</li><li>SQLAlchemy</li><li class="hl">MLflow</li><li class="hl">Databricks</li>
+  </ul>
+</section>
+
+<section class="cta" aria-labelledby="cta-title">
+  <div>
+    <h2 id="cta-title">Ready to build?</h2>
+    <span>Try the demo in your browser, or install the library and start from your next notebook.</span>
+  </div>
+  <div class="btns">
+    <a class="pill amber" href="https://api.skyulf.com/" target="_blank" rel="noopener">Try the live demo</a>
+    <a class="pill line" href="https://github.com/flyingriverhorse/Kayra">View on GitHub</a>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="cols">
+    <div class="col" style="gap:14px"><div class="logo"><img src="./static/img/logo-192.png?v=20261106" alt="" width="26" height="26">Skyulf</div><div class="line">Open tools that run on your own ground.</div></div>
+    <nav class="col" aria-label="Products"><div class="k">PRODUCTS</div><a href="./" class="prod"><span><span class="dot" aria-hidden="true"></span>Kayra</span><small>Build, verify and ship ML pipelines</small></a><a href="https://koloni.skyulf.com/" class="prod"><span><span class="dot koloni" aria-hidden="true"></span>Koloni</span><small>Agents do the work. You decide.</small></a></nav>
+    <nav class="col" aria-label="Resources"><div class="k">RESOURCES</div><a href="./manual/index.html">Docs</a><a href="./manual/guides/platform_setup.html">Quick start</a><a href="https://github.com/flyingriverhorse/Kayra">GitHub</a><a href="https://pypi.org/project/skyulf-core/">PyPI</a><a href="https://github.com/flyingriverhorse/Kayra/discussions">Community</a></nav>
+    <nav class="col" aria-label="Project"><div class="k">PROJECT</div><a href="https://github.com/flyingriverhorse/Kayra/releases">Releases</a><a href="https://github.com/flyingriverhorse/Kayra/blob/master/CONTRIBUTING.md">Contributing</a><a href="https://github.com/flyingriverhorse/Kayra/blob/master/SECURITY.md">Security</a><a href="https://github.com/flyingriverhorse/Kayra/blob/master/LICENSE">License</a><a href="https://www.linkedin.com/in/murat-u/">LinkedIn</a></nav>
+  </div>
+  <div class="bottom"><span>© 2025–2026 Murat Unsal</span><span>Libraries Apache-2.0 · Platforms AGPLv3</span></div>
 </footer>
 
-<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image preview">
-  <button type="button" class="btn btn-ghost btn-icon" id="lightbox-close" aria-label="Close image preview"><i class="ph ph-x" style="font-size:26px"></i></button>
-  <img id="lightbox-img" alt="">
-</div>
+<div class="lb" id="tourLb" role="dialog" aria-modal="true" aria-label="Kayra tour video"><video id="tourVideo" src="./static/video/kayra-tour.webm?v=20261106" poster="./static/img/dashboard.jpg?v=20261106" muted playsinline controls preload="none"></video><button type="button" id="tourClose">esc ✕</button></div>
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Image preview"><img id="lbImg" src="" alt=""><button type="button" id="lbClose">esc ✕</button></div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  var root = document.documentElement;
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+(function () {
+  var I = './static/img/';
+  var V = '?v=20261106'; // bump when screenshots change, so browsers fetch the new files
+  var $ = function (id) { return document.getElementById(id); };
 
-  // Theme
-  var tt = document.getElementById('theme-toggle');
-  function paint() { tt.setAttribute('aria-label', root.classList.contains('light') ? 'Switch to dark theme' : 'Switch to light theme'); }
-  tt.addEventListener('click', function () {
-    root.classList.toggle('light');
-    try { localStorage.setItem('skyulf-theme', root.classList.contains('light') ? 'light' : 'dark'); } catch (e) {}
-    paint();
+  // lightbox
+  var lb = $('lb'), lbImg = $('lbImg'), opener = null;
+  function zoom(src, alt) { opener = document.activeElement; lbImg.src = src; lbImg.alt = alt || ''; lb.classList.add('open'); $('lbClose').focus(); }
+  function unzoom() { if (!lb.classList.contains('open')) return; lb.classList.remove('open'); if (opener) opener.focus(); }
+  lb.addEventListener('click', unzoom);
+  window.addEventListener('keydown', function (e) { if (e.key === 'Escape') unzoom(); });
+  document.querySelectorAll('[data-zoom]').forEach(function (b) {
+    b.addEventListener('click', function () { var im = b.querySelector('img'); zoom(im.src, im.alt); });
   });
-  paint();
 
-  // Hero video
-  var v = document.querySelector('.hero-video');
-  if (v) { v.muted = true; if (reduce) { v.removeAttribute('autoplay'); v.pause(); } else { var p = v.play(); if (p && p.catch) p.catch(function () {}); } }
+  // pip copy
+  $('pip').addEventListener('click', function () {
+    try { navigator.clipboard.writeText('pip install skyulf-core'); } catch (e) {}
+    $('pipLabel').textContent = 'Copied';
+    setTimeout(function () { $('pipLabel').textContent = 'Copy'; }, 1500);
+  });
 
-  // Stepper
-  var steps = Array.prototype.slice.call(document.querySelectorAll('#steps .step'));
-  steps.forEach(function (li) {
-    var btn = li.querySelector('.step-btn');
-    btn.addEventListener('click', function () {
-      steps.forEach(function (o) {
-        var on = o === li, b = o.querySelector('.step-btn');
-        o.classList.toggle('active', on); b.setAttribute('aria-expanded', String(on));
-        document.getElementById(b.getAttribute('aria-controls')).classList.toggle('active', on);
-      });
+  // path steps: content lives in the markup; this only swaps the screenshot
+  var items = [].slice.call($('steps').children), stage = $('stage'), home = $('stageHome');
+  var narrow = window.matchMedia('(max-width: 860px)');
+  var step = 0, sub = 0;
+  function render() {
+    var li = items[step], imgs = JSON.parse(li.getAttribute('data-imgs'));
+    items.forEach(function (x, i) {
+      x.classList.toggle('active', i === step);
+      x.querySelector('button').setAttribute('aria-expanded', String(i === step));
     });
-  });
-
-  // Lightbox
-  var lb = document.getElementById('lightbox'), lbImg = document.getElementById('lightbox-img');
-  var lbClose = document.getElementById('lightbox-close'), lbTrigger = null;
-  var lbBackground = document.querySelectorAll('body > nav, body > main, body > footer, body > .skip');
-  function closeLb() {
-    if (!lb.classList.contains('open')) return;
-    lb.classList.remove('open');
-    lbBackground.forEach(function (el) { el.inert = false; });
-    if (lbTrigger) lbTrigger.focus();
+    $('stageImg').src = I + imgs[sub][0] + V;
+    $('stageImg').alt = imgs[sub][1];
+    $('stageN').textContent = li.querySelector('.n').textContent + ' / 07';
+    $('stageBody').textContent = li.querySelector('p').textContent;
+    var th = $('thumbs');
+    th.innerHTML = '';
+    th.hidden = imgs.length < 2;
+    imgs.forEach(function (im, j) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(j === sub));
+      b.setAttribute('aria-label', im[1]);
+      var img = document.createElement('img');
+      img.src = I + im[0] + V; img.alt = ''; img.loading = 'lazy';
+      b.appendChild(img);
+      b.addEventListener('click', function () { sub = j; render(); });
+      th.appendChild(b);
+    });
+    // on phones the screenshot follows the active step instead of sitting below all seven
+    if (narrow.matches) { if (stage.parentNode !== li) li.appendChild(stage); }
+    else if (stage.parentNode !== home) home.appendChild(stage);
   }
-  document.querySelectorAll('.zoomable').forEach(function (el) {
-    el.addEventListener('click', function () {
-      var img = el.querySelector('img');
-      lbTrigger = el; lbImg.src = img.currentSrc || img.src; lbImg.alt = img.alt;
-      lb.classList.add('open');
-      lbBackground.forEach(function (background) { background.inert = true; });
-      lbClose.focus();
+  items.forEach(function (li, i) {
+    li.querySelector('button').addEventListener('click', function () { step = i; sub = 0; render(); });
+  });
+  $('stageShot').addEventListener('click', function () { zoom($('stageImg').src, $('stageImg').alt); });
+  (narrow.addEventListener ? narrow.addEventListener('change', render) : narrow.addListener(render));
+  render();
+
+  // sticky header: add a soft shadow once the page scrolls
+  var top = document.querySelector('.top');
+  var onScroll = function () { top.classList.toggle('scrolled', window.scrollY > 40); };
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  // the tour plays in a modal opened from "How it works"
+  var tLb = $('tourLb'), tVid = $('tourVideo');
+  var openTour = function () { tLb.classList.add('open'); tVid.currentTime = 0; tVid.play().catch(function () {}); $('tourClose').focus(); };
+  var closeTour = function () { tVid.pause(); tLb.classList.remove('open'); };
+  $('tourBtn').addEventListener('click', openTour);
+  $('tourClose').addEventListener('click', closeTour);
+  tLb.addEventListener('click', function (e) { if (e.target === tLb) closeTour(); });
+  window.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTour(); });
+
+  // live numbers; the markup keeps sensible fallbacks if any request fails
+  var compact = function (n) { try { return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n); } catch (e) { return String(n); } };
+  var json = function (u) { return fetch(u).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
+  var fmt = new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric' });
+  var month = function (d) { try { return fmt.format(new Date(d)); } catch (e) { return ''; } };
+  function row(url, tag, date, sum) {
+    var a = document.createElement('a');
+    a.href = url;
+    [['tag', tag], ['date', date], ['sum', sum], ['arr', '↗']].forEach(function (p) {
+      var s = document.createElement('span'); s.className = p[0]; s.textContent = p[1]; a.appendChild(s);
     });
-  });
-  lb.addEventListener('click', function (e) { if (e.target !== lbImg) closeLb(); });
-  document.addEventListener('keydown', function (e) {
-    if (!lb.classList.contains('open')) return;
-    if (e.key === 'Escape') closeLb();
-    if (e.key === 'Tab') { e.preventDefault(); lbClose.focus(); }
-  });
-
-  // Copy
-  document.querySelectorAll('[data-copy]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      try { navigator.clipboard.writeText(btn.getAttribute('data-copy')); } catch (e) {}
-      var label = btn.querySelector('span'), icon = btn.querySelector('i');
-      label.textContent = 'Copied'; icon.className = 'ph ph-check';
-      setTimeout(function () { label.textContent = 'Copy'; icon.className = 'ph ph-copy'; }, 1600);
-    });
-  });
-
-  // Live stats (static fallbacks stay on failure)
-  if (!window.fetch) return;
-  function compact(n) { try { return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n); } catch (e) { return String(n); } }
-  function json(u) { return fetch(u).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
-  json('https://pypi.org/pypi/skyulf-core/json').then(function (d) { var ver = d && d.info && d.info.version; if (ver) document.querySelector('[data-version-label]').textContent = 'v' + ver + ' — live on PyPI'; });
-  json('https://api.github.com/repos/flyingriverhorse/skyulf').then(function (d) { if (d && typeof d.stargazers_count === 'number') document.querySelector('[data-github-stars]').textContent = compact(d.stargazers_count); });
-  json('https://pypistats.org/api/packages/skyulf-core/recent').then(function (d) { var p = (d && d.data) || d; if (p && typeof p.last_month === 'number') document.querySelector('[data-pypi-monthly]').textContent = compact(p.last_month); });
-  fetch('https://static.pepy.tech/personalized-badge/skyulf-core?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=BLUE&left_text=Total_Downloads')
-    .then(function (r) { return r.ok ? r.text() : null; })
-    .then(function (svg) { if (!svg) return; var re = /<text[^>]*>([^<]*)<\/text>/g, m, val = null; while ((m = re.exec(svg)) !== null) val = m[1]; if (val && val.trim()) document.querySelector('[data-pepy-total]').textContent = val.trim(); })
-    .catch(function () {});
-
-  function summarize(body) {
-    if (!body) return 'See the full notes on GitHub.';
-    var line = String(body).replace(/```[\s\S]*?```/g, ' ').replace(/`([^`]*)`/g, '$1').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_#>|]/g, ' ')
-      .split('\n').map(function (l) { return l.replace(/^[-\d.\s]+/, '').trim(); }).filter(function (l) { return l.length > 15; })[0];
-    if (!line) return 'See the full notes on GitHub.';
-    return line.length > 140 ? line.slice(0, 137).trimEnd() + '…' : line;
+    a.lastChild.setAttribute('aria-hidden', 'true');
+    return a;
   }
-  json('https://api.github.com/repos/flyingriverhorse/skyulf/releases?per_page=6').then(function (rs) {
-    if (!Array.isArray(rs) || !rs.length) return;
-    var list = document.getElementById('updates-list'), fmt = new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric' });
-    list.innerHTML = '';
-    rs.forEach(function (r) {
-      var a = document.createElement('a');
-      a.className = 'release rule-top'; a.href = r.html_url; a.target = '_blank'; a.rel = 'noopener';
-      var t = document.createElement('span'); t.className = 'tagname'; t.textContent = r.tag_name || r.name || 'release';
-      var d = document.createElement('span'); d.className = 'date'; try { d.textContent = fmt.format(new Date(r.published_at)); } catch (e) {}
-      var s = document.createElement('span'); s.className = 'sum'; s.textContent = summarize(r.body);
-      var i = document.createElement('i'); i.className = 'ph ph-arrow-up-right'; i.style.color = 'var(--faint)';
-      a.append(t, d, s, i); list.appendChild(a);
+  function fill(rows) {
+    if (!rows.length) return false;
+    var list = $('releases'); list.innerHTML = '';
+    rows.forEach(function (r) { list.appendChild(r); });
+    return true;
+  }
+  // first paragraph or bullet of the release notes, markdown stripped
+  function summary(body) {
+    var paras = [], cur = '';
+    String(body || '').replace(/```[^`]*```/g, ' ').split('\n').forEach(function (line) {
+      var t = line.trim(), bullet = /^([-+]|\d+\.) /.test(t);
+      if (!t || bullet) { if (cur) paras.push(cur); cur = ''; }
+      cur += ' ' + (bullet ? t.slice(t.indexOf(' ') + 1) : t);
+    });
+    if (cur) paras.push(cur);
+    var clean = paras.map(function (p) {
+      return p.replace(/\]\([^)]*\)/g, ' ').replace(/[`*_#>|[\]]/g, ' ').split(' ').filter(Boolean).join(' ');
+    }).filter(function (p) { return p.length > 15; });
+    return clean[0] || 'See the full notes on GitHub.';
+  }
+
+  var pypi = json('https://pypi.org/pypi/skyulf-core/json');
+  pypi.then(function (d) {
+    var v = d && d.info && d.info.version;
+    if (v) { $('latest').textContent = 'v' + v; $('liveLabel').textContent = 'live on PyPI'; }
+  });
+  json('https://api.github.com/repos/flyingriverhorse/Kayra').then(function (d) {
+    if (d && d.stargazers_count > 0) $('stars').textContent = compact(d.stargazers_count);
+  });
+  json('https://pypistats.org/api/packages/skyulf-core/recent').then(function (d) {
+    var p = (d && d.data) || d;
+    if (p && p.last_month > 0) $('monthly').textContent = compact(p.last_month);
+  });
+  json('https://api.github.com/repos/flyingriverhorse/Kayra/releases?per_page=6').then(function (rs) {
+    var ok = Array.isArray(rs) && fill(rs.map(function (r) {
+      return row(r.html_url, r.tag_name || r.name || 'release', month(r.published_at), summary(r.body));
+    }));
+    if (ok) return;
+    // GitHub rate-limited or empty: fall back to the PyPI upload history
+    pypi.then(function (d) {
+      if (!d || !d.releases) return;
+      var vs = Object.keys(d.releases).filter(function (v) { return d.releases[v].length; }).map(function (v) {
+        return { v: v, t: d.releases[v][0].upload_time };
+      }).sort(function (a, b) { return a.t < b.t ? 1 : -1; }).slice(0, 6);
+      fill(vs.map(function (x) {
+        return row('https://pypi.org/project/skyulf-core/' + x.v + '/', 'v' + x.v, month(x.t), 'Published to PyPI as skyulf-core ' + x.v + '.');
+      }));
     });
   });
-});
+})();
 </script>
 </body>
 </html>

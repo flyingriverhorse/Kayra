@@ -170,7 +170,7 @@ def test_nullable_large_integer_matches_materialized_source(spark):
     assert frame.schema["id"].dataType.typeName() == "long"
 
 
-def test_prepared_temporal_source_uses_normalized_timestamp_rules(spark, monkeypatch):
+def test_prepared_temporal_source_uses_normalized_timestamp_rules(spark):
     """Weight replay must not apply original string parsing to cached UTC timestamps."""
     from skyulf.integrations.databricks.data.training import spark_retraining_data
     from skyulf.integrations.databricks.data.training.training_dates import TrainingDateSpec
@@ -200,12 +200,8 @@ def test_prepared_temporal_source_uses_normalized_timestamp_rules(spark, monkeyp
         "id long, x long, y long, event timestamp, weight double",
     )
     seen = historical.where("id < 15").select("x", "y")
-    frames = {"source": historical, "seen": seen}
-    monkeypatch.setattr(
-        spark_retraining_data, "read_reference_population", lambda session, record: frames[record]
-    )
-    evidence = {"prepared_reference": {"source": "source", "seen": "seen"}}
-    baseline = spark_retraining_data._baseline(spark, evidence, spec, spec, historical, ["x", "y"])
+    readers = {"source": lambda: historical, "seen": lambda: seen}
+    baseline = spark_retraining_data._baseline(readers, spec, spec, historical, ["x", "y"])
     result = _assessment(_counts(seen, ["x", "y"]), baseline, ["x", "y"])
     assert result["changed_rows"] == 0
     assert result["training_rows"] == 15

@@ -9,7 +9,8 @@ from ....shared._contracts import table_name
 from ..monitoring_config import json_digest, qualified_name
 from ..monitoring_sources import read_snapshot, snapshot_at
 
-_PROJECTION = (
+# Older endpoints log request_date/request_time inside `attributes`.
+_ATTRIBUTE_PROJECTION = (
     "attributes:databricks_request_id::STRING AS databricks_request_id",
     "attributes:request_date::DATE AS request_date",
     "attributes:client_request_id::STRING AS client_request_id",
@@ -23,6 +24,15 @@ _PROJECTION = (
     "body:logging_error_codes::ARRAY<STRING> AS logging_error_codes",
     "attributes:requester::STRING AS requester",
 )
+# Current endpoints log them as the `date` and `time` columns of the OTel table.
+_COLUMN_PROJECTION = tuple(
+    {
+        "attributes:request_date::DATE AS request_date": "date AS request_date",
+        "timestamp_millis(attributes:request_time::BIGINT) AS request_time": "time AS request_time",
+    }.get(item, item)
+    for item in _ATTRIBUTE_PROJECTION
+)
+_PROJECTIONS = (_COLUMN_PROJECTION, _ATTRIBUTE_PROJECTION)
 _FILTER = (
     "resource.attributes:[\"databricks.product\"]::STRING = 'custom-model-serving' "
     "AND resource.attributes:[\"telemetry.sdk.name\"]::STRING = 'payload-logger'"
@@ -49,7 +59,7 @@ def _view_select(tokens: tuple[str, ...]) -> tuple[str, ...]:
     if tokens[:2] != ("CREATE", "VIEW") or len(starts) != 1:
         raise ValueError("Serving view does not match the canonical telemetry definition.")
     header = tokens[: starts[0]]
-    aliases = "(" + ",".join(item.rsplit(" AS ", 1)[1] for item in _PROJECTION) + ")"
+    aliases = "(" + ",".join(item.rsplit(" AS ", 1)[1] for item in _COLUMN_PROJECTION) + ")"
     try:
         actual = header[header.index("(") : header.index(")") + 1]
     except ValueError as error:
@@ -59,25 +69,27 @@ def _view_select(tokens: tuple[str, ...]) -> tuple[str, ...]:
     return tokens[starts[0] + 1 :]
 
 
-def _view_definition(spark: Any, source_table: str, backing: str) -> str:
-    """Attest the platform SELECT instead of executing arbitrary view text."""
+def _view_definition(spark: Any, source_table: str, backing: str) -> tuple[str, tuple[str, ...]]:
+    """Attest the platform SELECT and return its digest with the projection it uses."""
     row = spark.sql(f"SHOW CREATE TABLE {table_name(source_table)}").first()
     definition = row["createtab_stmt"] if row is not None else None
     if not isinstance(definition, str) or not definition:
         raise ValueError("Serving view definition is unavailable.")
     tokens = _sql_tokens(definition)
-    # This canonical text is token-compared only; it is never submitted to Spark.
-    expected = f"SELECT {', '.join(_PROJECTION)} FROM {table_name(backing)} WHERE {_FILTER}"  # nosec B608
-    if _view_select(tokens) != _sql_tokens(expected):
-        raise ValueError("Serving view does not match the canonical telemetry projection/filter.")
-    return json_digest(tokens)
+    select = _view_select(tokens)
+    for projection in _PROJECTIONS:
+        # This canonical text is token-compared only; it is never submitted to Spark.
+        expected = f"SELECT {', '.join(projection)} FROM {table_name(backing)} WHERE {_FILTER}"  # nosec B608
+        if select == _sql_tokens(expected):
+            return json_digest(tokens), projection
+    raise ValueError("Serving view does not match the canonical telemetry projection/filter.")
 
 
-def _source_binding(spark: Any, source_table: str) -> tuple[str, dict]:
+def _source_binding(spark: Any, source_table: str) -> tuple[str, dict, tuple[str, ...]]:
     """Resolve only Delta payloads or attested AI Gateway telemetry views."""
     qualified_name(source_table)
     if spark.catalog.getTable(source_table).tableType != "VIEW":
-        return source_table, {}
+        return source_table, {}, ()
     row = spark.sql(
         f"SHOW TBLPROPERTIES {table_name(source_table)} ('otel.sourceLogsTable')"
     ).first()
@@ -85,23 +97,21 @@ def _source_binding(spark: Any, source_table: str) -> tuple[str, dict]:
     if not isinstance(backing, str):
         raise ValueError("Serving view requires a concrete telemetry backing table.")
     qualified_name(backing)
-    definition = _view_definition(spark, source_table, backing)
-    return backing, {
-        "payload_backing_table": backing,
-        "payload_view_definition_sha256": definition,
-    }
+    definition, projection = _view_definition(spark, source_table, backing)
+    view = {"payload_backing_table": backing, "payload_view_definition_sha256": definition}
+    return backing, view, projection
 
 
 def read_serving_payload_snapshot(
     spark: Any, source_table: str, as_of: datetime
 ) -> tuple[Any, dict]:
     """Pin physical logs at the cutoff and apply only the admitted platform projection."""
-    physical, view = _source_binding(spark, source_table)
+    physical, view, projection = _source_binding(spark, source_table)
     identity = table_identity(spark, physical)
     version = snapshot_at(spark, physical, as_of)
     frame = read_snapshot(spark, physical, version)
     if view:
-        frame = frame.filter(_FILTER).selectExpr(*_PROJECTION)
+        frame = frame.filter(_FILTER).selectExpr(*projection)
     return frame, {
         "source_table": source_table,
         "source_table_id": identity,
@@ -116,7 +126,7 @@ def verify_serving_payload_snapshot(spark: Any, source_table: str, evidence: dic
     """Recheck physical identity and the complete view definition after parsing."""
     if (evidence["source_table"], evidence["prediction_table"]) != (source_table, source_table):
         raise ValueError("Serving snapshot source differs from observation evidence.")
-    physical, view = _source_binding(spark, source_table)
+    physical, view, _ = _source_binding(spark, source_table)
     expected = {
         key: evidence[key]
         for key in ("payload_backing_table", "payload_view_definition_sha256")

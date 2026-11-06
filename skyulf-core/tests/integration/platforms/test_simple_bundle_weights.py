@@ -341,6 +341,9 @@ def test_legacy_dataset_id_omits_all_new_defaults():
         "training_label_table",
         "training_label_version",
         "training_label_table_id",
+        "source_kind",
+        "source_snapshot_json",
+        "training_label_kind",
     ):
         settings.pop(field)
     expected = hashlib.sha256(json.dumps(settings, sort_keys=True).encode()).hexdigest()

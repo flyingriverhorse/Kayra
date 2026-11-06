@@ -23,7 +23,7 @@ Skyulf is a **self-hosted, privacy-first MLOps platform** that combines:
 
 ### Is Skyulf free?
 
-Yes. Skyulf is open-source. See the [LICENSE](https://github.com/flyingriverhorse/Skyulf/blob/master/LICENSE) for details.
+Yes. Skyulf is open-source. See the [LICENSE](https://github.com/flyingriverhorse/Kayra/blob/master/LICENSE) for details.
 
 ### Can I use skyulf-core without the web platform?
 

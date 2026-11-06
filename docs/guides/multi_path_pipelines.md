@@ -2,6 +2,15 @@
 
 Skyulf supports building pipelines with **multiple branches** that merge into a single training node or fan out into separate experiments. This guide covers both patterns.
 
+![Multi-path canvas: from one graph to parallel jobs](../assets/diagrams/app/multi_path.svg)
+
+[Editable draw.io source](../assets/diagrams/app/multi_path.drawio)
+
+The server splits the canvas into branches: each model node is one branch, and a model node set to
+**Parallel** becomes one branch per input path. Each branch gets its own queued job, and new
+jobs run in parallel. Inside a job, any node with two or more inputs merges them by the
+rules in the box at the bottom left, described in detail below.
+
 ## Preview Path Labels
 
 Canvas path labels identify the corresponding branches in **Preview Results**.

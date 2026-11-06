@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.data_ingestion.demo import hidden_in_demo
 from backend.database.engine import get_async_session
 from backend.database.models import DataSource
 from backend.ml_pipeline._execution._schema_graph import (
@@ -74,14 +75,16 @@ def _to_pipeline_config(model: PipelineConfigModel) -> PipelineConfig:
 
 
 async def _resolve_data_source_row(session: AsyncSession, dataset_id: Any) -> DataSource | None:
-    """Look up a DataSource by integer id, falling back to source_id UUID lookup."""
+    """Look up a DataSource by integer id, falling back to source_id UUID lookup.
+
+    Demo mode resolves only the Iris source.
+    """
     try:
-        return await session.scalar(select(DataSource).where(DataSource.id == int(dataset_id)))
+        ds = await session.scalar(select(DataSource).where(DataSource.id == int(dataset_id)))
     except (ValueError, TypeError):
         # dataset_id is not an integer — try source_id UUID fallback
-        return await session.scalar(
-            select(DataSource).where(DataSource.source_id == str(dataset_id))
-        )
+        ds = await session.scalar(select(DataSource).where(DataSource.source_id == str(dataset_id)))
+    return None if hidden_in_demo(ds) else ds
 
 
 async def _seed_loader_schema_for_node(

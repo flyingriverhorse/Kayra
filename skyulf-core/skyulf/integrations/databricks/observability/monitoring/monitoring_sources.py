@@ -12,6 +12,9 @@ from ...scoring.incremental.incremental_batch import bounded_frame
 from ...shared._contracts import column_name
 from .monitoring_config import MonitorConfig
 
+# Performance state while the configured label table does not exist yet.
+AWAITING_LABELS = "awaiting_labels"
+
 
 def observation_window(
     as_of: datetime,

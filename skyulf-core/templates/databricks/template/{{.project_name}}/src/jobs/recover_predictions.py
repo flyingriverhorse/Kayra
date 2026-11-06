@@ -5,6 +5,7 @@ from skyulf.integrations.databricks.jobs.shared.notebook_diagnostics import note
 from skyulf.integrations.databricks.scoring.incremental.scoring_recovery import (
     run_cdf_recovery_notebook,
 )
+from skyulf.integrations.databricks.scoring.shared.prediction_output import grant_prediction_readers
 
 if __name__ == "__main__":
     with notebook_task("recover_predictions", globals()["dbutils"]):
@@ -14,6 +15,8 @@ if __name__ == "__main__":
             display_html=globals().get("displayHTML"),
             exit_notebook=False,
         )
+        # Readers in access_data_readers (deployment/targets.yml) get SELECT.
+        grant_prediction_readers(globals()["spark"], globals()["dbutils"], output)
 
 # COMMAND ----------
 

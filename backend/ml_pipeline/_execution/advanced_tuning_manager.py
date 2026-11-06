@@ -262,18 +262,18 @@ class AdvancedTuningManager(TrainingJobManagerBase):
         session: AsyncSession,
         limit: int = 50,
         skip: int = 0,
+        dataset_ids: set[str] | None = None,
     ) -> list[JobInfo]:
-        """Lists recent tuning jobs (Async)."""
+        """Lists recent tuning jobs (Async), optionally only those on ``dataset_ids``."""
         # 1. Fetch all DataSources for robust name resolution
         ds_map = await get_dataset_map(session)
 
         # 2. Fetch Jobs
+        stmt = select(TrainingJob).where(TrainingJob.run_mode == "tuned")
+        if dataset_ids is not None:
+            stmt = stmt.where(TrainingJob.dataset_source_id.in_(dataset_ids))
         result_tune = await session.execute(
-            select(TrainingJob)
-            .where(TrainingJob.run_mode == "tuned")
-            .order_by(TrainingJob.started_at.desc())
-            .limit(limit)
-            .offset(skip)
+            stmt.order_by(TrainingJob.started_at.desc()).limit(limit).offset(skip)
         )
         tune_rows = result_tune.scalars().all()
 

@@ -16,15 +16,15 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="skyulf-core",
-    version="0.9.6",
+    version="0.9.7",
     description="The core machine learning library for Skyulf.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Murat H. Unsal",
     project_urls={
-        "Documentation": "https://www.skyulf.com/manual",
-        "Source": "https://github.com/flyingriverhorse/Skyulf",
-        "Changelog": "https://github.com/flyingriverhorse/Skyulf/releases",
+        "Documentation": "https://kayra.skyulf.com/manual",
+        "Source": "https://github.com/flyingriverhorse/Kayra",
+        "Changelog": "https://github.com/flyingriverhorse/Kayra/releases",
     },
     include_package_data=True,
     packages=find_packages(),

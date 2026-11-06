@@ -21,8 +21,8 @@ defaults:
   cv_enabled: false
   filter_unavailable_results: false
   skip_missing_targets: true
-  max_rows: 10000
-  max_input_mb: 64
+  max_rows: 1000000
+  max_input_mb: 512
   metric: heldout_rmse
   min_improvement: 0
   min_scored_fraction: 0.90

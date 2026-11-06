@@ -9,7 +9,7 @@ approved and scored together.
 {{else if eq .training_layout "model_competition"}}This project trains several candidate models for one target; cross-validation
 picks one winner, which becomes the registered candidate.
 {{else}}This project trains one model for one target and registers it as a candidate.
-{{end}}Skyulf 0.9.6 Bundle: **{{if eq .training_layout "multi_target"}}independent target models{{else}}{{.task}}{{end}}** with **{{.engine}}** training, **{{.prediction_delivery}}** prediction delivery and **{{.compute_mode}}** compute.
+{{end}}Skyulf 0.9.7 Bundle: **{{if eq .training_layout "multi_target"}}independent target models{{else}}{{.task}}{{end}}** with **{{.engine}}** training, **{{.prediction_delivery}}** prediction delivery and **{{.compute_mode}}** compute.
 Training runs in one bounded Python process.
 {{if eq .prediction_delivery "endpoint"}}Prediction delivery uses the serving endpoint; no batch score job is generated.
 {{else}}Batch scoring uses **{{.batch_compute}}** batch compute.
@@ -25,7 +25,7 @@ check that the data exists before you deploy:
 | `deployment/targets.yml` | `host` under `test`{{if eq .personal_development_targets "true"}} and `test_development`{{end}}: replace `https://replace-test.example.invalid` with your workspace URL. |
 | `deployment/variables.yml` | `test_catalog`, `test_input_schema`, `test_output_schema` and `test_metadata_schema` (`REPLACE_TEST_*`){{if eq .personal_development_targets "true"}}, plus `test_development_input_schema`, `test_development_output_schema` and `test_development_metadata_schema`{{end}}. |
 | Commands below | `YOUR_PROFILE`: an authenticated Databricks CLI profile for that workspace. |
-| Unity Catalog grants | The job identity reads the inputs, writes the output schema and registers models in the metadata schema; see [required access](https://www.skyulf.com/manual/user_guide/databricks_deployment.html#data-model-and-experiment-access). |
+| Unity Catalog grants | The job identity reads the inputs, writes the output schema and registers models in the metadata schema; see [required access](https://kayra.skyulf.com/manual/user_guide/databricks_deployment.html#data-model-and-experiment-access). |
 | Unity Catalog | The catalog, schemas and source table must exist. The table needs the record key, input and target columns from setup{{if ne .prediction_delivery "endpoint"}}, and Change Data Feed on before the first score{{end}}. |
 | `config/training.yml` | A numeric `quality_threshold`{{if eq .training_layout "multi_target"}} in every `models` entry{{end}}, if you will approve the first champion or promote automatically. Set it before training; a trained version keeps its policy. |
 | `deployment/variables.yml` and `deployment/targets.yml` (optional) | Monitoring runs only when `monitoring_enabled` is `"true"`. It writes to `monitoring_catalog`.`monitoring_schema` (variables.yml); {{if eq .monitoring "true"}}the catalog defaults to each target's own catalog and the schema to `skyulf_monitoring`{{else}}setup had monitoring off, so both are empty until you set them ([monitoring](GUIDE.md#monitoring)){{end}}. Use the same schema in every project so all models appear in one dashboard. `deployment/targets.yml` holds each target's dashboard and the development targets' monitoring settings; only one project creates a dashboard, the others connect to it there. |
@@ -89,15 +89,13 @@ Replace `YOUR_PROFILE` in every command.
    Replace `N` with that version. This needs no approval and changes neither
    `config/inference.yml` nor any alias. Scheduled runs use `model_version` in
    `config/inference.yml`; set it to the same version when you are ready.
-   Check the committed output{{if eq .monitoring "true"}}, then `monitoring_report` and `evaluate_retraining`.
-   Before monitoring an unactivated pinned candidate for the first time, prepare its
-   [reference](https://www.skyulf.com/manual/user_guide/databricks_monitoring_enrollment.html){{end}}.
+   Check the committed output{{if eq .monitoring "true"}}, then `monitoring_report` and `evaluate_retraining`{{end}}.
 
 6. **Approve later (optional).** Approval makes a version the champion, which
    champion scoring needs. It uses the `quality_threshold` set before training. Copy the
    **Available action: approve** block from the report (the first approval uses expected
    champion `none`) into the train job's **Run now with different parameters**; see
-   [operator actions](https://www.skyulf.com/manual/user_guide/databricks_lifecycle.html#operator-actions-through-run-now).
+   [operator actions](https://kayra.skyulf.com/manual/user_guide/databricks_lifecycle.html#operator-actions-through-run-now).
 {{if eq .score_follow_champion "true"}}   An approval starts a score run by itself; inspect that run instead of starting another.
 {{end}}
 {{else}}5. **Approve.** {{if eq .promotion_policy "automatic"}}This project promotes automatically when the quality gates pass; the
@@ -105,7 +103,7 @@ Replace `YOUR_PROFILE` in every command.
 {{else}}Copy the **Available action: approve** block from the report (the first
    approval uses expected champion `none`)
 {{end}}   into the train job's **Run now with different parameters**; see
-   [operator actions](https://www.skyulf.com/manual/user_guide/databricks_lifecycle.html#operator-actions-through-run-now).
+   [operator actions](https://kayra.skyulf.com/manual/user_guide/databricks_lifecycle.html#operator-actions-through-run-now).
 
 {{if ne .prediction_delivery "endpoint"}}6. **Score:**
 
@@ -119,9 +117,7 @@ Replace `YOUR_PROFILE` in every command.
 {{else}}Scoring uses the pinned `model_version` in `config/inference.yml` (`"1"` for
    a new model) and needs no approval. Change it to score a later version.
 {{end}}{{if eq .score_follow_champion "true"}}   An approval or promotion starts a score run by itself; inspect that run first.
-{{end}}   Check the committed output{{if eq .monitoring "true"}}, then `monitoring_report` and `evaluate_retraining`.
-   Before monitoring an unactivated pinned candidate for the first time, prepare its
-   [reference](https://www.skyulf.com/manual/user_guide/databricks_monitoring_enrollment.html){{end}}.
+{{end}}   Check the committed output{{if eq .monitoring "true"}}, then `monitoring_report` and `evaluate_retraining`{{end}}.
 
 {{end}}{{end}}{{if ne .prediction_delivery "batch"}}
 ## Serve the model
@@ -185,7 +181,7 @@ After the first successful run, change one setting and compare two fits of the s
    performance using [monitoring](GUIDE.md#monitoring).
 
 Use the [reference guide](GUIDE.md) for the next setting you need. The
-[worked walkthrough](https://www.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html)
+[worked walkthrough](https://kayra.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html)
 provides a small practice dataset.
 
 ## If something fails
@@ -193,14 +189,14 @@ provides a small practice dataset.
 Start with the first failing task and record its run ID, target and
 model{{if eq .training_layout "multi_target"}} set{{end}} version. A monitoring failure does not undo committed predictions.
 
-- [Exact validation errors and fixes](https://www.skyulf.com/manual/user_guide/databricks_troubleshooting.html)
-- [Create and preview a project](https://www.skyulf.com/manual/user_guide/databricks_project_setup.html)
-- [Complete worked project](https://www.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html)
+- [Exact validation errors and fixes](https://kayra.skyulf.com/manual/user_guide/databricks_troubleshooting.html)
+- [Create and preview a project](https://kayra.skyulf.com/manual/user_guide/databricks_project_setup.html)
+- [Complete worked project](https://kayra.skyulf.com/manual/user_guide/databricks_bundle_walkthrough.html)
 
 ## Upgrading this project
 
-This template pins `skyulf-core[mlflow]==0.9.6` in `deployment/requirements.txt`;
+This template pins `skyulf-core[mlflow]==0.9.7` in `deployment/requirements.txt`;
 public guides describe the current revision. Before changing the pin, follow
-[Upgrade an existing project](https://www.skyulf.com/manual/user_guide/databricks_project_upgrade.html)
+[Upgrade an existing project](https://kayra.skyulf.com/manual/user_guide/databricks_project_upgrade.html)
 and **Upgrade steps for generated Databricks projects** in the
-[release notes](https://github.com/flyingriverhorse/Skyulf/blob/master/changelog/0.9.x.md).
+[release notes](https://github.com/flyingriverhorse/Kayra/blob/master/changelog/0.9.x.md).

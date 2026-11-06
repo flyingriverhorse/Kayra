@@ -115,30 +115,69 @@ targets already use their normal deployment identity without inheriting shared
 overrides. Keep identities at job scope so later unrelated resource types do not
 inherit execution settings they cannot support.
 
+### Access groups
+
+Access for people is set in one place: each shared target (`test`, `syst`,
+`prod`) in `deployment/targets.yml` sets four group variables. Use one company
+(account) group per role, different per environment. Blank means not applied.
+Personal `*_development` targets do not set them, so they keep the empty defaults
+declared in `deployment/variables.yml`.
+
+| Variable | Grant | Applied by |
+| --- | --- | --- |
+| `access_viewers` | `CAN_VIEW` on jobs, dashboard and project folder (the MLflow experiment inherits it); endpoint `CAN_VIEW` when `config/serving.yml` lists no `permissions` | Bundle deploy; serving job |
+| `access_runners` | `CAN_RUN` on the target's jobs: start and cancel runs, including train approve/reject/rollback | Bundle deploy |
+| `access_serving_callers` | Endpoint `CAN_QUERY` and SQL function `EXECUTE` | Serving job, when `config/serving.yml` lists no `permissions` for the target |
+| `access_data_readers` | `SELECT` on the prediction table and its views | Score and recovery tasks, after every run |
+
+```yaml
+targets:
+  prod:
+    permissions:
+      - level: CAN_MANAGE
+        user_name: ${workspace.current_user.userName}
+      - level: CAN_MANAGE
+        user_name: ${var.pipeline_owner}
+      - level: CAN_VIEW
+        group_name: ${var.access_viewers}
+      - level: CAN_RUN
+        group_name: ${var.access_runners}
+    variables:
+      access_viewers: "xx-yyy-ml-viewers"
+      access_runners: "xx-yyy-ml-operators"
+      access_serving_callers: "xx-yyy-ml-callers"
+      access_data_readers: "xx-yyy-ml-readers"
+```
+
+Detailed setup asks for the twelve groups after one opt-in question; quick setup
+skips them. A Bundle `permissions` entry cannot be skipped when its variable is
+blank, and Databricks rejects an empty `group_name`. So the `CAN_VIEW` and
+`CAN_RUN` entries are written at setup time: active when setup was given the
+group, commented out otherwise. To add one of these two groups later, set the
+variable and uncomment its entry; to remove one, comment the entry out as well.
+Do not override an active group with an empty `--var`. The serving and data
+reader groups need only the variable.
+
+The score job grants `SELECT` as its run identity, which must own the prediction
+table and views or hold `MANAGE` on them. A refused grant fails the score (or
+recovery) task with a message naming the group and the privilege. Readers also
+need `USE CATALOG` and `USE SCHEMA`; the job does not grant them, because the
+run identity usually does not own the schema. Ask the schema owner to grant them
+once. Source and label tables and registered model privileges are out of scope.
+Viewers, and runners through the same folder, can read the experiment and with it
+the saved training rows: choose groups that may read the source tables.
+
 ### Job access
 
 Every target grants `CAN_MANAGE` to the deploying identity and to
 `${var.pipeline_owner}`. Entries here apply to every job in that target,
-including optional feature and online jobs. Shared `test`, `syst` and `prod`
-targets also grant `CAN_VIEW` to a workspace group when detailed setup was given
-one. Personal targets have their own list, with the two managers only:
-
-```yaml
-permissions:
-  - level: CAN_MANAGE
-    user_name: ${workspace.current_user.userName}
-  - level: CAN_MANAGE
-    user_name: ${var.pipeline_owner}
-  - level: CAN_VIEW
-    group_name: "YOUR_ENVIRONMENT_VIEWERS"
-```
+including optional feature and online jobs. Shared targets add their access
+groups (above). Personal targets have their own list, with the two managers only.
 
 `pipeline_owner` is a variable in `deployment/variables.yml`. Its default is the
 setup answer, or the deploying user when the answer was blank; listing the same
 user twice is accepted. CI/CD can set it per deployment with
-`--var pipeline_owner=<email>` or `BUNDLE_VAR_pipeline_owner`. Change a view
-group by editing `group_name` in `deployment/targets.yml`; remove the entry to
-grant none.
+`--var pipeline_owner=<email>` or `BUNDLE_VAR_pipeline_owner`.
 When CI deploys as a service principal, `current_user.userName` is its
 application ID: change that entry's `user_name` key to `service_principal_name`.
 
@@ -196,7 +235,8 @@ See [Databricks job privileges](https://docs.databricks.com/aws/en/jobs/privileg
 
 Configure Unity Catalog and workspace access with your existing governance
 process. The Bundle does not silently create UC objects, transfer ownership or
-grant privileges on existing resources.
+grant privileges on existing resources. The one grant a job makes is `SELECT` on
+its own prediction outputs for `access_data_readers` ([access groups](#access-groups)).
 
 | Execution identity | Required access to arrange |
 | --- | --- |

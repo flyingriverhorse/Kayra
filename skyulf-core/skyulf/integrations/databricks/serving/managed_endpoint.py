@@ -9,10 +9,10 @@ from typing import Any
 
 from .contracts import PinnedEndpointPlan
 from .endpoints import (
-    create_pinned_endpoint,
     read_pinned_endpoint,
     require_pinned_endpoint_logging,
     require_pinned_endpoint_ready,
+    submit_pinned_endpoint,
     wait_for_pinned_endpoint_ready,
 )
 from .sql_functions import ServingSQLFunctionPlan, build_serving_sql_function
@@ -20,6 +20,7 @@ from .sql_functions import ServingSQLFunctionPlan, build_serving_sql_function
 _OWNER_KEYS = {"project", "target", "suffix", "managed_by"}
 _COMMENT_PREFIX = "Managed serving function "
 _PRINCIPAL_KEYS = {"user_name", "group_name", "service_principal_name"}
+_LEVELS = ("CAN_QUERY", "CAN_VIEW")
 _FAILED_UPDATES = {"UPDATE_FAILED", "UPDATE_CANCELED"}
 _ZERO_CAPACITY_FIELDS = {
     "min_provisioned_throughput",
@@ -81,7 +82,7 @@ def _tag_matches(endpoint: dict[str, Any], key: str, value: str) -> bool:
     ]
 
 
-def _require_owner(endpoint: dict[str, Any], ownership: dict[str, str]) -> None:
+def require_owner(endpoint: dict[str, Any], ownership: dict[str, str]) -> None:
     """Reject foreign, missing or duplicate ownership tags without adopting names."""
     for key, value in ownership.items():
         if not _tag_matches(endpoint, key, value):
@@ -231,6 +232,7 @@ def ensure_owned_endpoint(
     *,
     ownership: Mapping[str, str],
     tags: Mapping[str, str] | None = None,
+    permissions: Any = (),
 ) -> dict[str, Any]:
     """Create or update one owned pinned model, then require its exact settled readback.
 
@@ -238,6 +240,10 @@ def ensure_owned_endpoint(
     updates, multiple entities, routing and logging conflicts fail before writes.
     An owned endpoint whose first deployment failed (nothing served, and any pending
     config is for this model) is retried in place instead of requiring a manual delete.
+    ``permissions`` entries with level CAN_VIEW are added before the readiness wait,
+    so the team can inspect a deployment that fails; CAN_QUERY waits for verification.
+    On create, CAN_QUERY entries also get that early CAN_VIEW; an existing endpoint
+    skips it, because it would downgrade callers who can already query.
     The caller owns concurrency between separate deployments of the same target.
     """
     from databricks.sdk.errors import NotFound  # noqa: PLC0415
@@ -245,15 +251,16 @@ def ensure_owned_endpoint(
 
     owner = _ownership(ownership)
     extra_tags = validate_serving_tags(tags)
+    entries = validate_serving_principals(permissions)
     tags_updated = False
     try:
         endpoint = _dictionary(read_pinned_endpoint(client, plan))
     except NotFound:
         wanted = _named_plan(plan, plan.spec.endpoint_name, owner | extra_tags)
-        final = create_pinned_endpoint(client, wanted)
+        submit_pinned_endpoint(client, wanted)
         action, previous = "created", None
     else:
-        _require_owner(endpoint, owner)
+        require_owner(endpoint, owner)
         entity, previous = _existing_entity(endpoint, plan)
         wanted = _named_plan(plan, entity["name"], owner | extra_tags)
         desired = wanted.config["config"]["served_entities"][0]
@@ -269,9 +276,11 @@ def ensure_owned_endpoint(
                 ),
             )
             action = "updated"
-        final = wait_for_pinned_endpoint_ready(client, wanted)
-    final = _dictionary(final)
-    _require_owner(final, owner)
+    _add_endpoint_permissions(
+        client, plan.spec.endpoint_name, _early_viewers(entries, action == "created")
+    )
+    final = _dictionary(wait_for_pinned_endpoint_ready(client, wanted))
+    require_owner(final, owner)
     _require_owned_config(final, wanted)
     if any(not _tag_matches(final, key, value) for key, value in extra_tags.items()):
         raise ValueError("Serving endpoint requested extra tags differ from their exact readback.")
@@ -309,7 +318,7 @@ def _sql_metadata(plan: ServingSQLFunctionPlan, owner: dict[str, str]) -> dict[s
     }
 
 
-def _require_function_owner(comment: Any, expected: dict[str, Any]) -> dict[str, Any]:
+def require_function_owner(comment: Any, expected: dict[str, Any]) -> dict[str, Any]:
     """Treat unrelated or malformed function comments as foreign ownership."""
     try:
         if not isinstance(comment, str) or not comment.startswith(_COMMENT_PREFIX):
@@ -335,10 +344,10 @@ def ensure_owned_sql_function(
     except NotFound:
         action = "created"
     else:
-        actual = _require_function_owner(function.get("comment"), metadata)
+        actual = require_function_owner(function.get("comment"), metadata)
         action = "unchanged" if actual == metadata else "updated"
     endpoint = _dictionary(require_pinned_endpoint_ready(client, plan.endpoint))
-    _require_owner(endpoint, owner)
+    require_owner(endpoint, owner)
     _require_owned_config(endpoint, plan.endpoint)
     if action != "unchanged":
         comment = _COMMENT_PREFIX + json.dumps(metadata, sort_keys=True, separators=(",", ":"))
@@ -347,10 +356,32 @@ def ensure_owned_sql_function(
 
 
 def validate_serving_principals(principals: Any) -> list[dict[str, str]]:
-    """Normalize principal dictionaries to one identity plus level CAN_QUERY before writes."""
+    """Normalize principal dictionaries to one identity plus CAN_QUERY or CAN_VIEW."""
     if not isinstance(principals, Sequence) or isinstance(principals, (str, bytes)):
         raise ValueError("permissions must be a list of principal dictionaries.")
-    return [_principal(principal) for principal in principals]
+    entries = [_principal(principal) for principal in principals]
+    levels: dict[tuple[str, str], str] = {}
+    for entry in entries:
+        identity = next((key, value) for key, value in entry.items() if key != "level")
+        # The early CAN_VIEW grant could downgrade a caller listed at both levels.
+        if levels.setdefault(identity, entry["level"]) != entry["level"]:
+            raise ValueError(
+                f"permissions list {identity[1]!r} with both CAN_VIEW and CAN_QUERY; keep one."
+            )
+    return entries
+
+
+def _early_viewers(entries: list[dict[str, str]], created: bool) -> list[dict[str, str]]:
+    """Return the CAN_VIEW grants made before readiness; callers join only on create."""
+    viewers = _with_level(entries, "CAN_VIEW")
+    if not created:
+        return viewers
+    return viewers + [{**entry, "level": "CAN_VIEW"} for entry in _with_level(entries, "CAN_QUERY")]
+
+
+def _with_level(entries: list[dict[str, str]], level: str) -> list[dict[str, str]]:
+    """Select the validated entries granted at one permission level."""
+    return [entry for entry in entries if entry["level"] == level]
 
 
 def _principal(value: Any) -> dict[str, str]:
@@ -358,13 +389,14 @@ def _principal(value: Any) -> dict[str, str]:
     if not isinstance(value, Mapping) or set(value) - _PRINCIPAL_KEYS - {"level"}:
         raise ValueError("permissions require one supported principal and optional level.")
     keys = set(value) & _PRINCIPAL_KEYS
-    if len(keys) != 1 or value.get("level", "CAN_QUERY") != "CAN_QUERY":
-        raise ValueError("permissions require one principal and level CAN_QUERY.")
+    level = value.get("level", "CAN_QUERY")
+    if len(keys) != 1 or level not in _LEVELS:
+        raise ValueError("permissions require one principal and level CAN_QUERY or CAN_VIEW.")
     key = next(iter(keys))
     name = value[key]
     if not isinstance(name, str) or not name.strip() or any(ord(char) < 32 for char in name):
         raise ValueError("permission principal must be a nonempty string without controls.")
-    return {key: name, "level": "CAN_QUERY"}
+    return {key: name, "level": level}
 
 
 def grant_serving_access(
@@ -380,26 +412,19 @@ def grant_serving_access(
 
     ``function_principals`` receive the UC EXECUTE grant; None reuses ``principals``.
     Keep them separate when an endpoint caller, such as a workspace-local group, is not
-    a Unity Catalog principal.
+    a Unity Catalog principal. CAN_VIEW entries get neither grant here; the endpoint
+    step adds them before its readiness wait.
     """
-    from databricks.sdk.service import serving  # noqa: PLC0415
-
-    entries = validate_serving_principals(principals)
+    entries = _with_level(validate_serving_principals(principals), "CAN_QUERY")
     grantees = (
-        entries if function_principals is None else validate_serving_principals(function_principals)
+        entries
+        if function_principals is None
+        else _with_level(validate_serving_principals(function_principals), "CAN_QUERY")
     )
     function = (
         build_serving_sql_function(plan, function_name) if function_name is not None else None
     )
-    if entries:
-        endpoint = _dictionary(client.serving_endpoints.get(plan.spec.endpoint_name))
-        if not endpoint.get("id"):
-            raise ValueError("Serving endpoint readback requires its ID for additive grants.")
-        acl = [
-            serving.ServingEndpointAccessControlRequest.from_dict(_sdk_permission(entry))
-            for entry in entries
-        ]
-        client.serving_endpoints.update_permissions(endpoint["id"], access_control_list=acl)
+    _add_endpoint_permissions(client, plan.spec.endpoint_name, entries)
     if function is not None:
         for entry in grantees:
             name = next(value for key, value in entry.items() if key != "level")
@@ -407,8 +432,22 @@ def grant_serving_access(
             spark.sql(f"GRANT EXECUTE ON FUNCTION {function.quoted_name} TO {principal}").collect()
 
 
+def _add_endpoint_permissions(client: Any, endpoint_name: str, entries: list) -> None:
+    """Add validated endpoint ACL entries by ID without replacing or revoking others."""
+    from databricks.sdk.service import serving  # noqa: PLC0415
+
+    if not entries:
+        return
+    endpoint = _dictionary(client.serving_endpoints.get(endpoint_name))
+    if not endpoint.get("id"):
+        raise ValueError("Serving endpoint readback requires its ID for additive grants.")
+    acl = [
+        serving.ServingEndpointAccessControlRequest.from_dict(_sdk_permission(entry))
+        for entry in entries
+    ]
+    client.serving_endpoints.update_permissions(endpoint["id"], access_control_list=acl)
+
+
 def _sdk_permission(entry: dict[str, str]) -> dict[str, str]:
     """Translate the validated configuration level to the SDK permission field."""
-    return {key: value for key, value in entry.items() if key != "level"} | {
-        "permission_level": "CAN_QUERY"
-    }
+    return {("permission_level" if key == "level" else key): value for key, value in entry.items()}

@@ -13,7 +13,7 @@ defaults:
   save_preprocessing_diagnostics: true # Optional preprocessing diagnostics; first 256 holdout rows, 8 MiB. See GUIDE.md#preprocessing-and-custom-code.
   # Spark and online-feature projects check admission automatically, even when false below.
   # Set true to check preprocessing during training and save the results needed for endpoint deployment.
-  # Details: https://www.skyulf.com/manual/user_guide/databricks_spark_scoring.html
+  # Details: https://kayra.skyulf.com/manual/user_guide/databricks_spark_scoring.html
   probe_pipeline_for_serving: false
   training_table: "{catalog}.{input_schema}.trips_train"
   record_key_columns: ["trip_id"]
@@ -35,7 +35,7 @@ defaults:
   filter_unavailable_results: false # true: skip rows with no result date (or after result_cutoff); they do not count toward max_rows. multi_target skips empty branch targets automatically
   skip_missing_targets: true # skip rows whose target is empty; they do not count toward max_rows
   max_rows: 25000
-  max_input_mb: 64
+  max_input_mb: 512
   metric: heldout_rmse
   min_improvement: 0
   # Candidate coverage and allowed loss versus champion; null disables either gate.

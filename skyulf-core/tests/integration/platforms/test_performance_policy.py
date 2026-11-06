@@ -424,3 +424,13 @@ def test_contract_change_resets_adjacent_degraded_streak():
     assert changed["contract_digest"] == "d" * 64
     assert changed["consecutive_failures"] == 1
     assert changed["action"] == "report"
+
+
+def test_training_holdout_baseline_version_is_optional():
+    """Templates omit the version so enrolling a new model needs no hand-edited policy."""
+    unpinned = policy(baseline={"kind": "training_holdout"})
+    assert validate_performance_policy(unpinned)["baseline"] == {"kind": "training_holdout"}
+    with pytest.raises(ValueError, match="missing"):
+        validate_performance_policy(
+            policy(baseline={"kind": "production_window", "report_id": "a" * 64})
+        )

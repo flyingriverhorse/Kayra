@@ -5,7 +5,6 @@ import importlib
 import importlib.util
 import json
 import sys
-from collections import Counter
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
@@ -13,78 +12,16 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-_TRAIN_TASK_STATES = {"training": "success", "operator": "excluded"}
-_OPERATOR_TASK_STATES = {"training": "excluded", "operator": "success"}
+from skyulf.integrations.databricks.training.fitting.candidate import (
+    read_training_snapshot as _real_read_training_snapshot,
+)
 
-
-@pytest.mark.parametrize("engine", ["pandas", "polars"])
-@pytest.mark.parametrize("policy", ["automatic", "manual_approval"])
-def test_grouped_replay_avoids_discarded_source_reads(staged, monkeypatch, engine, policy):
-    """Reuse checked phase metadata while retaining fresh source replay before alias mutation."""
-    import mlflow
-
-    from skyulf.integrations.databricks.lifecycle import workflow
-    from skyulf.integrations.databricks.training.fitting import candidate
-
-    adapter, client, config, _, frame = staged
-    config.update(engine=engine, promotion_policy=policy)
-    counts = Counter()
-    download = mlflow.MlflowClient.download_artifacts
-    package_download = mlflow.artifacts.download_artifacts
-    validate = adapter.validate_training_evidence
-
-    def read_source(spark, spec):
-        """Count the shared external source boundary across both task and decision adapters."""
-        counts["source_reads"] += 1
-        return frame.copy()
-
-    def read_artifact(self, run_id, path, *args, **kwargs):
-        """Count persisted receipt/spec downloads without replacing their real verification."""
-        counts[f"artifact:{path}"] += 1
-        return download(self, run_id, path, *args, **kwargs)
-
-    def read_package(*args, **kwargs):
-        """Count MLflow download API calls, including receipt downloads delegated by the client."""
-        counts["download_api_calls"] += 1
-        return package_download(*args, **kwargs)
-
-    def check_evidence(*args, **kwargs):
-        """Count task evidence validation while preserving the real digest and membership checks."""
-        counts["task_evidence_checks"] += 1
-        return validate(*args, **kwargs)
-
-    monkeypatch.setattr(candidate, "read_training_snapshot", read_source)
-    monkeypatch.setattr(workflow, "read_training_snapshot", read_source)
-    monkeypatch.setattr(mlflow.MlflowClient, "download_artifacts", read_artifact)
-    monkeypatch.setattr(mlflow.artifacts, "download_artifacts", read_package)
-    monkeypatch.setattr(adapter, "validate_training_evidence", check_evidence)
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    counts.clear()
-    registered = _call(staged, "train_register", prepared.reference)
-    train_counts = dict(counts)
-    counts.clear()
-    decided = _call(staged, "compare_decide", registered.reference)
-    decision_counts = dict(counts)
-    print(
-        json.dumps(
-            {
-                "engine": engine,
-                "policy": policy,
-                "train_register": train_counts,
-                "compare_decide": decision_counts,
-            },
-            sort_keys=True,
-        )
-    )
-    assert train_counts["source_reads"] == 2
-    assert decision_counts["source_reads"] == 2
-    assert train_counts["artifact:lifecycle/train.json"] == 3
-    assert decision_counts["artifact:lifecycle/train.json"] == 5
-    assert decision_counts["artifact:lifecycle/prepare.json"] == 5
-    assert decided.reference["phase"] == "decide"
-    assert ("champion" in client.get_registered_model(config["model_name"]).aliases) == (
-        policy == "automatic"
-    )
+_DECISION_SUCCESS = {"decision": "success"}
+# Tasks the generated job graph runs between a predecessor and the requested phase.
+_GRAPH_GAPS = {
+    ("train", "prepare"): ("load_data", "prepare_dataset"),
+    ("evaluate_register", "train"): ("select_best_model",),
+}
 
 
 def test_registration_rechecks_train_receipt_after_evaluation(staged, monkeypatch):
@@ -92,7 +29,7 @@ def test_registration_rechecks_train_receipt_after_evaluation(staged, monkeypatc
     from skyulf.integrations.databricks.training.fitting import candidate
 
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     run_id = prepared.reference["run_id"]
     evaluate = candidate.evaluate_candidate
@@ -116,18 +53,18 @@ def test_registration_rechecks_train_receipt_after_evaluation(staged, monkeypatc
 
 
 @pytest.mark.parametrize("change", ["receipt", "evidence", "membership", "champion"])
-def test_grouped_decision_rechecks_mutations_after_comparison(staged, monkeypatch, change):
+def test_decision_rechecks_mutations_after_comparison(staged, monkeypatch, change):
     """Phase-local data must not hide edits or changed aliases before the decision phase."""
     from skyulf.integrations.mlflow.lifecycle.promotion import AliasConflictError
 
     adapter, client, config, _, frame = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    registered = _call(staged, "train_register", prepared.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    registered = _register(staged, prepared.reference)
     run_id = prepared.reference["run_id"]
     compare = adapter._compare
 
     def change_after_compare(*args, **kwargs):
-        """Inject changes at the grouped task's internal durable phase boundary."""
+        """Inject changes after comparison, before the separate decision task."""
         result = compare(*args, **kwargs)
         if change == "champion":
             client.set_registered_model_alias(config["model_name"], "champion", "1")
@@ -146,7 +83,7 @@ def test_grouped_decision_rechecks_mutations_after_comparison(staged, monkeypatc
 
     monkeypatch.setattr(adapter, "_compare", change_after_compare)
     with pytest.raises((ValueError, AliasConflictError)):
-        _call(staged, "compare_decide", registered.reference)
+        _decide(staged, registered.reference)
     run = client.get_run(run_id)
     assert "skyulf.lifecycle.decide.receipt" not in run.data.tags
     assert "skyulf.lifecycle.result.receipt" not in run.data.tags
@@ -179,6 +116,7 @@ def staged(tmp_path, monkeypatch):
     frame = pd.DataFrame({"id": range(20), "x": range(20), "target": range(0, 40, 2)})
     frame.attrs.update(source_table_id="delta-log-id", source_uc_table_id="uc-object-id")
     monkeypatch.setattr(candidate, "read_training_snapshot", lambda spark, spec: frame.copy())
+    monkeypatch.setattr(candidate, "read_live_snapshot", lambda spark, spec: frame.copy())
     monkeypatch.setattr(workflow, "read_training_snapshot", lambda spark, spec: frame.copy())
     config = {
         "engine": "pandas",
@@ -205,8 +143,14 @@ def staged(tmp_path, monkeypatch):
 
 
 def _call(staged, phase, reference=None, **kwargs):
-    """Call phases with JSON-only references as separate notebook tasks would."""
+    """Call phases with JSON-only references as separate notebook tasks would.
+
+    A call that skips generated-graph tasks (train after initialize, registration after
+    train) first runs each skipped task as its own phase, so tests stay on graph 3.
+    """
     adapter, _, config, context, _ = staged
+    for skipped in _GRAPH_GAPS.get((phase, (reference or {}).get("phase")), ()):
+        reference = _call(staged, skipped, reference).reference
     return adapter.run_lifecycle_phase(
         None,
         phase=phase,
@@ -217,9 +161,18 @@ def _call(staged, phase, reference=None, **kwargs):
     )
 
 
+def _register(staged, reference):
+    """Run the graph's data, fit, selection and registration tasks from initialize."""
+    return _call(staged, "evaluate_register", _call(staged, "train", reference).reference)
+
+
+def _decide(staged, reference):
+    """Compare the registered candidate, then apply the pinned promotion policy."""
+    return _call(staged, "decide", _call(staged, "compare", reference).reference)
+
+
 @pytest.mark.parametrize("engine", ["pandas", "polars"])
-@pytest.mark.parametrize("readable", [False, True])
-def test_training_inputs_follow_exact_registered_run(staged, engine, readable):
+def test_training_inputs_follow_exact_registered_run(staged, engine):
     """Actual split metadata must survive task boundaries without attaching to a caller run."""
     mlflow = pytest.importorskip("mlflow")
     _, client, config, _, frame = staged
@@ -239,20 +192,9 @@ def test_training_inputs_follow_exact_registered_run(staged, engine, readable):
             experiment_id=client.get_experiment_by_name("staged").experiment_id
         ) as caller:
             initialized = _call(
-                staged,
-                "initialize" if readable else "prepare",
-                config=config,
-                action="train",
-                experiment_name="staged",
+                staged, "initialize", config=config, action="train", experiment_name="staged"
             )
-            if readable:
-                loaded = _call(staged, "load_data", initialized.reference)
-                split = _call(staged, "prepare_dataset", loaded.reference)
-                trained = _call(staged, "train", split.reference)
-                selected = _call(staged, "select_best_model", trained.reference)
-                registered = _call(staged, "evaluate_register", selected.reference)
-            else:
-                registered = _call(staged, "train_register", initialized.reference)
+            registered = _register(staged, initialized.reference)
             assert mlflow.active_run().info.run_id == caller.info.run_id
             assert not client.get_run(caller.info.run_id).inputs.dataset_inputs
     finally:
@@ -302,8 +244,7 @@ def test_training_inputs_follow_exact_registered_run(staged, engine, readable):
 
 
 @pytest.mark.parametrize("engine", ["pandas", "polars"])
-@pytest.mark.parametrize("readable", [False, True])
-def test_search_result_survives_durable_registration_and_comparison(staged, engine, readable):
+def test_search_result_survives_durable_registration_and_comparison(staged, engine):
     """The registered artifact and notebook report must retain the actual selected search."""
     from skyulf.integrations.databricks.jobs.shared.job_output import render_lifecycle_output
 
@@ -322,26 +263,13 @@ def test_search_result_survives_durable_registration_and_comparison(staged, engi
         "max_features": 2,
         "max_display_samples": 2,
     }
-    prepared = _call(
-        staged,
-        "initialize" if readable else "prepare",
-        config=config,
-        action="train",
-        experiment_name="staged",
-    )
-    if readable:
-        loaded = _call(staged, "load_data", prepared.reference)
-        split = _call(staged, "prepare_dataset", loaded.reference)
-        fitted = _call(staged, "train", split.reference)
-        assert fitted.output["tuning"]["n_trials"] == 2
-        assert "Selected parameters" in render_lifecycle_output("train", fitted.output)
-        selected = _call(staged, "select_best_model", fitted.reference)
-        trained = _call(staged, "evaluate_register", selected.reference)
-        _call(staged, "compare", trained.reference)
-        result = _call(staged, "model_decision", prepared.reference)
-    else:
-        trained = _call(staged, "train_register", prepared.reference)
-        result = _call(staged, "compare_decide", trained.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    fitted = _call(staged, "train", prepared.reference)
+    assert fitted.output["tuning"]["n_trials"] == 2
+    assert "Selected parameters" in render_lifecycle_output("train", fitted.output)
+    trained = _call(staged, "evaluate_register", fitted.reference)
+    _call(staged, "compare", trained.reference)
+    result = _call(staged, "model_decision", prepared.reference)
     run_id = prepared.reference["run_id"]
     evidence = json.loads(Path(client.download_artifacts(run_id, "tuning.json")).read_text())
     assert evidence["n_trials"] == 2
@@ -349,14 +277,14 @@ def test_search_result_survives_durable_registration_and_comparison(staged, engi
     assert result.output["candidate"]["comparison"]["row_count"] == 4
     assert result.output["candidate"]["comparison"]["candidate_metrics"]["heldout_rmse"] < 1
     assert trained.output["tuning"]["best_params"] == evidence["best_params"]
-    assert "Selected parameters" in render_lifecycle_output("train_register", trained.output)
+    assert "Selected parameters" in render_lifecycle_output("evaluate_register", trained.output)
     explanation = json.loads(
         Path(client.download_artifacts(run_id, "explanations.json")).read_text()
     )
     assert explanation["sample_count"] == 4
     assert explanation["status"] in {"completed", "unavailable"}
     assert trained.output["explanations"]["status"] == explanation["status"]
-    assert "Model explanations" in render_lifecycle_output("train_register", trained.output)
+    assert "Model explanations" in render_lifecycle_output("evaluate_register", trained.output)
 
 
 def test_hard_voting_search_survives_registry_and_heldout_comparison(staged):
@@ -388,9 +316,9 @@ def test_hard_voting_search_survives_registry_and_heldout_comparison(staged):
         "search_space": {"logistic_regression__C": [0.1, 1]},
         "metric": "accuracy",
     }
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    trained = _call(staged, "train_register", prepared.reference)
-    compared = _call(staged, "compare_decide", trained.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    trained = _register(staged, prepared.reference)
+    compared = _decide(staged, trained.reference)
     candidate = compared.output["candidate"]
     artifact = load_run_pipeline(
         f"runs:/{candidate['run_id']}/model",
@@ -420,9 +348,9 @@ def test_quality_gates_survive_durable_training_and_approval(staged, policy, mon
 
     monkeypatch.setattr(type(client), "set_model_version_tag", set_uc_compatible_tag)
     config.update(promotion_policy=policy, quality_gates={"heldout_r2": 0.5})
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    trained = _call(staged, "train_register", prepared.reference)
-    decision = _call(staged, "compare_decide", trained.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    trained = _register(staged, prepared.reference)
+    decision = _decide(staged, trained.reference)
     candidate = decision.output["candidate"]
     assert candidate["comparison"]["quality_gates"] == {"heldout_r2": 0.5}
     saved = json.loads(
@@ -449,10 +377,10 @@ def test_secondary_gate_prevents_automatic_first_champion(staged):
     _, client, config, _, frame = staged
     frame["target"] += [0, 2] * 10
     config.update(quality_threshold=100, quality_gates={"heldout_mae": 0})
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    trained = _call(staged, "train_register", prepared.reference)
-    decision = _call(staged, "compare_decide", trained.reference)
-    completed = _call(staged, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    trained = _register(staged, prepared.reference)
+    decision = _decide(staged, trained.reference)
+    completed = _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     assert decision.output["alias_change"] is None
     assert completed.output["score_requested"] is False
     tags = client.get_model_version(config["model_name"], "1").tags
@@ -463,9 +391,8 @@ def test_secondary_gate_prevents_automatic_first_champion(staged):
 
 @pytest.mark.parametrize("engine", ["pandas", "polars"])
 @pytest.mark.parametrize("custom_filter", [False, True])
-@pytest.mark.parametrize("readable", [False, True])
 def test_custom_recipes_restore_before_cv_in_separate_task(
-    staged, tmp_path, monkeypatch, engine, custom_filter, readable
+    staged, tmp_path, monkeypatch, engine, custom_filter
 ):
     """Saved builders must register custom nodes after the preparation process ends."""
     from skyulf.integrations.databricks.projects.project import load_project_workflow
@@ -491,13 +418,7 @@ def build_pre_split_steps():
     frame["is_test"] = False
     config.update(engine=engine, cv_enabled=True, cv_folds=2)
     config.update(load_project_workflow(config, path))
-    prepared = _call(
-        staged,
-        "initialize" if readable else "prepare",
-        config=config,
-        action="train",
-        experiment_name="staged",
-    )
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     path.unlink()
 
     def clear_project_state():
@@ -511,23 +432,18 @@ def build_pre_split_steps():
                 monkeypatch.delitem(sys.modules, name)
 
     clear_project_state()
-    if readable:
-        current = prepared
-        for phase in (
-            "load_data",
-            "prepare_dataset",
-            "train",
-            "select_best_model",
-            "evaluate_register",
-        ):
-            current = _call(staged, phase, current.reference)
-            clear_project_state()
-        _call(staged, "compare", current.reference)
-        decision = _call(staged, "model_decision", prepared.reference)
-    else:
-        registered = _call(staged, "train_register", prepared.reference)
+    current = prepared
+    for phase in (
+        "load_data",
+        "prepare_dataset",
+        "train",
+        "select_best_model",
+        "evaluate_register",
+    ):
+        current = _call(staged, phase, current.reference)
         clear_project_state()
-        decision = _call(staged, "compare_decide", registered.reference)
+    _call(staged, "compare", current.reference)
+    decision = _call(staged, "model_decision", prepared.reference)
     assert decision.output["alias_change"]["new_version"] == "1"
     metrics = client.get_run(prepared.reference["run_id"]).data.metrics
     assert metrics["heldout_rmse"] < 1e-8
@@ -544,7 +460,7 @@ def test_train_prepares_latest_once_and_downstream_keeps_the_pin(staged, engine)
     history.return_value = {"version": 7}
     prepared = adapter.run_lifecycle_phase(
         spark,
-        phase="prepare",
+        phase="initialize",
         context=context,
         tracking_uri=config["tracking_uri"],
         config=config,
@@ -576,7 +492,7 @@ def test_phases_roundtrip_and_only_finalize_completed_training(staged, engine, m
 
     monkeypatch.setattr(candidate, "fit_workflow", capture_path)
     config["engine"] = engine
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     reference = prepared.reference
     run_id = reference["run_id"]
     assert prepared.output["source_table"] == "workspace.test.labels"
@@ -606,7 +522,7 @@ def test_phases_roundtrip_and_only_finalize_completed_training(staged, engine, m
 def test_out_of_order_foreign_and_repeated_stages_fail_closed(staged):
     """Missing evidence and duplicate attempts must never authorize registration."""
     adapter, client, config, context, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     with pytest.raises(ValueError, match="predecessor"):
         _call(staged, "evaluate_register", prepared.reference)
     foreign = adapter.LifecycleContext(job_id=context.job_id, job_run_id="21")
@@ -618,9 +534,11 @@ def test_out_of_order_foreign_and_repeated_stages_fail_closed(staged):
             reference=prepared.reference,
             tracking_uri=config["tracking_uri"],
         )
-    trained = _call(staged, "train", prepared.reference)
+    loaded = _call(staged, "load_data", prepared.reference)
+    split = _call(staged, "prepare_dataset", loaded.reference)
+    trained = _call(staged, "train", split.reference)
     with pytest.raises(ValueError, match="fresh run"):
-        _call(staged, "train", prepared.reference)
+        _call(staged, "train", split.reference)
     assert not client.search_registered_models()
     assert json.loads(json.dumps(trained.reference)) == trained.reference
 
@@ -630,7 +548,7 @@ def test_failed_evaluation_never_registers_and_finalizer_marks_failed(staged, mo
     from skyulf.integrations.databricks.training.fitting import candidate
 
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     failure = RuntimeError("holdout failed")
 
@@ -653,7 +571,7 @@ def test_failed_evaluation_never_registers_and_finalizer_marks_failed(staged, mo
 def test_finalized_incomplete_run_cannot_resume_training(staged):
     """A cleanup-completed failed run cannot be resumed by a late phase call."""
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     _call(staged, "finalize", prepared.reference)
     with pytest.raises(ValueError, match="fresh run"):
         _call(staged, "train", prepared.reference)
@@ -665,8 +583,9 @@ def test_lost_registration_response_cannot_register_twice(staged, monkeypatch):
     from skyulf.integrations.databricks.training.fitting import candidate
 
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
+    selected = _call(staged, "select_best_model", trained.reference)
     original = candidate.register_model
     failure = RuntimeError("registration response lost")
 
@@ -677,10 +596,10 @@ def test_lost_registration_response_cannot_register_twice(staged, monkeypatch):
 
     monkeypatch.setattr(candidate, "register_model", lost_response)
     with pytest.raises(RuntimeError) as caught:
-        _call(staged, "evaluate_register", trained.reference)
+        _call(staged, "evaluate_register", selected.reference)
     assert caught.value is failure
     with pytest.raises(ValueError, match="fresh run"):
-        _call(staged, "evaluate_register", trained.reference)
+        _call(staged, "evaluate_register", selected.reference)
     versions = client.search_model_versions(f"name='{config['model_name']}'")
     assert len(versions) == 1
     assert not client.get_registered_model(config["model_name"]).aliases
@@ -702,7 +621,7 @@ def test_task_prepare_rejects_stale_champion_before_creating_run(staged, monkeyp
         config["model_selection_mode"] = "auto_champion"
     monkeypatch.setattr(workflow, "controlled_champion_version", Mock(return_value="2"))
     with pytest.raises(ValueError, match="champion_version"):
-        _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+        _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     experiment = client.get_experiment_by_name("staged")
     assert not client.search_runs([experiment.experiment_id])
 
@@ -713,7 +632,7 @@ def test_registration_receipt_survives_candidate_resolution_failure(staged, monk
     from skyulf.integrations.databricks.training.shared.training_evidence import evidence_digest
 
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     failure = RuntimeError("candidate resolution failed")
     monkeypatch.setattr(candidate, "resolve_model", Mock(side_effect=failure))
@@ -737,7 +656,7 @@ def test_registration_accepts_verified_normalized_artifact_source(staged, monkey
     from skyulf.integrations.databricks.training.fitting import candidate
 
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
 
     def normalized_registration(model_uri, name, **kwargs):
@@ -760,7 +679,7 @@ def test_comparison_failure_restores_exact_challenger_without_nomination(staged,
     from skyulf.integrations.mlflow.lifecycle.challenger import ChallengerLifecycle
 
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     registered = _call(staged, "evaluate_register", trained.reference)
     failure = RuntimeError("comparison failed")
@@ -787,7 +706,7 @@ def test_saved_provenance_or_membership_change_blocks_registration(staged, chang
     from skyulf.integrations.databricks.training.fitting import candidate
 
     _, client, config, _, frame = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     trained = _call(staged, "train", prepared.reference)
     run_id = prepared.reference["run_id"]
     if change in {"request", "evidence", "spec"}:
@@ -843,7 +762,7 @@ def test_saved_project_recipe_and_cv_survive_changed_editable_inputs(staged, eng
     )
     config.update(engine=engine, cv_enabled=True, cv_folds=2, promotion_policy="manual_approval")
     config.update(load_project_workflow(config, source))
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     source.write_text("raise RuntimeError('edited project must not run')\n", encoding="utf-8")
     config["training_version"] = 99
     config["pipeline"]["modeling"]["type"] = "changed"
@@ -863,29 +782,24 @@ def test_saved_project_recipe_and_cv_survive_changed_editable_inputs(staged, eng
 
 
 @pytest.mark.parametrize("action", ["approve", "reject"])
-@pytest.mark.parametrize("grouped", [False, True])
+@pytest.mark.parametrize("via_complete", [False, True])
 def test_manual_actions_reuse_saved_evidence_without_fit_or_registration(
-    staged, action, grouped, monkeypatch
+    staged, action, via_complete, monkeypatch
 ):
     """Operator tasks bypass training and finish their own descriptor runs from saved evidence."""
     from skyulf.integrations.databricks.training.fitting import candidate as candidate_training
 
     adapter, client, config, _, frame = staged
     config["promotion_policy"] = "manual_approval"
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     current = prepared
-    phases = (
-        ("train_register", "compare_decide")
-        if grouped
-        else ("train", "evaluate_register", "compare", "decide")
-    )
-    for phase in phases:
+    for phase in ("train", "evaluate_register", "compare", "decide"):
         current = _call(staged, phase, current.reference)
     _call(
         staged,
-        "complete" if grouped else "finalize",
+        "complete" if via_complete else "finalize",
         prepared.reference,
-        **({"task_states": _TRAIN_TASK_STATES} if grouped else {}),
+        **({"task_states": _DECISION_SUCCESS} if via_complete else {}),
     )
     candidate = current.output["candidate"]
 
@@ -907,7 +821,7 @@ def test_manual_actions_reuse_saved_evidence_without_fit_or_registration(
         options["rejection_reason"] = "Needs review"
     pending = _call(
         operator_staged,
-        "prepare",
+        "initialize",
         config=config,
         action=action,
         experiment_name="staged",
@@ -916,9 +830,9 @@ def test_manual_actions_reuse_saved_evidence_without_fit_or_registration(
     _call(operator_staged, "operator", pending.reference)
     result = _call(
         operator_staged,
-        "complete" if grouped else "result",
+        "complete" if via_complete else "result",
         pending.reference,
-        **({"task_states": _OPERATOR_TASK_STATES} if grouped else {}),
+        **({"task_states": _DECISION_SUCCESS} if via_complete else {}),
     )
     assert result.output["score_requested"] is (action == "approve")
     assert client.get_run(pending.reference["run_id"]).info.status == "FINISHED"
@@ -936,7 +850,7 @@ def test_retry_repair_and_unresolved_invocation_rejected_before_work(staged, cha
     with pytest.raises(ValueError):
         adapter.run_lifecycle_phase(
             None,
-            phase="prepare",
+            phase="initialize",
             context=context,
             tracking_uri=config["tracking_uri"],
             config=config,
@@ -961,20 +875,20 @@ def test_prepare_failure_closes_created_run(staged, monkeypatch):
 
     monkeypatch.setattr(type(client), "log_dict", fail_request)
     with pytest.raises(RuntimeError) as caught:
-        _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+        _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     assert caught.value is failure
     experiment = client.get_experiment_by_name("staged")
     runs = client.search_runs([experiment.experiment_id])
     assert len(runs) == 1 and runs[0].info.status == "FAILED"
 
 
-@pytest.mark.parametrize("grouped", [False, True])
+@pytest.mark.parametrize("via_complete", [False, True])
 def test_finalizer_failure_leaves_incomplete_and_preserves_committed_promotion(
-    staged, monkeypatch, grouped
+    staged, monkeypatch, via_complete
 ):
     """A failed status write cannot fabricate successful output or undo a committed alias."""
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     current = prepared
     for phase in ("train", "evaluate_register", "compare", "decide"):
         current = _call(staged, phase, current.reference)
@@ -988,9 +902,9 @@ def test_finalizer_failure_leaves_incomplete_and_preserves_committed_promotion(
     with pytest.raises(RuntimeError) as caught:
         _call(
             staged,
-            "complete" if grouped else "finalize",
+            "complete" if via_complete else "finalize",
             prepared.reference,
-            **({"task_states": _TRAIN_TASK_STATES} if grouped else {}),
+            **({"task_states": _DECISION_SUCCESS} if via_complete else {}),
         )
     assert caught.value is failure
     assert (
@@ -1013,7 +927,7 @@ def test_cv_and_fit_failure_never_reach_registration(staged, monkeypatch, operat
 
     _, client, config, _, _ = staged
     config.update(cv_enabled=True, cv_folds=2)
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     failure = RuntimeError("training failed")
 
     def fail(*args, **kwargs):
@@ -1033,7 +947,7 @@ def test_failed_quality_gate_is_successful_training_without_score_handoff(staged
     _, client, config, _, frame = staged
     frame["target"] += [0, 2] * 10
     config["quality_threshold"] = 0.0
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     current = prepared
     for phase in ("train", "evaluate_register", "compare", "decide"):
         current = _call(staged, phase, current.reference)
@@ -1046,17 +960,17 @@ def test_failed_quality_gate_is_successful_training_without_score_handoff(staged
 
 @pytest.mark.parametrize("engine", ["pandas", "polars"])
 @pytest.mark.parametrize("policy", ["automatic", "manual_approval"])
-def test_grouped_training_preserves_receipts_and_publishes_result(staged, engine, policy):
-    """Grouped tasks retain durable phase boundaries and finish either promotion policy."""
+def test_training_preserves_receipts_and_publishes_result(staged, engine, policy):
+    """Separate tasks retain durable phase boundaries and finish either promotion policy."""
     _, client, config, _, _ = staged
     config.update(engine=engine, promotion_policy=policy)
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    registered = _call(staged, "train_register", prepared.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    registered = _register(staged, prepared.reference)
     assert registered.reference["phase"] == "evaluate_register"
     assert registered.output["candidate_version"] == "1"
-    decided = _call(staged, "compare_decide", registered.reference)
+    decided = _decide(staged, registered.reference)
     assert decided.reference["phase"] == "decide"
-    result = _call(staged, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+    result = _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     run = client.get_run(prepared.reference["run_id"])
     assert result.reference["phase"] == "result"
     assert result.output["score_requested"] is (policy == "automatic")
@@ -1064,33 +978,33 @@ def test_grouped_training_preserves_receipts_and_publishes_result(staged, engine
     for phase in ("train", "evaluate_register", "compare", "decide", "finalize", "result"):
         assert run.data.tags[f"skyulf.lifecycle.{phase}.receipt"]
     with pytest.raises(ValueError, match="fresh run"):
-        _call(staged, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+        _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     assert len(client.search_model_versions(f"name='{config['model_name']}'")) == 1
 
 
 @pytest.mark.parametrize(
-    ("operation", "group", "failed_phase", "unattempted_phase"),
+    ("operation", "predecessors", "failed_phase", "unattempted_phase"),
     [
-        ("fit_workflow", "train_register", "train", "evaluate_register"),
-        ("evaluate_holdout", "train_register", "evaluate_register", "compare"),
-        ("register_model", "train_register", "evaluate_register", "compare"),
-        ("compare_registered_pipeline_models", "compare_decide", "compare", "decide"),
-        ("automatic_promotion", "compare_decide", "decide", "result"),
+        ("fit_workflow", (), "train", "evaluate_register"),
+        ("evaluate_holdout", ("train",), "evaluate_register", "compare"),
+        ("register_model", ("train",), "evaluate_register", "compare"),
+        ("compare_registered_pipeline_models", ("train", "evaluate_register"), "compare", "decide"),
+        ("automatic_promotion", ("train", "evaluate_register", "compare"), "decide", "result"),
     ],
 )
-def test_group_failure_stops_later_work_and_complete_cannot_publish(
-    staged, monkeypatch, operation, group, failed_phase, unattempted_phase
+def test_phase_failure_stops_later_work_and_complete_cannot_publish(
+    staged, monkeypatch, operation, predecessors, failed_phase, unattempted_phase
 ):
-    """Grouped failures preserve their exception and cannot yield a score handoff."""
+    """Task failures preserve their exception and cannot yield a score handoff."""
     from skyulf.integrations.databricks.lifecycle import workflow
     from skyulf.integrations.databricks.training.fitting import candidate
 
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     reference = prepared.reference
-    if group == "compare_decide":
-        reference = _call(staged, "train_register", reference).reference
-    failure = RuntimeError("grouped operation failed")
+    for predecessor in predecessors:
+        reference = _call(staged, predecessor, reference).reference
+    failure = RuntimeError("task operation failed")
 
     def fail(*args, **kwargs):
         """Inject one computation or transport failure without replacing receipt handling."""
@@ -1099,10 +1013,10 @@ def test_group_failure_stops_later_work_and_complete_cannot_publish(
     module = workflow if operation == "automatic_promotion" else candidate
     monkeypatch.setattr(module, operation, fail)
     with pytest.raises(RuntimeError) as caught:
-        _call(staged, group, reference)
+        _call(staged, failed_phase, reference)
     assert caught.value is failure
     with pytest.raises(ValueError, match="successful"):
-        _call(staged, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+        _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     run = client.get_run(prepared.reference["run_id"])
     assert run.info.status == "FAILED"
     assert run.data.tags[f"skyulf.lifecycle.{failed_phase}.attempt"] == "failed"
@@ -1110,13 +1024,13 @@ def test_group_failure_stops_later_work_and_complete_cannot_publish(
     if unattempted_phase != "result":
         assert f"skyulf.lifecycle.{unattempted_phase}.attempt" not in run.data.tags
     assert "skyulf.lifecycle.result.receipt" not in run.data.tags
-    if group == "train_register":
+    if failed_phase in {"train", "evaluate_register"}:
         assert not client.search_registered_models()
     else:
         assert "champion" not in client.get_registered_model(config["model_name"]).aliases
 
 
-@pytest.mark.parametrize("phase", ["train_register", "compare_decide", "complete"])
+@pytest.mark.parametrize("phase", ["train", "model_decision", "complete"])
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -1127,27 +1041,27 @@ def test_group_failure_stops_later_work_and_complete_cannot_publish(
         {"now": "2026-09-26"},
     ],
 )
-def test_grouped_inputs_rejected_before_external_work(staged, monkeypatch, phase, kwargs):
-    """Groups cannot discard downstream options or initialize storage before validation."""
+def test_downstream_inputs_rejected_before_external_work(staged, monkeypatch, phase, kwargs):
+    """Downstream tasks cannot take invocation options or open storage before validation."""
     adapter, _, _, _, _ = staged
 
     def forbidden(*args, **kwargs):
         """Any store construction means invalid options reached external work."""
-        pytest.fail("Invalid grouped inputs reached storage")
+        pytest.fail("Invalid downstream inputs reached storage")
 
     monkeypatch.setattr(adapter, "PhaseStore", forbidden)
     with pytest.raises(ValueError, match="pinned invocation"):
         _call(staged, phase, **kwargs)
 
 
-@pytest.mark.parametrize("phase", ["train_register", "compare_decide", "complete"])
-def test_grouped_context_rejected_before_external_work(staged, monkeypatch, phase):
-    """Grouped entries cannot bypass the no-repair admission check."""
+@pytest.mark.parametrize("phase", ["train", "model_decision", "complete"])
+def test_downstream_context_rejected_before_external_work(staged, monkeypatch, phase):
+    """Downstream entries cannot bypass the no-repair admission check."""
     adapter, _, config, _, _ = staged
 
     def forbidden(*args, **kwargs):
         """A rejected repair must never open a lifecycle store."""
-        pytest.fail("Invalid grouped context reached storage")
+        pytest.fail("Invalid downstream context reached storage")
 
     monkeypatch.setattr(adapter, "PhaseStore", forbidden)
     with pytest.raises(ValueError, match="repair/retry"):
@@ -1159,43 +1073,43 @@ def test_grouped_context_rejected_before_external_work(staged, monkeypatch, phas
         )
 
 
-def test_grouped_quality_rejection_completes_without_handoff(staged):
+def test_quality_rejection_completes_without_handoff(staged):
     """Quality rejection remains successful training with no promotion or score request."""
     _, client, config, _, frame = staged
     frame["target"] += [0, 2] * 10
     config["quality_threshold"] = 0.0
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    registered = _call(staged, "train_register", prepared.reference)
-    decision = _call(staged, "compare_decide", registered.reference)
-    result = _call(staged, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    registered = _register(staged, prepared.reference)
+    decision = _decide(staged, registered.reference)
+    result = _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     assert decision.output["alias_change"] is None
     assert result.output["score_requested"] is False
     assert client.get_run(prepared.reference["run_id"]).info.status == "FINISHED"
     assert "champion" not in client.get_registered_model(config["model_name"]).aliases
 
 
-def test_groups_reject_foreign_wrong_and_repeated_references(staged):
-    """Task grouping cannot admit another job or bypass durable predecessor checks."""
+def test_tasks_reject_foreign_wrong_and_repeated_references(staged):
+    """Tasks cannot admit another job or bypass durable predecessor checks."""
     adapter, client, config, _, frame = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     foreign = (adapter, client, config, adapter.LifecycleContext("10", "21"), frame)
     with pytest.raises(ValueError, match="invocation"):
-        _call(foreign, "train_register", prepared.reference)
+        _register(foreign, prepared.reference)
     with pytest.raises(ValueError, match="predecessor"):
-        _call(staged, "compare_decide", prepared.reference)
-    registered = _call(staged, "train_register", prepared.reference)
+        _decide(staged, prepared.reference)
+    registered = _register(staged, prepared.reference)
     with pytest.raises(ValueError, match="fresh run"):
-        _call(staged, "train_register", prepared.reference)
+        _register(staged, prepared.reference)
     with pytest.raises(ValueError, match="invocation"):
-        _call(foreign, "compare_decide", registered.reference)
+        _decide(foreign, registered.reference)
     with pytest.raises(ValueError, match="predecessor"):
-        _call(staged, "complete", registered.reference, task_states=_TRAIN_TASK_STATES)
-    _call(staged, "compare_decide", registered.reference)
+        _call(staged, "complete", registered.reference, task_states=_DECISION_SUCCESS)
+    _decide(staged, registered.reference)
     with pytest.raises(ValueError, match="fresh run"):
-        _call(staged, "compare_decide", registered.reference)
+        _decide(staged, registered.reference)
     with pytest.raises(ValueError, match="invocation"):
-        _call(foreign, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
-    result = _call(staged, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+        _call(foreign, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
+    result = _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     assert result.output["score_requested"] is True
     assert len(client.search_model_versions(f"name='{config['model_name']}'")) == 1
 
@@ -1203,14 +1117,14 @@ def test_groups_reject_foreign_wrong_and_repeated_references(staged):
 def test_complete_verifies_pinned_request_before_finalization(staged):
     """A changed request cannot select a different completion branch or finalize a run."""
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     run_id = prepared.reference["run_id"]
     path = client.download_artifacts(run_id, "lifecycle/request.json")
     request = json.loads(Path(path).read_text(encoding="utf-8"))
     request["action"] = "reject"
     client.log_dict(run_id, request, "lifecycle/request.json")
     with pytest.raises(ValueError, match="pinned request"):
-        _call(staged, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+        _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     run = client.get_run(run_id)
     assert run.info.status == "RUNNING"
     assert "skyulf.lifecycle.finalize.attempt" not in run.data.tags
@@ -1224,7 +1138,7 @@ def test_complete_never_publishes_missing_or_failed_operator_result(staged, atte
     config["promotion_policy"] = "manual_approval"
     prepared = _call(
         staged,
-        "prepare",
+        "initialize",
         config=config,
         action="approve",
         experiment_name="staged",
@@ -1234,15 +1148,14 @@ def test_complete_never_publishes_missing_or_failed_operator_result(staged, atte
         with pytest.raises(ValueError, match="candidate_version"):
             _call(staged, "operator", prepared.reference)
     with pytest.raises(ValueError, match="successful"):
-        _call(staged, "complete", prepared.reference, task_states=_OPERATOR_TASK_STATES)
+        _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     run = client.get_run(prepared.reference["run_id"])
     assert run.info.status == ("FAILED" if attempt_operator else "RUNNING")
     assert "skyulf.lifecycle.finalize.attempt" not in run.data.tags
     assert "skyulf.lifecycle.result.receipt" not in run.data.tags
 
 
-@pytest.mark.parametrize("readable", [False, True])
-def test_complete_publishes_real_rollback_without_training(staged, monkeypatch, readable):
+def test_complete_publishes_real_rollback_without_training(staged, monkeypatch):
     """Operator completion returns the restored champion and never reruns training phases."""
     from skyulf.integrations.databricks.training.fitting import candidate
     from skyulf.integrations.mlflow.lifecycle.promotion import AliasChangeReceipt
@@ -1254,11 +1167,11 @@ def test_complete_publishes_real_rollback_without_training(staged, monkeypatch, 
         config["pipeline"]["modeling"]["params"] = {"fit_intercept": fit_intercept}
         current = (adapter, client, config, adapter.LifecycleContext("10", job_run_id), frame)
         prepared = _call(
-            current, "prepare", config=config, action="train", experiment_name="staged"
+            current, "initialize", config=config, action="train", experiment_name="staged"
         )
-        registered = _call(current, "train_register", prepared.reference)
-        decision = _call(current, "compare_decide", registered.reference)
-        _call(current, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+        registered = _register(current, prepared.reference)
+        decision = _decide(current, registered.reference)
+        _call(current, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     receipt = AliasChangeReceipt(**decision.output["alias_change"])
     assert receipt.kind == "promotion" and receipt.new_version == "2"
 
@@ -1271,19 +1184,14 @@ def test_complete_publishes_real_rollback_without_training(staged, monkeypatch, 
     current = (adapter, client, config, adapter.LifecycleContext("10", "22"), frame)
     pending = _call(
         current,
-        "initialize" if readable else "prepare",
+        "initialize",
         config=config,
         action="rollback",
         experiment_name="staged",
         operator_options={"promotion_receipt": receipt, "expected_champion_version": "2"},
     )
-    _call(current, "model_decision" if readable else "operator", pending.reference)
-    result = _call(
-        current,
-        "complete",
-        pending.reference,
-        task_states={"decision": "success"} if readable else _OPERATOR_TASK_STATES,
-    )
+    _call(current, "model_decision", pending.reference)
+    result = _call(current, "complete", pending.reference, task_states=_DECISION_SUCCESS)
     assert result.output["score_requested"] is True
     assert str(client.get_model_version_by_alias(config["model_name"], "champion").version) == "1"
     assert client.get_run(pending.reference["run_id"]).info.status == "FINISHED"
@@ -1295,19 +1203,19 @@ def test_complete_publishes_real_rollback_without_training(staged, monkeypatch, 
     [
         None,
         {},
-        {"training": "failed", "operator": "excluded"},
-        {"training": "{{tasks.compare_and_decide.result_state}}", "operator": "excluded"},
-        {"training": "unknown", "operator": "excluded"},
-        {"training": "success", "operator": "excluded", "extra": "success"},
-        {"training": "success", "operator": "success"},
+        {"decision": "failed"},
+        {"decision": "{{tasks.model_decision.result_state}}"},
+        {"decision": "unknown"},
+        {"decision": "success", "extra": "success"},
+        {"training": "success", "operator": "excluded"},
     ],
 )
 def test_complete_blocks_unsuccessful_task_output_after_committed_training(staged, task_states):
     """Notebook output failure must not authorize scoring from an already committed promotion."""
     _, client, config, _, _ = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    registered = _call(staged, "train_register", prepared.reference)
-    _call(staged, "compare_decide", registered.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    registered = _register(staged, prepared.reference)
+    _decide(staged, registered.reference)
     options = {} if task_states is None else {"task_states": task_states}
     with pytest.raises(ValueError, match="task outcomes"):
         _call(staged, "complete", prepared.reference, **options)
@@ -1322,15 +1230,15 @@ def test_complete_blocks_failed_operator_task_output_after_committed_approval(st
     """An approved alias survives task output failure without publishing a scoring handoff."""
     adapter, client, config, _, frame = staged
     config["promotion_policy"] = "manual_approval"
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    registered = _call(staged, "train_register", prepared.reference)
-    decision = _call(staged, "compare_decide", registered.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    registered = _register(staged, prepared.reference)
+    decision = _decide(staged, registered.reference)
     _call(staged, "finalize", prepared.reference)
     operator = (adapter, client, config, adapter.LifecycleContext("10", "21"), frame)
     candidate = decision.output["candidate"]
     pending = _call(
         operator,
-        "prepare",
+        "initialize",
         config=config,
         action="approve",
         experiment_name="staged",
@@ -1345,7 +1253,7 @@ def test_complete_blocks_failed_operator_task_output_after_committed_approval(st
             operator,
             "complete",
             pending.reference,
-            task_states={"training": "excluded", "operator": "failed"},
+            task_states={"decision": "failed"},
         )
     run = client.get_run(pending.reference["run_id"])
     assert run.info.status == "FINISHED"
@@ -1357,14 +1265,16 @@ def test_complete_blocks_failed_operator_task_output_after_committed_approval(st
 @pytest.mark.parametrize(
     "phase",
     [
-        "prepare",
-        "train_register",
-        "compare_decide",
+        "initialize",
+        "load_data",
+        "prepare_dataset",
         "train",
+        "select_best_model",
         "evaluate_register",
         "compare",
         "decide",
         "operator",
+        "model_decision",
         "finalize",
         "result",
     ],
@@ -1384,20 +1294,23 @@ def test_task_states_only_accepted_by_complete_before_external_work(monkeypatch,
             phase=phase,
             context=adapter.LifecycleContext("10", "20"),
             tracking_uri="unused",
-            task_states={"training": "success", "operator": "excluded"},
+            task_states=_DECISION_SUCCESS,
         )
 
 
 @pytest.mark.parametrize("engine", ["pandas", "polars"])
 @pytest.mark.parametrize("policy", ["automatic", "manual_approval"])
 def test_readable_graph_executes_data_stages_before_fitting(staged, monkeypatch, engine, policy):
-    """Named data stages do real work and training consumes their checked saved partitions."""
+    """Named data stages do real work and every later step replays the one saved source read."""
+    from skyulf.integrations.databricks.lifecycle import workflow
     from skyulf.integrations.databricks.training.fitting import candidate
 
     _, client, config, _, frame = staged
     config.update(engine=engine, promotion_policy=policy)
     reads = Mock(side_effect=lambda spark, spec: frame.copy())
-    monkeypatch.setattr(candidate, "read_training_snapshot", reads)
+    monkeypatch.setattr(candidate, "read_live_snapshot", reads)
+    monkeypatch.setattr(candidate, "read_training_snapshot", _real_read_training_snapshot)
+    monkeypatch.setattr(workflow, "read_training_snapshot", _real_read_training_snapshot)
     prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     reads.assert_not_called()
     loaded = _call(staged, "load_data", prepared.reference)
@@ -1405,8 +1318,15 @@ def test_readable_graph_executes_data_stages_before_fitting(staged, monkeypatch,
     reads.assert_called_once()
     split = _call(staged, "prepare_dataset", loaded.reference)
     assert split.output["training_rows"] + split.output["holdout_rows"] == len(frame)
+    adapter, _, _, context, _ = staged
     with pytest.raises(ValueError, match="predecessor"):
-        _call(staged, "train", prepared.reference)
+        adapter.run_lifecycle_phase(
+            None,
+            phase="train",
+            context=context,
+            reference=prepared.reference,
+            tracking_uri=config["tracking_uri"],
+        )
     trained = _call(staged, "train", split.reference)
     reads.assert_called_once()
     assert not client.search_registered_models()
@@ -1422,6 +1342,7 @@ def test_readable_graph_executes_data_stages_before_fitting(staged, monkeypatch,
     assert ("champion" in client.get_registered_model(config["model_name"]).aliases) == (
         policy == "automatic"
     )
+    reads.assert_called_once()
 
 
 def test_readable_graph_rejects_modified_partition_before_fit(staged, monkeypatch):
@@ -1455,10 +1376,10 @@ def test_readable_decision_routes_manual_actions_without_fitting(
 
     adapter, client, config, _, frame = staged
     config["promotion_policy"] = "manual_approval"
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    registered = _call(staged, "train_register", prepared.reference)
-    compared = _call(staged, "compare_decide", registered.reference)
-    _call(staged, "complete", prepared.reference, task_states=_TRAIN_TASK_STATES)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    registered = _register(staged, prepared.reference)
+    compared = _decide(staged, registered.reference)
+    _call(staged, "complete", prepared.reference, task_states=_DECISION_SUCCESS)
     candidate = compared.output["candidate"]
     forbidden = Mock(side_effect=AssertionError("manual action must not fit or register"))
     monkeypatch.setattr(candidate_training, "fit_workflow", forbidden)
@@ -1502,7 +1423,7 @@ def test_readable_failed_data_stage_cannot_publish_success(staged, monkeypatch):
     prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
     monkeypatch.setattr(
         candidate,
-        "read_training_snapshot",
+        "read_live_snapshot",
         Mock(side_effect=ValueError("source unavailable")),
     )
     with pytest.raises(ValueError, match="source unavailable"):
@@ -1628,6 +1549,7 @@ def _probe_sized_source(monkeypatch):
     frame = pd.DataFrame({"id": range(90), "x": range(90), "target": range(0, 180, 2)})
     frame.attrs.update(source_table_id="delta-log-id", source_uc_table_id="uc-object-id")
     monkeypatch.setattr(candidate, "read_training_snapshot", lambda spark, spec: frame.copy())
+    monkeypatch.setattr(candidate, "read_live_snapshot", lambda spark, spec: frame.copy())
     monkeypatch.setattr(workflow, "read_training_snapshot", lambda spark, spec: frame.copy())
 
 

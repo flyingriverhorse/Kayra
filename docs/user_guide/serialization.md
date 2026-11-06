@@ -9,6 +9,15 @@ That includes:
 - preprocessing fitted artifacts (per-step `params`)
 - the trained model (sklearn estimator object)
 
+![What save() writes and predict() checks](../assets/diagrams/core/serialization.svg)
+
+[Editable draw.io source](../assets/diagrams/core/serialization.drawio)
+
+The file holds the whole fitted object, so `load()` needs no separate artifact files.
+`fingerprint()` and `export_model_card()` are computed from the object on demand; `save()` does
+not write them. `load()` is a plain `pickle.load`, so only load files you trust (see the
+[security note](#security-note) below).
+
 ## Practical guidance
 
 - Prefer saving in environments where the same library versions are available.

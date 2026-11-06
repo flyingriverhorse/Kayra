@@ -103,12 +103,12 @@ describe('LoadingState', () => {
   });
 
   it.each([false, true])('hides the decorative loading logo with reduced motion %s', reducedMotion => {
-    // Both the animated scene and static fallback defer announcements to the status text.
+    // Both the logo video and static fallback defer announcements to the status text.
     vi.spyOn(window, 'matchMedia').mockReturnValue(
       Object.assign(new EventTarget(), { matches: reducedMotion }) as MediaQueryList,
     );
     const { container } = render(<LoadingState />);
-    const logo = container.querySelector(reducedMotion ? 'img' : 'svg');
+    const logo = container.querySelector(reducedMotion ? 'img' : 'video');
     expect(logo).not.toBeNull();
     expect(logo).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByRole('img')).toBeNull();

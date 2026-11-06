@@ -136,6 +136,10 @@ def _eligible(labels: Any, available: str, cutoff: datetime, keys: tuple, target
     value = spark_column(available)
     if isinstance(dtype, types.TimestampType):
         parsed, valid = value, value.isNotNull()
+    elif isinstance(dtype, types.DateType):
+        # A label date is available from 00:00 UTC that day, whatever the session time zone.
+        parsed = f.timestamp_seconds(f.unix_date(value) * 86400)
+        valid = value.isNotNull()
     elif isinstance(dtype, types.StringType):
         parsed = f.try_to_timestamp(value)
         valid = value.rlike(r"(?i)[T ].*(Z|[+-]\d{2}(?::?\d{2})?)$") & parsed.isNotNull()

@@ -27,7 +27,24 @@ Skyulf uses a hybrid approach to data processing to balance **performance** (Ing
 
 ---
 
-## 2. Future Architecture: The AI Hub
+## 2. Training Job Lifecycle
+
+![Training job lifecycle](assets/diagrams/architecture/job_lifecycle.svg)
+
+[Editable draw.io source](assets/diagrams/architecture/job_lifecycle.drawio)
+
+An upload is saved and registered first; a background ingestion task then profiles it with
+Polars, and only completed sources appear in the canvas dataset picker.
+Run sends the canvas graph to `POST /api/pipeline/run`, which checks for leakage before any job
+exists, then creates one queued `training_jobs` row per branch.
+Jobs run on in-process threads by default, or on a Celery worker through Redis when
+`USE_CELERY=true`; either way `execute_pipeline` drives the engine, which calls skyulf-core.
+A completed job shows up in the model registry as a version, and deploying it makes it the one
+active deployment that the prediction API serves.
+
+---
+
+## 3. Future Architecture: The AI Hub
 
 Skyulf is evolving from a Tabular ML tool into a multi-modal AI Hub.
 

@@ -311,6 +311,57 @@ def endpoint_ready(endpoint: Any, plan: PinnedEndpointPlan) -> bool:
     return True
 
 
+_LOG_TAIL_LINES = 50
+
+
+def _log_tail(client: Any, endpoint_name: str, entity: str, kind: str) -> str:
+    """Return the last log lines of one served entity, or why they could not be read."""
+    try:
+        text = getattr(client.serving_endpoints, kind)(endpoint_name, entity).logs or ""
+    except Exception as error:  # noqa: BLE001 - log details must never hide the deployment error
+        return f"\n{kind} unavailable: {type(error).__name__}"
+    lines = text.strip().splitlines()[-_LOG_TAIL_LINES:]
+    return f"\n{kind} (last {len(lines)} lines):\n" + "\n".join(lines) if lines else ""
+
+
+def failure_detail(client: Any, endpoint_name: str, endpoint: Any) -> str:
+    """Describe why a deployment failed: entity state messages and build/server log tails.
+
+    Only the endpoint owner (the job identity) and admins can open these logs, so the
+    job prints them. Best effort: any problem reading them yields a note, never an error.
+    """
+    try:
+        config = _field(endpoint, "pending_config") or _field(endpoint, "config")
+        parts = []
+        for entity in _field(config, "served_entities") or []:
+            name = _field(entity, "name")
+            message = _field(_field(entity, "state"), "deployment_state_message")
+            parts.append(f"\nServed entity {name}: {message or 'no state message'}")
+            parts.extend(
+                _log_tail(client, endpoint_name, name, kind) for kind in ("build_logs", "logs")
+            )
+    except Exception as error:  # noqa: BLE001 - the deployment error itself must still surface
+        return f"\nDeployment details unavailable: {type(error).__name__}"
+    return "".join(parts)
+
+
+def explain_failed_update(client: Any, endpoint_name: str, endpoint: Any, check: Any) -> Any:
+    """Run a readiness check; add the endpoint's own failure reason to a failed update."""
+    try:
+        return check()
+    except ValueError as error:
+        if not str(error).startswith("Serving endpoint config update failed"):
+            raise
+        raise ValueError(f"{error}{failure_detail(client, endpoint_name, endpoint)}") from error
+
+
+def _ready(client: Any, endpoint: Any, plan: PinnedEndpointPlan) -> bool:
+    """Check readiness with the failure reason attached when the update failed."""
+    return explain_failed_update(
+        client, plan.spec.endpoint_name, endpoint, lambda: endpoint_ready(endpoint, plan)
+    )
+
+
 def read_pinned_endpoint(client: Any, plan: PinnedEndpointPlan) -> Any:
     """Read native telemetry fields without losing them through older SDK models."""
     if plan.spec.logging_mode == "telemetry":
@@ -323,7 +374,7 @@ def read_pinned_endpoint(client: Any, plan: PinnedEndpointPlan) -> Any:
 def require_pinned_endpoint_ready(client: Any, plan: PinnedEndpointPlan) -> Any:
     """Read and admit only an exact, fully settled endpoint through an injected SDK client."""
     endpoint = read_pinned_endpoint(client, plan)
-    if not endpoint_ready(endpoint, plan):
+    if not _ready(client, endpoint, plan):
         raise RuntimeError("Serving endpoint is not ready or its config update is pending.")
     return endpoint
 
@@ -337,7 +388,7 @@ def wait_for_pinned_endpoint_ready(client: Any, plan: PinnedEndpointPlan) -> Any
     deadline = monotonic() + plan.spec.ready_timeout_s
     while True:
         endpoint = read_pinned_endpoint(client, plan)
-        if endpoint_ready(endpoint, plan):
+        if _ready(client, endpoint, plan):
             return endpoint
         remaining = deadline - monotonic()
         if remaining <= 0:
@@ -364,8 +415,8 @@ def api_transport(client: Any) -> Any:
     return transport
 
 
-def create_pinned_endpoint(client: Any, plan: PinnedEndpointPlan) -> Any:
-    """Create once and wait for the exact ready config; never overwrite an existing name."""
+def submit_pinned_endpoint(client: Any, plan: PinnedEndpointPlan) -> None:
+    """Submit the create request once without waiting; never overwrite an existing name."""
     from databricks.sdk.errors import NotFound  # noqa: PLC0415
     from databricks.sdk.service import serving  # noqa: PLC0415
 
@@ -387,6 +438,11 @@ def create_pinned_endpoint(client: Any, plan: PinnedEndpointPlan) -> Any:
         if "tags" in plan.config:
             kwargs["tags"] = [serving.EndpointTag.from_dict(tag) for tag in plan.config["tags"]]
         client.serving_endpoints.create(**kwargs)
+
+
+def create_pinned_endpoint(client: Any, plan: PinnedEndpointPlan) -> Any:
+    """Create once and wait for the exact ready config; never overwrite an existing name."""
+    submit_pinned_endpoint(client, plan)
     return wait_for_pinned_endpoint_ready(client, plan)
 
 

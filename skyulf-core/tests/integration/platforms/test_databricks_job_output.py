@@ -56,7 +56,7 @@ def test_comparison_output_explains_each_quality_gate():
     from skyulf.integrations.databricks.jobs.shared.job_output import render_lifecycle_output
 
     html = render_lifecycle_output(
-        "compare_decide",
+        "model_decision",
         {
             "candidate": {
                 "comparison": {
@@ -183,7 +183,7 @@ def test_notebook_renders_summary_and_preserves_machine_result(
     path.write_text(json.dumps(workflow_config))
     values = {
         "config_path": str(path),
-        "workflow_contract": "2",
+        "workflow_contract": "3",
         "deployed_score_handoff": "after_alias_change",
         "catalog": "workspace",
         "input_schema": "test",

@@ -27,6 +27,6 @@ class TestApiConfig:
 
     def test_payload_shape(self, client: TestClient):
         payload = client.get("/api/config").json()
-        assert set(payload.keys()) == {"max_upload_size_bytes", "allowed_extensions"}
+        assert set(payload.keys()) == {"max_upload_size_bytes", "allowed_extensions", "demo_mode"}
         assert isinstance(payload["max_upload_size_bytes"], int)
         assert all(ext.startswith(".") for ext in payload["allowed_extensions"])

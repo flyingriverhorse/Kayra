@@ -73,6 +73,14 @@ The shared JSON contract is in
 The core and backend test matrices cover `raise`, `warn`, and `ignore`, safe and
 unsafe placements, and parameter-dependent exceptions for all registered nodes.
 
+## Leakage score-gap notebook and script
+
+[`10_leakage_score_gap.ipynb`](10_leakage_score_gap.ipynb) (and the terminal
+[`10_leakage_score_gap.py`](10_leakage_score_gap.py)) measures what leakage costs:
+the same logistic regression with `UnivariateSelection` before vs. after the split,
+over 10 seeds, comparing each pipeline's reported test accuracy with its accuracy on
+5,000 fresh rows. Seeded pandas data, no downloads, about 15 seconds.
+
 ## Original notebooks (00-08)
 
 | # | Notebook | Task | Dataset | Rows | Highlights |

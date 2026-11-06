@@ -317,9 +317,10 @@ def _display_training_explanations(
 
 def lifecycle_widget_context(values: dict[str, str]) -> dict[str, Any]:
     """Reject unresolved invocation values and unsupported repairs before loading files."""
-    if values.get("workflow_contract") not in {"2", "3"}:
+    if values.get("workflow_contract") != "3":
         raise ValueError(
-            "Lifecycle tasks require graph contract 2 or 3; regenerate/redeploy together."
+            "Lifecycle tasks require graph contract 3; regenerate the project with "
+            "Skyulf 0.9.7 and redeploy the Bundle."
         )
     if any(values.get(key) for key in ("phase", "task_role", "action", "score_model_version")):
         raise ValueError("Notebook phase and lifecycle role cannot be overridden by parameters.")
@@ -380,6 +381,29 @@ def _prepared_notebook_request(
     }
 
 
+_PREDECESSOR_VALUES = ("reference_json", "tracking_uri")
+
+
+def report_values(dbutils: Any) -> dict[str, str]:
+    """Read the ALL_DONE report's widgets, taking initialize_run's values at run time.
+
+    Job definitions cannot reference a task value that was never set: when initialize_run
+    fails, a `{{tasks.initialize_run.values...}}` parameter turns the report into a second,
+    misleading failure, so the report reads them here instead.
+    """
+    values = dict(dbutils.widgets.getAll())
+    for key in _PREDECESSOR_VALUES:
+        values[key] = dbutils.jobs.taskValues.get(
+            taskKey="initialize_run", key=key, default="", debugValue=""
+        )
+    if not values["reference_json"]:
+        raise ValueError(
+            "initialize_run did not finish, so there is no training run to report; "
+            "its own error above is the cause."
+        )
+    return values
+
+
 def saved_notebook_request(values: dict[str, str]) -> dict[str, Any]:
     """Validate the frozen predecessor reference and prepared tracking URI."""
     try:
@@ -394,31 +418,35 @@ def saved_notebook_request(values: dict[str, str]) -> dict[str, Any]:
     return {"reference": reference, "tracking_uri": tracking_uri}
 
 
-def _validate_notebook_phase_contract(phase: str, values: dict[str, str]) -> None:
-    """Reject mismatched old/new notebooks before preparing or reading saved state."""
-    new_phases = {
+_NOTEBOOK_PHASES = frozenset(
+    {
         "initialize",
         "load_data",
         "prepare_dataset",
+        "train",
         "select_best_model",
+        "evaluate_register",
+        "compare",
         "model_decision",
+        "complete",
     }
-    old_phases = {"prepare", "train_register", "compare_decide", "operator"}
-    contract = values["workflow_contract"]
-    if (phase in new_phases and contract != "3") or (phase in old_phases and contract != "2"):
-        raise ValueError("Notebook and job graph contract differ; regenerate/redeploy together.")
+)
+
+
+def _validate_notebook_phase(phase: str) -> None:
+    """Reject notebooks generated for another graph before preparing or reading saved state."""
+    if phase not in _NOTEBOOK_PHASES:
+        raise ValueError(
+            "Notebook phase does not belong to graph contract 3; regenerate the project "
+            "with Skyulf 0.9.7 and redeploy the Bundle."
+        )
 
 
 def _notebook_task_states(phase: str, values: dict[str, str]) -> dict[str, str] | None:
-    """Keep graph-specific completion states separate from the pinned action."""
+    """Pass the decision task's outcome to the completion report."""
     if phase != "complete":
         return None
-    if values["workflow_contract"] == "3":
-        return {"decision": values.get("decision_result_state", "")}
-    return {
-        "training": values.get("training_result_state", ""),
-        "operator": values.get("operator_result_state", ""),
-    }
+    return {"decision": values.get("decision_result_state", "")}
 
 
 def run_lifecycle_notebook(
@@ -433,13 +461,13 @@ def run_lifecycle_notebook(
 ) -> str:
     """Execute a fixed lifecycle phase using durable evidence from its predecessor.
 
-    Only prepare/initialize read editable configuration and project Python. Later tasks
+    Only initialize reads editable configuration and project Python. Later tasks
     receive references from this job invocation and load the frozen MLflow
     evidence. Notebook metadata is a misuse guard, not workspace authorization.
     """
-    values = dbutils.widgets.getAll()
+    values = report_values(dbutils) if phase == "complete" else dbutils.widgets.getAll()
     context_values = lifecycle_widget_context(values)
-    _validate_notebook_phase_contract(phase, values)
+    _validate_notebook_phase(phase)
     from ..lifecycle.lifecycle_tasks import (  # noqa: PLC0415 - shared runtime helpers avoid a module cycle
         LifecycleContext,
         run_lifecycle_phase,
@@ -447,7 +475,7 @@ def run_lifecycle_notebook(
 
     options = (
         _prepared_notebook_request(values, preprocessing_path)
-        if phase in {"prepare", "initialize"}
+        if phase == "initialize"
         else saved_notebook_request(values)
     )
     task_states = _notebook_task_states(phase, values)
@@ -461,12 +489,12 @@ def run_lifecycle_notebook(
     dbutils.jobs.taskValues.set(
         key="reference_json", value=json.dumps(outcome.reference, sort_keys=True)
     )
-    if phase in {"prepare", "initialize"}:
+    if phase == "initialize":
         dbutils.jobs.taskValues.set(key="tracking_uri", value=options["tracking_uri"])
         dbutils.jobs.taskValues.set(
             key="training_requested", value=outcome.output["training_requested"]
         )
-    if phase in {"result", "complete"}:
+    if phase == "complete":
         dbutils.jobs.taskValues.set(key="score_requested", value=outcome.output["score_requested"])
         completed = outcome.output["result"]
         publish_serving_handoff(dbutils, completed.get("alias_change", completed), values)
@@ -485,7 +513,7 @@ def run_lifecycle_notebook(
         exit_notebook=exit_notebook,
         explanation_tracking_uri=(
             options["tracking_uri"]
-            if phase in {"train", "train_register"}
+            if phase == "train"
             and not separate_shap
             and outcome.output.get("explanations", {}).get("status") in {"completed", "unavailable"}
             else None
@@ -497,7 +525,7 @@ def _lifecycle_notebook_renderer(
     phase: str, outcome: Any, tracking_uri: str, separate_shap: bool, *, workspace_host: str = ""
 ) -> Callable:
     """Keep training settings visible when SHAP is displayed by a separate task."""
-    if phase in {"result", "complete"}:
+    if phase == "complete":
         if outcome.output.get("action") == "train":
             from ...observability.reports.training_summary import (  # noqa: PLC0415
                 render_final_training_report,

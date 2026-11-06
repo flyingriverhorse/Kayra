@@ -1,13 +1,13 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Ask a Question
-    url: https://github.com/flyingriverhorse/Skyulf/discussions
+    url: https://github.com/flyingriverhorse/Kayra/discussions
     about: Please use GitHub Discussions for general questions, ideas, and community support.
 
   - name: 📚 Documentation
-    url: https://flyingriverhorse.github.io/Skyulf/
+    url: https://kayra.skyulf.com/manual/
     about: Check the official documentation before opening an issue.
 
   - name: 🔒 Security Vulnerability
-    url: https://github.com/flyingriverhorse/Skyulf/security/policy
+    url: https://github.com/flyingriverhorse/Kayra/security/policy
     about: Please strictly follow the instructions in SECURITY.md for sensitive security reports.

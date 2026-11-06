@@ -83,7 +83,7 @@ git push
 The `release-drafter.yml` workflow triggers because `pyproject.toml` was modified. After ~30 seconds a draft appears at:
 
 ```
-https://github.com/flyingriverhorse/Skyulf/releases
+https://github.com/flyingriverhorse/Kayra/releases
 ```
 
 #### 4. Publish the draft

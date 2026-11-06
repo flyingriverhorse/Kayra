@@ -1,0 +1,97 @@
+<mxfile host="drawio" version="24.7.17">
+  <diagram id="serving-rollout" name="Serving rollout">
+    <mxGraphModel dx="1200" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="0" page="0" pageScale="1" pageWidth="1000" pageHeight="700" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Gradual serving rollout: traffic stages" style="text;html=0;fontSize=20;fontColor=#1A1A19;align=left;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="0" width="760" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="before" value="@champion and a staged&#xa;@challenger with a saved&#xa;passing comparison&#xa;(manual_approval training)" style="rounded=1;arcSize=10;html=0;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="init" value="You create the A/B endpoint&#xa;and initialize the rollout:&#xa;100% champion, 0% challenger" style="rounded=1;arcSize=10;html=0;fillColor=#F3E8FF;strokeColor=#9673A6;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="250" y="55" width="230" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="evidence" value="Stage evidence&#xa;0%: saved comparison and&#xa;smoke calls to both versions&#xa;above 0%: requests, error rate,&#xa;p99 latency, mature labels" style="rounded=1;arcSize=10;html=0;fillColor=#F5F5F5;strokeColor=#666666;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="190" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="job" value="daily_rollout job&#xa;04:00 UTC, paused by&#xa;default; at most one&#xa;step per run" style="rounded=1;arcSize=10;html=0;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="270" y="195" width="190" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="verdict" value="verdict on fresh,&#xa;matching evidence" style="rhombus;html=0;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="150" width="200" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="advance" value="ADVANCE&#xa;PASS after a full stage&#xa;(stage_minimum_hours, 24 h):&#xa;+traffic_step_percent (10)" style="rounded=1;arcSize=10;html=0;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="430" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="hold" value="HOLD&#xa;too few requests or labels,&#xa;stale evidence, short stage:&#xa;keep share and stage clock" style="rounded=1;arcSize=10;html=0;fillColor=#EAF7EE;strokeColor=#82B366;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="250" y="430" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="rollback" value="ROLLBACK (FAIL)&#xa;error rate, p99 latency or&#xa;quality gate: 0% challenger,&#xa;100% champion; rollout ends" style="rounded=1;arcSize=10;html=0;fillColor=#FDECEC;strokeColor=#B85450;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="490" y="430" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="complete" value="COMPLETE&#xa;PASS at 100% after a full stage:&#xa;guarded approval rechecks the&#xa;saved evidence, then @champion&#xa;-&gt; the challenger version" style="rounded=1;arcSize=10;html=0;fillColor=#EAF2FF;strokeColor=#6C8EBF;fontColor=#1A1A19;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="740" y="425" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="serving" value="serving_endpoint job&#xa;updates the separate delivery&#xa;endpoint (production mode,&#xa;enabled and follow_champion)" style="rounded=1;arcSize=10;html=0;fillColor=#FFF4E5;strokeColor=#D79B00;fontColor=#1A1A19;fontSize=12;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="740" y="610" width="250" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="caption" value="ADVANCE and HOLD wait for the next daily run; a missed day never adds two steps.&#xa;ROLLBACK moves traffic only: it does not change a registry alias.&#xa;Pausing the schedule stops new decisions but does not move traffic back.&#xa;An endpoint update with an unknown outcome holds until it is reconciled.&#xa;Final approval refuses promotion if the champion, comparison or approval policy changed." style="text;html=0;fontSize=12;fontColor=#444444;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="20" y="600" width="690" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="before" target="init">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.4783;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="init" target="job">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="reads" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="evidence" target="job">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="job" target="verdict">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.25;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="verdict" target="advance">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="360" />
+              <mxPoint x="120" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.4;exitY=0.9;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="verdict" target="hold">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="580" y="385" />
+              <mxPoint x="350" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=0.6;exitY=0.9;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="verdict" target="rollback">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="400" />
+              <mxPoint x="590" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="verdict" target="complete">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="865" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="new champion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#444444;fontSize=11;fontColor=#444444;labelBackgroundColor=#FFFFFF;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="complete" target="serving">
+          <mxGeometry relative="1" as="geometry">
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

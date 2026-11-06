@@ -8,8 +8,20 @@ an in-place upgrade.
 
 Public documentation describes the current revision. Read **Upgrade steps for generated Databricks
 projects** for every intervening release in the
-[0.9.x changelog](https://github.com/flyingriverhorse/Skyulf/blob/master/changelog/0.9.x.md). Keep
+[0.9.x changelog](https://github.com/flyingriverhorse/Kayra/blob/master/changelog/0.9.x.md). Keep
 the project pin and release-specific contracts together.
+
+## 0.9.7 is a clean break
+
+Skyulf 0.9.7 keeps no compatibility paths for projects, job definitions or models from
+earlier releases. To upgrade, regenerate the project, redeploy the Bundle and retrain.
+
+- Job definitions must use graph contract 3 (`workflow_contract: "3"`). Older job
+  graphs stop with "regenerate the project with Skyulf 0.9.7 and redeploy the Bundle".
+- Every training run saves the rows it reads. Registration, comparison, approval and
+  monitoring replay only those rows; a model without them stops with "trained before
+  0.9.7 or outside the generated job graph; retrain it with the current project".
+- A model loads only with the Core release that trained it.
 
 ## What to edit
 
@@ -251,6 +263,12 @@ use `batch_compute: spark`. Log a new certified version. Configurations without
 
 ### Monitoring and serving changes
 
+- 0.9.7 is a clean break: regenerate projects created before it and retrain their
+  models. Monitoring now rebuilds each reference from the training run's saved rows;
+  an older model fails with a message to retrain it. Delete the removed
+  `resources/monitoring_cleanup.job.yml` and its `monitoring_cleanup_*` /
+  `monitoring_reference_retention_days` variables, then drop old reference tables
+  once as shown in [reference tables from before 0.9.7](databricks_monitoring_setup.md#reference-tables-from-before-097).
 - New projects ask for the monitoring catalog and schema and start with
   `monitoring_enabled: "false"` when they are blank. Existing projects keep
   `monitoring_enabled: "true"` in `deployment/variables.yml`; with a blank

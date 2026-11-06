@@ -34,6 +34,18 @@ the upload with a transformed reference. Legacy jobs without graph metadata
 retain their original saved reference; ensure that reference and upload use the
 same preprocessing stage.
 
+## How drift is decided
+
+![Drift decision flow](../assets/diagrams/drift/drift_decision.svg)
+
+[Editable draw.io source](../assets/diagrams/drift/drift_decision.drawio)
+
+Columns present on only one side are schema drift, and a shared column whose types cannot
+be compared is `type_drift`; both count as drifted without a statistical test. Every other
+scored column is drifted only when at least one effect metric exceeds its threshold **and**
+its corrected statistical evidence is `supported`. The backend saves every check, including
+failed and missing-baseline checks, as an alert with a severity and a status.
+
 ## Quick example
 
 ```python

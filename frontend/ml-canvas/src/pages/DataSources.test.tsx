@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   deleteDataset: vi.fn(),
   navigate: vi.fn(),
   refetch: vi.fn(),
+  demoMode: false,
   failedDataset: {
     id: 'dataset-1',
     source_id: 'source-1',
@@ -47,6 +48,10 @@ vi.mock('../core/hooks/useDatasets', () => ({
     variables: null,
     mutateAsync: mocks.cancelIngestion,
   }),
+}));
+
+vi.mock('../core/hooks/useUploadConfig', () => ({
+  useDemoMode: () => mocks.demoMode,
 }));
 
 vi.mock('../core/toast', () => ({
@@ -91,6 +96,7 @@ describe('DataSources', () => {
     mocks.navigate.mockReset();
     mocks.refetch.mockReset();
     mocks.confirm.mockResolvedValue(true);
+    mocks.demoMode = false;
   });
 
   it('shows failed-job details inline and routes retry to the upload flow', async () => {
@@ -107,5 +113,24 @@ describe('DataSources', () => {
 
     const message = screen.getByText('Upload failed: invalid delimiter');
     expect(message.closest('[role="alert"], [aria-live="assertive"]')).toBeNull();
+  });
+
+  it('offers upload, new sources and deletion outside demo mode', () => {
+    render(<DataSources />);
+
+    expect(screen.getByRole('button', { name: /upload file/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add source/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete dataset/i })).toBeInTheDocument();
+  });
+
+  it('hides upload, new-source and delete controls in the public demo', () => {
+    // The demo server refuses these with 403; the UI must not offer them.
+    mocks.demoMode = true;
+    render(<DataSources />);
+
+    expect(screen.queryByRole('button', { name: /upload file/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /add source/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /delete dataset/i })).toBeNull();
+    expect(screen.getByText(/public demo/i)).toBeInTheDocument();
   });
 });

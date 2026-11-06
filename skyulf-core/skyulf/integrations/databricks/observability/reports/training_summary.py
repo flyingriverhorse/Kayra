@@ -10,7 +10,7 @@ from .training_node_output import training_report_document
 
 _UNAVAILABLE = "Unavailable; inspect the fitting run artifacts"
 _SHAP_HELP = (
-    '<a href="https://www.skyulf.com/manual/user_guide/databricks_explanations.html">'
+    '<a href="https://kayra.skyulf.com/manual/user_guide/databricks_explanations.html">'
     "Enable config/training.yml defaults.explainability and the SHAP report task</a>"
 )
 
@@ -93,7 +93,9 @@ def _data_cell(documents: dict, origin: str, run_path: str) -> str:
     filters = documents.get("pre_split_filters.json") or {}
     table = data.get("train_data_destination", spec.get("table", "Unavailable"))
     version = data.get("train_data_version", spec.get("version", "Unavailable"))
-    lines = [escape(f"{table} · Delta version {version}")]
+    kind = spec.get("source_kind")
+    snapshot = f"{kind} read once, rows saved" if kind else f"Delta version {version}"
+    lines = [escape(f"{table} · {snapshot}")]
     for label, value in (
         ("Source rows", evidence.get("source_rows")),
         ("Training rows", evidence.get("training_rows")),

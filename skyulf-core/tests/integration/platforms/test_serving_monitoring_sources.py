@@ -187,3 +187,31 @@ def test_changed_object_kind_fails_post_read_verification(source):
     with pytest.raises(ValueError, match="definition"):
         serving_sources.verify_serving_payload_snapshot(source.spark, SOURCE, evidence)
     assert source.read.call_count == 1
+
+
+DDL_COLUMNS = DDL.replace(
+    "attributes:request_date::DATE AS request_date", "date AS request_date"
+).replace(
+    "timestamp_millis(attributes:request_time::BIGINT) AS request_time", "time AS request_time"
+)
+
+
+def test_current_platform_view_reads_date_and_time_columns(source):
+    """Newer endpoints log request_date/request_time as columns; their view must still be admitted."""
+    source.metadata["ddl"] = DDL_COLUMNS
+    frame, evidence = serving_sources.read_serving_payload_snapshot(source.spark, SOURCE, NOW)
+    assert frame is source.projected
+    projection = source.frame.selectExpr.call_args.args
+    assert "date AS request_date" in projection
+    assert "time AS request_time" in projection
+    assert "attributes:request_date::DATE AS request_date" not in projection
+    assert len(projection) == 12
+    serving_sources.verify_serving_payload_snapshot(source.spark, SOURCE, evidence)
+
+
+def test_view_switching_projection_after_read_fails_verification(source):
+    """A view rewritten between the two telemetry shapes mid-observation is a changed definition."""
+    _, evidence = serving_sources.read_serving_payload_snapshot(source.spark, SOURCE, NOW)
+    source.metadata["ddl"] = DDL_COLUMNS
+    with pytest.raises(ValueError, match="definition changed"):
+        serving_sources.verify_serving_payload_snapshot(source.spark, SOURCE, evidence)

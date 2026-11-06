@@ -194,8 +194,6 @@ resources:
             notebook_path: ../src/jobs/training_report.py
             base_parameters:
               <<: *lifecycle_parameters
-              reference_json: '{{tasks.initialize_run.values.reference_json}}'
-              tracking_uri: '{{tasks.initialize_run.values.tracking_uri}}'
               decision_result_state: '{{tasks.model_decision.result_state}}'
               workspace_host: ${workspace.host}
 

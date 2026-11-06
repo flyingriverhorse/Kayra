@@ -793,3 +793,121 @@ def test_tag_preflight_is_public_idempotent_and_copies_input():
     assert validated == original and validated is not original
     assert managed.validate_serving_tags(validated) == validated
     assert managed.validate_serving_tags(None) == {}
+
+
+VIEWERS = [{"group_name": "viewers", "level": "CAN_VIEW"}, {"group_name": "callers"}]
+
+
+@pytest.mark.parametrize("path", ["create", "repair"])
+def test_viewers_see_endpoint_even_when_first_deployment_fails(plan, ownership, path):
+    """Without an early CAN_VIEW grant, only the job identity can diagnose a failed deploy."""
+    broken = _never_served(plan, ownership)
+    client = Mock()
+    client.serving_endpoints.get.side_effect = (
+        [NotFound("absent"), NotFound("absent"), {"id": "endpoint-id"}, broken]
+        if path == "create"
+        else [broken, {"id": "endpoint-id"}, broken]
+    )
+    with pytest.raises(ValueError):
+        managed.ensure_owned_endpoint(client, plan, ownership=ownership, permissions=VIEWERS)
+    request = client.serving_endpoints.update_permissions.call_args
+    assert request.args == ("endpoint-id",)
+    acl = request.kwargs["access_control_list"]
+    # Callers only see a new endpoint early; an existing one may already let them query.
+    early = [("viewers", "CAN_VIEW")] + ([("callers", "CAN_VIEW")] if path == "create" else [])
+    assert [(entry.group_name, entry.permission_level.value) for entry in acl] == early
+
+
+def test_callers_see_a_new_endpoint_before_readiness(plan, ownership):
+    """A caller of a first deployment that fails must be able to see why."""
+    client = Mock()
+    client.serving_endpoints.get.side_effect = [
+        NotFound("absent"),
+        NotFound("absent"),
+        {"id": "endpoint-id"},
+        remote(plan, ownership),
+    ]
+    managed.ensure_owned_endpoint(
+        client, plan, ownership=ownership, permissions=[{"group_name": "callers"}]
+    )
+    acl = client.serving_endpoints.update_permissions.call_args.kwargs["access_control_list"]
+    assert [(entry.group_name, entry.permission_level.value) for entry in acl] == [
+        ("callers", "CAN_VIEW")
+    ]
+
+
+def test_existing_endpoint_callers_get_no_early_view(plan, ownership):
+    """An early CAN_VIEW on an existing endpoint would downgrade its callers' CAN_QUERY."""
+    client = Mock()
+    client.serving_endpoints.get.side_effect = [remote(plan, ownership), remote(plan, ownership)]
+    managed.ensure_owned_endpoint(
+        client, plan, ownership=ownership, permissions=[{"group_name": "callers"}]
+    )
+    client.serving_endpoints.update_permissions.assert_not_called()
+
+
+@pytest.mark.parametrize("function_principals", [None, VIEWERS])
+def test_viewers_never_get_query_or_execute(plan, function_principals):
+    """CAN_VIEW lets people inspect a broken endpoint; it must not let them call the model."""
+    client, spark = Mock(), Mock()
+    client.serving_endpoints.get.return_value = {"id": "endpoint-id"}
+    managed.grant_serving_access(
+        spark,
+        client,
+        plan,
+        principals=VIEWERS,
+        function_principals=function_principals,
+        function_name="main.ml.score",
+    )
+    acl = client.serving_endpoints.update_permissions.call_args.kwargs["access_control_list"]
+    assert [(entry.group_name, entry.permission_level.value) for entry in acl] == [
+        ("callers", "CAN_QUERY")
+    ]
+    assert [call.args[0] for call in spark.sql.call_args_list] == [
+        "GRANT EXECUTE ON FUNCTION `main`.`ml`.`score` TO `callers`"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("principals", "message"),
+    [
+        ([{"group_name": "x", "level": "CAN_MANAGE"}], "CAN_QUERY or CAN_VIEW"),
+        (
+            [{"group_name": "x", "level": "CAN_VIEW"}, {"group_name": "x"}],
+            "both CAN_VIEW and CAN_QUERY",
+        ),
+    ],
+)
+def test_unsupported_or_conflicting_levels_are_rejected(principals, message):
+    """Only view and query are granted, and one principal cannot be listed at both levels."""
+    with pytest.raises(ValueError, match=message):
+        managed.validate_serving_principals(principals)
+
+
+def test_telemetry_create_grants_viewers_before_the_readiness_read(plan, ownership):
+    """Telemetry is the default mode, so its create path must also grant viewers early."""
+    spec = replace(
+        plan.spec,
+        logging_mode="telemetry",
+        logging_catalog="main",
+        logging_schema="logs",
+        logging_table_prefix="risk",
+    )
+    telemetry = {
+        "table_names": {"logs_table": spec.telemetry_logs_table},
+        "inference_table_config": {"name": spec.inference_table, "sampling_fraction": 1.0},
+        "enabled_telemetry_features": ["TELEMETRY_FEATURE_INFERENCE_TABLE"],
+    }
+    plan = replace(plan, spec=spec, config=plan.config | {"telemetry_config": telemetry})
+    final = remote(plan, ownership) | {"telemetry_config": deepcopy(telemetry)}
+    client = Mock()
+    client.api_client.do.side_effect = [NotFound("absent"), {}, final]
+    client.serving_endpoints.get.side_effect = [NotFound("absent"), {"id": "endpoint-id"}]
+    result = managed.ensure_owned_endpoint(client, plan, ownership=ownership, permissions=VIEWERS)
+    post = client.api_client.do.call_args_list[1].kwargs
+    assert (post["method"], post["path"]) == ("POST", "/api/2.0/serving-endpoints")
+    assert {tag["key"]: tag["value"] for tag in post["body"]["tags"]} == ownership
+    names = [name for name, *_ in client.mock_calls]
+    grant = names.index("serving_endpoints.update_permissions")
+    assert grant < len(names) - 1 - names[::-1].index("api_client.do")
+    assert result["action"] == "created"

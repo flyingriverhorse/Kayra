@@ -62,6 +62,7 @@ def delivery(monkeypatch):
     )
     monkeypatch.setattr(job, "prepare_pinned_endpoint", prepare)
     monkeypatch.setattr(job, "_load_pyfunc", lambda *args: model)
+    monkeypatch.setattr(job, "request_record_keys", lambda *args: ())
     monkeypatch.setattr(job, "sample_serving_rows", lambda *args, **kwargs: [{"value": 2.0}])
     monkeypatch.setattr(job, "_sql_input_frame", lambda *args: (Mock(), "ordinal"))
     endpoint = Mock(side_effect=lambda *args, **kwargs: events.append("endpoint") or {})
@@ -339,7 +340,10 @@ def test_serving_labels_require_request_identity_before_endpoint_changes(deliver
             for name, dtype in fields.items()
         ]
     )
-    spark = SimpleNamespace(table=lambda name: SimpleNamespace(schema=schema))
+    spark = SimpleNamespace(
+        table=lambda name: SimpleNamespace(schema=schema),
+        catalog=SimpleNamespace(tableExists=lambda name: True),
+    )
     with pytest.raises(ValueError, match="Serving label"):
         job.run_serving_endpoint(
             spark,
@@ -351,6 +355,30 @@ def test_serving_labels_require_request_identity_before_endpoint_changes(deliver
         )
     delivery.endpoint.assert_not_called()
     assert delivery.inventory == {} and delivery.events == []
+
+
+def test_missing_label_table_enrolls_with_a_warning(delivery):
+    """Serving must not depend on a label table that the data product has not created yet."""
+    delivery.values.update(
+        monitoring_label_table="main.labels.silver",
+        monitoring_result_available_at_column="monthly_data_date",
+    )
+    spark = SimpleNamespace(
+        catalog=SimpleNamespace(tableExists=lambda name: False, databaseExists=lambda name: True)
+    )
+    result = job.run_serving_endpoint(
+        spark,
+        delivery.settings,
+        source_table="main.source.features",
+        client=Mock(),
+        registry_client=delivery.registry,
+        monitoring_values=delivery.values,
+    )
+    assert result["monitoring"]["status"] == "enrolled"
+    assert len(result["monitoring"]["warnings"]) == 1
+    assert "main.labels.silver" in result["monitoring"]["warnings"][0]
+    assert "awaiting_labels" in result["monitoring"]["warnings"][0]
+    delivery.endpoint.assert_called_once()
 
 
 def test_disabled_logging_ignores_unused_monitoring_configuration(delivery):
@@ -477,6 +505,51 @@ def test_model_set_enrolls_pinned_components_and_parent_identity(delivery, saved
         ("enroll", "3", False),
     ]
     assert result["monitoring"]["retired_monitor_ids"] == [c.monitor_id for c in previous]
+
+
+def test_model_set_enrolls_with_a_record_key_label_table(delivery, saved_set, monkeypatch):
+    """A silver table with the set's record keys replaces the request-outcomes table."""
+
+    def prepare(spec, **kwargs):
+        """Expose the model set's record keys as the real endpoint plan does."""
+        return PinnedEndpointPlan(
+            spec,
+            {},
+            ("value",),
+            (("value", "float64"),),
+            (("prediction", "float64"),),
+            record_key_columns=("record_id",),
+        )
+
+    monkeypatch.setattr(job, "prepare_pinned_endpoint", prepare)
+    delivery.values.update(
+        monitoring_label_table="main.silver.records",
+        monitoring_result_available_at_column="month",
+    )
+    fields = {"record_id": "long", "month": "date", "target": "double"}
+    schema = SimpleNamespace(
+        fields=[
+            SimpleNamespace(name=name, dataType=SimpleNamespace(typeName=lambda dtype=dtype: dtype))
+            for name, dtype in fields.items()
+        ]
+    )
+    spark = SimpleNamespace(
+        table=lambda name: SimpleNamespace(schema=schema),
+        catalog=SimpleNamespace(tableExists=lambda name: True),
+    )
+    result = job.run_serving_endpoint(
+        spark,
+        delivery.settings,
+        source_table="main.source.features",
+        client=Mock(),
+        registry_client=delivery.registry,
+        monitoring_values=delivery.values,
+        model_version="2",
+    )
+    assert result["monitoring"]["models"] == 2
+    assert "warnings" not in result["monitoring"]
+    labels = {c["label_table"] for c in delivery.inventory.values() if c["enabled"]}
+    assert labels == {"main.silver.records"}
 
 
 @pytest.mark.parametrize("failure", ["package_digest", "component_bytes"])
@@ -614,9 +687,6 @@ def test_reference_preparation_keeps_served_registry_selection(
         serving_registration,
         "prepare_spark_monitoring_reference",
         spark_monitoring_reference.prepare_spark_monitoring_reference,
-    )
-    monkeypatch.setattr(
-        spark_monitoring_reference, "ensure_monitoring_store", lambda *args: "ops.monitoring"
     )
     loader = Mock(side_effect=RuntimeError("reference registry reached"))
     monkeypatch.setattr(spark_monitoring_reference, "load_monitoring_artifact", loader)

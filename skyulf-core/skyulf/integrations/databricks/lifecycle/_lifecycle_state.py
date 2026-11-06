@@ -16,8 +16,8 @@ PHASE_PREDECESSORS = {
     "load_data": "prepare",
     "prepare_dataset": "load_data",
     "select_best_model": "train",
-    "train": "prepare",
-    "evaluate_register": "train",
+    "train": "prepare_dataset",
+    "evaluate_register": "select_best_model",
     "compare": "evaluate_register",
     "generate_charts": "compare",
     "decide": "compare",
@@ -181,10 +181,6 @@ class PhaseStore:
             "competition", {}
         ).get("candidates", {}):
             return "prepare_dataset"
-        if self.request.get("graph_version", 2) == 3:
-            overrides = {"train": "prepare_dataset", "evaluate_register": "select_best_model"}
-            if phase in overrides:
-                return overrides[phase]
         return PHASE_PREDECESSORS.get(phase)
 
     def reference(self, receipt: dict[str, Any]) -> dict[str, str]:

@@ -531,7 +531,7 @@ def test_generated_default_training_does_not_require_dates():
 
 
 def test_generated_input_limit_uses_readable_megabytes():
-    """The default must remain 64 MiB after replacing the byte-valued Bundle field."""
+    """The default must stay 512 MiB (pandas memory) after replacing the byte-valued Bundle field."""
     config = _render_default_config()
-    assert config["max_input_mb"] == 64
+    assert config["max_input_mb"] == 512
     assert "max_bytes" not in config

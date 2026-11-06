@@ -41,19 +41,19 @@ def test_monitoring_notifications_resolve_in_real_bundle(tmp_path, offline_works
     assert job["health"]["rules"] == rules
 
 
-def test_reference_cleanup_is_manual_and_dry_run_by_default(tmp_path):
-    """Ordinary observation must never become a destructive retention job by default."""
+def test_monitoring_job_has_no_reference_cleanup_controls(tmp_path):
+    """Models keep their reference in MLflow, so no job may offer to retire reference tables."""
     project = _generate_project(tmp_path)
     job = yaml.safe_load((project / "resources/monitoring.job.yml").read_text())["resources"][
         "jobs"
     ]["monitoring"]
     params = {item["name"]: item["default"] for item in job["parameters"]}
     assert params["monitoring_action"] == "observe"
-    assert params["cleanup_confirm"] == "false"
-    assert params["reference_retention_days"] == "${var.monitoring_reference_retention_days}"
     first = job["tasks"][0]["notebook_task"]["base_parameters"]
-    assert first["cleanup_confirm"] == "{{job.parameters.cleanup_confirm}}"
-    assert first["reference_retention_days"] == "{{job.parameters.reference_retention_days}}"
+    for name in ("cleanup_confirm", "reference_retention_days"):
+        assert name not in params
+        assert name not in first
+    assert not (project / "resources/monitoring_cleanup.job.yml").exists()
 
 
 @pytest.mark.parametrize("layout", ["single_model", "multi_target"])

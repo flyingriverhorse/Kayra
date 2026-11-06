@@ -54,6 +54,17 @@ initialize durable rollout state, configure the generated controller job, test
 one invocation, then unpause its schedule. The snippets below form that sequence
 and require existing model versions and permissions; they do not train models.
 
+## How the rollout moves traffic
+
+![Gradual serving rollout stages](../assets/diagrams/databricks/serving_rollout.svg)
+
+[Editable draw.io source](../assets/diagrams/databricks/serving_rollout.drawio)
+
+Each `daily_rollout` run judges fresh evidence for the current stage and takes at most one step.
+A pass after the full stage time adds traffic, missing or weak evidence holds, and a measured
+failure returns all traffic to the champion and ends the rollout. After a passing 100% stage, a
+guarded approval makes the challenger the `@champion`.
+
 ## What to edit
 
 | File or input | Required settings |

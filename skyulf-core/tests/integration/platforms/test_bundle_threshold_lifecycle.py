@@ -10,6 +10,8 @@ pytest.importorskip("mlflow")
 
 from test_databricks_lifecycle_tasks import (  # noqa: F401 - real isolated registry fixture
     _call,
+    _decide,
+    _register,
     staged,
 )
 
@@ -55,9 +57,9 @@ def test_thresholds_survive_training_registration_and_decision(staged, engine, c
     """A passing fit alone must not hide failure at configuration replay or registration."""
     config = _classification(staged, engine, classes, mode)
     _, client, _, _, frame = staged
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    registered = _call(staged, "train_register", prepared.reference)
-    decided = _call(staged, "compare_decide", registered.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    registered = _register(staged, prepared.reference)
+    decided = _decide(staged, registered.reference)
     run_id = prepared.reference["run_id"]
     artifact = load_run_pipeline(
         f"runs:/{run_id}/model",
@@ -97,7 +99,7 @@ def test_threshold_competition_selects_and_registers_winner(staged, mode, metric
     trained = _call(staged, "train", split.reference)
     selected = _call(staged, "select_best_model", trained.reference)
     registered = _call(staged, "evaluate_register", selected.reference)
-    decided = _call(staged, "compare_decide", registered.reference)
+    decided = _decide(staged, registered.reference)
     assert registered.reference["phase"] == "evaluate_register"
     assert len(client.search_model_versions(f"name='{config['model_name']}'")) == 1
     assert selected.output["candidate_count"] == 2
@@ -195,9 +197,9 @@ def test_original_target_labels_survive_registry_lifecycle(staged, engine, mode,
             {"class": label, "value": 0.2 + i * 0.2}
             for i, label in enumerate(["alpha", "beta", "gamma"])
         ]
-    prepared = _call(staged, "prepare", config=config, action="train", experiment_name="staged")
-    registered = _call(staged, "train_register", prepared.reference)
-    decided = _call(staged, "compare_decide", registered.reference)
+    prepared = _call(staged, "initialize", config=config, action="train", experiment_name="staged")
+    registered = _register(staged, prepared.reference)
+    decided = _decide(staged, registered.reference)
     run_id = prepared.reference["run_id"]
     artifact = load_run_pipeline(
         f"runs:/{run_id}/model",

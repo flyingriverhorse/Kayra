@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { ArrowLeft, ArrowRight, Upload } from 'lucide-react';
 import { useUsableDatasets } from '../../../core/hooks/useDatasets';
 import { useDatasetSchema } from '../../../core/hooks/useDatasetSchema';
+import { useDemoMode } from '../../../core/hooks/useUploadConfig';
 import type { PipelineTemplate, TemplateBinding } from '../../../core/templates/pipelineTemplates';
 import { templateStories } from '../../../core/templates/templateStories';
 import { FileUpload } from '../../../modules/nodes/data/FileUpload';
@@ -29,6 +30,7 @@ export function TemplateSetup({ template, opening, onBack, onOpen }: Props) {
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
   const datasets = useUsableDatasets();
+  const demoMode = useDemoMode(); // the public demo server refuses uploads
   const schema = useDatasetSchema(source.datasetId);
   const story = templateStories[template.id]!;
   const ready = canOpen(template.category, schema, source.datasetId, target, text);
@@ -71,9 +73,9 @@ export function TemplateSetup({ template, opening, onBack, onOpen }: Props) {
               {source.datasetId && !datasets.data?.some(dataset => String(dataset.id) === source.datasetId) && <option value={source.datasetId}>{source.datasetName}</option>}
             </select>
             <DatasetListStatus query={datasets} />
-            <button type="button" disabled={opening} onClick={() => setUploading(true)} className="flex items-center gap-2 rounded text-sm font-medium text-primary focus-visible:ring-2 focus-visible:ring-primary">
+            {!demoMode && <button type="button" disabled={opening} onClick={() => setUploading(true)} className="flex items-center gap-2 rounded text-sm font-medium text-primary focus-visible:ring-2 focus-visible:ring-primary">
               <Upload className="h-4 w-4" aria-hidden="true" /> Upload a dataset
-            </button>
+            </button>}
           </div>
           {source.datasetId && <TemplateColumnFields id={id} category={template.category} schema={schema}
             target={target} text={text} disabled={opening} onTarget={value => { setTarget(value); if (value === text) setText(''); }} onText={setText} />}

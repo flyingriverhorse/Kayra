@@ -88,6 +88,34 @@ def test_prepared_frame_cannot_claim_another_outcome_snapshot():
         validate_label_binding(frame, _labeled_spec())
 
 
+def test_unversioned_outcome_table_is_pinned_by_kind_and_read_without_time_travel(monkeypatch):
+    """An ST or MV label table has no history; pin its catalog id and join a plain read."""
+    from unittest.mock import MagicMock, Mock
+
+    from skyulf.integrations.databricks.data.training import training_labels
+    from skyulf.integrations.databricks.observability.monitoring.spark import (
+        spark_monitoring_sources,
+    )
+    from skyulf.integrations.databricks.training.fitting.candidate import training_spec_payload
+
+    monkeypatch.setattr(training_labels, "history", Mock(side_effect=RuntimeError("no history")))
+    monkeypatch.setattr(training_labels, "unversioned_kind", lambda *_: "MATERIALIZED_VIEW")
+    monkeypatch.setattr(training_labels, "source_table_identity", lambda *args: f"uc-{args[2]}")
+    monkeypatch.setattr(spark_monitoring_sources, "require_unique_keys", lambda *_: None)
+    unpinned = _labeled_spec(training_label_version=None, training_label_table_id=None)
+    spec = training_labels.pin_training_labels(None, unpinned)
+    assert (spec.training_label_kind, spec.training_label_version) == ("MATERIALIZED_VIEW", 0)
+    assert spec.training_label_table_id == "uc-MATERIALIZED_VIEW"
+    assert TrainingSpec.from_payload(training_spec_payload(spec, "pandas")) == spec
+    spark, source = MagicMock(), MagicMock()
+    labels = spark.read.table.return_value
+    labels.columns, labels.schema = ["id", "y", "known_at"], source.schema
+    labels.select.return_value = labels
+    training_labels.join_training_labels(spark, source, spec)
+    spark.read.format.assert_not_called()
+    spark.read.table.assert_called_once_with("cat.data.labels")
+
+
 @pytest.fixture
 def outcome_tables(delta_spark):
     """Own two isolated Delta tables so native validation never rewrites example data."""
