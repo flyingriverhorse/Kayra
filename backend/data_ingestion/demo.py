@@ -7,7 +7,6 @@ dataset (jobs, models, deployments, EDA reports) keep only Iris rows. With the
 flag off, which is the default, every helper here is a no-op.
 """
 
-from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -67,16 +66,6 @@ async def demo_dataset_ids(session: AsyncSession) -> set[str] | None:
         return None
     pk = await session.scalar(select(DataSource.id).where(DataSource.source_id == IRIS_SOURCE_ID))
     return {IRIS_SOURCE_ID} if pk is None else {IRIS_SOURCE_ID, str(pk)}
-
-
-async def keep_demo_rows[T](
-    session: AsyncSession, rows: Sequence[T], dataset_id: Callable[[T], Any]
-) -> Sequence[T]:
-    """In demo mode, keep only rows whose dataset id names Iris; otherwise return ``rows``."""
-    ids = await demo_dataset_ids(session)
-    if ids is None:
-        return rows
-    return [row for row in rows if dataset_id(row) in ids]
 
 
 def _iris_frame() -> pl.DataFrame:

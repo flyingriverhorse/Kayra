@@ -6,20 +6,20 @@ the seeded Iris source; with it off (the default) nothing changes.
 """
 
 import uuid
+from datetime import datetime
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from backend.config import Settings, get_settings
 from backend.data_ingestion.demo import (
     IRIS_SOURCE_ID,
-    keep_demo_rows,
     seed_demo_iris,
 )
-from backend.database.models import DataSource
+from backend.database.models import DataSource, Deployment, TrainingJob
 from backend.main import app
 
 settings = get_settings()
@@ -160,17 +160,71 @@ async def test_iris_readable_in_demo_mode(client, demo_on, iris):
     assert len(sample.json()["data"]) == 3
 
 
-async def test_keep_demo_rows_filters_by_iris_ids(demo_on, iris, db_session):
-    """Job, model and deployment lists keep rows keyed by Iris's id or source_id."""
-    rows = [{"d": IRIS_SOURCE_ID}, {"d": str(iris.id)}, {"d": "other"}, {"d": None}]
-    kept = await keep_demo_rows(db_session, rows, lambda r: r["d"])
-    assert kept == rows[:2]
+@pytest.fixture
+async def iris_job_under_hidden_jobs(db_session, iris):
+    """One Iris job and deployment, sorted below two newer non-Iris ones.
+
+    The future dates put these four rows at the top of every list, whatever
+    else the shared test database holds.
+    """
+    tag = uuid.uuid4().hex[:8]
+    rows = [
+        ("iris", IRIS_SOURCE_ID, datetime(2099, 1, 1)),
+        ("other1", "other", datetime(2099, 1, 2)),
+        ("other2", "other", datetime(2099, 1, 3)),
+    ]
+    ids = []
+    for name, dataset, when in rows:
+        job_id = f"demo-{tag}-{name}"
+        ids.append(job_id)
+        db_session.add(
+            TrainingJob(
+                id=job_id,
+                pipeline_id=job_id,
+                node_id="model",
+                dataset_source_id=dataset,
+                status="completed",
+                model_type=f"demo_{tag}_{name}",
+                graph={},
+                run_mode="fixed",
+                started_at=when,
+                created_at=when,
+            )
+        )
+    await db_session.flush()
+    for job_id, (name, _, when) in zip(ids, rows, strict=True):
+        db_session.add(
+            Deployment(
+                job_id=job_id,
+                model_type=f"demo_{tag}_{name}",
+                artifact_uri="unused",
+                is_active=False,
+                created_at=when,
+            )
+        )
+    await db_session.commit()
+    yield ids[0]
+    await db_session.execute(delete(Deployment).where(Deployment.job_id.in_(ids)))
+    await db_session.execute(delete(TrainingJob).where(TrainingJob.id.in_(ids)))
+    await db_session.commit()
 
 
-async def test_keep_demo_rows_is_noop_when_off(db_session, demo_off):
-    """With demo mode off, lists are returned unchanged."""
-    rows = [{"d": "other"}]
-    assert await keep_demo_rows(db_session, rows, lambda r: r["d"]) is rows
+@pytest.mark.parametrize(
+    ("url", "job_of"),
+    [
+        ("/api/pipeline/jobs?limit=1", lambda row: row["job_id"]),
+        ("/api/pipeline/jobs?limit=1&job_type=training", lambda row: row["job_id"]),
+        ("/api/deployment/history?limit=1", lambda row: row["job_id"]),
+        ("/api/registry/models?limit=1", lambda row: row["latest_version"]["job_id"]),
+    ],
+)
+async def test_demo_lists_filter_before_paging(
+    client, demo_on, iris_job_under_hidden_jobs, url, job_of
+):
+    """Hidden rows must not use up a page: the first page still shows the newest Iris row."""
+    response = client.get(url)
+    assert response.status_code == 200, response.text
+    assert [job_of(row) for row in response.json()] == [iris_job_under_hidden_jobs]
 
 
 async def test_lists_unchanged_when_demo_off(client, demo_off, other_source):

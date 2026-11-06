@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import get_settings
-from backend.data_ingestion.demo import keep_demo_rows
+from backend.data_ingestion.demo import demo_dataset_ids
 from backend.database.engine import get_async_session
 from backend.exceptions.core import SkyulfException
 from backend.ml_pipeline._execution.jobs import JobInfo, JobManager
@@ -325,8 +325,9 @@ async def list_jobs(
     """List jobs with a positive limit up to MAX_PAGE_SIZE and a non-negative skip."""
     effective_limit = limit if limit is not None else get_settings().DEFAULT_PAGE_SIZE
     validate_query_limit(effective_limit, get_settings().MAX_PAGE_SIZE)
-    jobs = await JobManager.list_jobs(session, effective_limit, skip, job_type)
-    return await keep_demo_rows(session, jobs, lambda job: job.dataset_id)
+    return await JobManager.list_jobs(
+        session, effective_limit, skip, job_type, await demo_dataset_ids(session)
+    )
 
 
 @router.get("/jobs/tuning/latest/{node_id}", response_model=JobInfo | None)

@@ -257,19 +257,21 @@ class BasicTrainingManager(TrainingJobManagerBase):
         session: AsyncSession,
         limit: int | None = None,
         skip: int = 0,
+        dataset_ids: set[str] | None = None,
     ) -> list[JobInfo]:
-        """Lists recent training jobs (Async)."""
+        """Lists recent training jobs (Async), optionally only those on ``dataset_ids``."""
         effective_limit = limit if limit is not None else get_settings().DEFAULT_PAGE_SIZE
         # 1. Fetch all DataSources for robust name resolution
         ds_map = await get_dataset_map(session)
 
         # 2. Fetch Jobs
+        stmt = select(TrainingJob).where(
+            TrainingJob.run_mode == "fixed", TrainingJob.model_type != "preview"
+        )
+        if dataset_ids is not None:
+            stmt = stmt.where(TrainingJob.dataset_source_id.in_(dataset_ids))
         result_train = await session.execute(
-            select(TrainingJob)
-            .where(TrainingJob.run_mode == "fixed", TrainingJob.model_type != "preview")
-            .order_by(TrainingJob.started_at.desc())
-            .limit(effective_limit)
-            .offset(skip)
+            stmt.order_by(TrainingJob.started_at.desc()).limit(effective_limit).offset(skip)
         )
         train_rows = result_train.scalars().all()
 

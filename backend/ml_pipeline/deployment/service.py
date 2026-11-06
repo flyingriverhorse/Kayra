@@ -213,16 +213,21 @@ class DeploymentService:
 
     @staticmethod
     async def list_deployments(
-        session: AsyncSession, limit: int | None = None, skip: int = 0
+        session: AsyncSession,
+        limit: int | None = None,
+        skip: int = 0,
+        dataset_ids: set[str] | None = None,
     ) -> Sequence[Deployment]:
-        """Lists deployment history."""
+        """Lists deployment history, optionally only models trained on ``dataset_ids``."""
         effective_limit = limit if limit is not None else get_settings().DEFAULT_PAGE_SIZE
-        stmt = (
-            select(Deployment)
-            .order_by(Deployment.created_at.desc())
-            .limit(effective_limit)
-            .offset(skip)
-        )
+        stmt = select(Deployment)
+        if dataset_ids is not None:
+            stmt = stmt.where(
+                Deployment.job_id.in_(
+                    select(TrainingJob.id).where(TrainingJob.dataset_source_id.in_(dataset_ids))
+                )
+            )
+        stmt = stmt.order_by(Deployment.created_at.desc()).limit(effective_limit).offset(skip)
         result = await session.execute(stmt)
         return result.scalars().all()
 
@@ -947,7 +952,10 @@ class DeploymentService:
 
     @staticmethod
     async def list_deployment_details(
-        session: AsyncSession, limit: int | None = None, skip: int = 0
+        session: AsyncSession,
+        limit: int | None = None,
+        skip: int = 0,
+        dataset_ids: set[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Lists deployment history enriched with cheap lineage fields only.
 
@@ -956,7 +964,7 @@ class DeploymentService:
         fetching one job (and deserializing one artifact) per row, so paging
         through history stays O(1) artifact loads regardless of page size.
         """
-        deployments = await DeploymentService.list_deployments(session, limit, skip)
+        deployments = await DeploymentService.list_deployments(session, limit, skip, dataset_ids)
         job_ids = {d.job_id for d in deployments}
         jobs_by_id = await DeploymentService._get_jobs_by_ids(session, job_ids)
 

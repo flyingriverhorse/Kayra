@@ -187,8 +187,9 @@ class JobManager:
         limit: int = 50,
         skip: int = 0,
         job_type: str | None = None,
+        dataset_ids: set[str] | None = None,
     ) -> list[JobInfo]:
-        """Lists recent jobs (Async).
+        """Lists recent jobs (Async); ``dataset_ids`` filters before paging.
 
         When listing all job types, results are merge-sorted in Python because a
         cross-table UNION across the training and tuning ORM models would require
@@ -200,9 +201,9 @@ class JobManager:
         jobs = []
 
         if job_type == "training":
-            jobs = await BasicTrainingManager.list_training_jobs(session, limit, skip)
+            jobs = await BasicTrainingManager.list_training_jobs(session, limit, skip, dataset_ids)
         elif job_type == "tuning":
-            jobs = await AdvancedTuningManager.list_tuning_jobs(session, limit, skip)
+            jobs = await AdvancedTuningManager.list_tuning_jobs(session, limit, skip, dataset_ids)
         else:
             max_skip = get_settings().MAX_CROSS_TABLE_SKIP
             if skip > max_skip:
@@ -214,8 +215,12 @@ class JobManager:
                 skip = max_skip
 
             # Combine both
-            train_jobs = await BasicTrainingManager.list_training_jobs(session, limit + skip, 0)
-            tune_jobs = await AdvancedTuningManager.list_tuning_jobs(session, limit + skip, 0)
+            train_jobs = await BasicTrainingManager.list_training_jobs(
+                session, limit + skip, 0, dataset_ids
+            )
+            tune_jobs = await AdvancedTuningManager.list_tuning_jobs(
+                session, limit + skip, 0, dataset_ids
+            )
 
             all_jobs = train_jobs + tune_jobs
             # Sort by start_time desc
