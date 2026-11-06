@@ -369,15 +369,17 @@ def test_owner_and_view_groups_follow_setup_answers(tmp_path):
         tmp_path,
         personal_development_targets="true",
         pipeline_owner="owner@example.com",
-        test_view_group="fT-DBX-team",
-        prod_view_group="Data Team",
+        access_groups="true",
+        test_access_viewers="fT-DBX-team",
+        prod_access_viewers="Data Team",
     )
     bundle = _read_bundle(project)
     assert bundle["variables"]["pipeline_owner"]["default"] == "owner@example.com"
     views = {"test": "fT-DBX-team", "syst": None, "prod": "Data Team"}
     for env, group in views.items():
-        extra = [{"level": "CAN_VIEW", "group_name": group}] if group else []
+        extra = [{"level": "CAN_VIEW", "group_name": "${var.access_viewers}"}] if group else []
         assert bundle["targets"][env]["permissions"] == MANAGERS + extra
+        assert bundle["targets"][env]["variables"]["access_viewers"] == (group or "")
         assert bundle["targets"][f"{env}_development"]["permissions"] == MANAGERS
 
 

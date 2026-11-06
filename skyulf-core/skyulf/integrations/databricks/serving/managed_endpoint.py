@@ -242,6 +242,8 @@ def ensure_owned_endpoint(
     config is for this model) is retried in place instead of requiring a manual delete.
     ``permissions`` entries with level CAN_VIEW are added before the readiness wait,
     so the team can inspect a deployment that fails; CAN_QUERY waits for verification.
+    On create, CAN_QUERY entries also get that early CAN_VIEW; an existing endpoint
+    skips it, because it would downgrade callers who can already query.
     The caller owns concurrency between separate deployments of the same target.
     """
     from databricks.sdk.errors import NotFound  # noqa: PLC0415
@@ -249,7 +251,7 @@ def ensure_owned_endpoint(
 
     owner = _ownership(ownership)
     extra_tags = validate_serving_tags(tags)
-    viewers = _with_level(validate_serving_principals(permissions), "CAN_VIEW")
+    entries = validate_serving_principals(permissions)
     tags_updated = False
     try:
         endpoint = _dictionary(read_pinned_endpoint(client, plan))
@@ -274,7 +276,9 @@ def ensure_owned_endpoint(
                 ),
             )
             action = "updated"
-    _add_endpoint_permissions(client, plan.spec.endpoint_name, viewers)
+    _add_endpoint_permissions(
+        client, plan.spec.endpoint_name, _early_viewers(entries, action == "created")
+    )
     final = _dictionary(wait_for_pinned_endpoint_ready(client, wanted))
     _require_owner(final, owner)
     _require_owned_config(final, wanted)
@@ -365,6 +369,14 @@ def validate_serving_principals(principals: Any) -> list[dict[str, str]]:
                 f"permissions list {identity[1]!r} with both CAN_VIEW and CAN_QUERY; keep one."
             )
     return entries
+
+
+def _early_viewers(entries: list[dict[str, str]], created: bool) -> list[dict[str, str]]:
+    """Return the CAN_VIEW grants made before readiness; callers join only on create."""
+    viewers = _with_level(entries, "CAN_VIEW")
+    if not created:
+        return viewers
+    return viewers + [{**entry, "level": "CAN_VIEW"} for entry in _with_level(entries, "CAN_QUERY")]
 
 
 def _with_level(entries: list[dict[str, str]], level: str) -> list[dict[str, str]]:

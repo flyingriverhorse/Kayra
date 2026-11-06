@@ -813,19 +813,33 @@ def test_viewers_see_endpoint_even_when_first_deployment_fails(plan, ownership, 
     request = client.serving_endpoints.update_permissions.call_args
     assert request.args == ("endpoint-id",)
     acl = request.kwargs["access_control_list"]
-    assert [(entry.group_name, entry.permission_level.value) for entry in acl] == [
-        ("viewers", "CAN_VIEW")
-    ]
+    # Callers only see a new endpoint early; an existing one may already let them query.
+    early = [("viewers", "CAN_VIEW")] + ([("callers", "CAN_VIEW")] if path == "create" else [])
+    assert [(entry.group_name, entry.permission_level.value) for entry in acl] == early
 
 
-def test_without_viewers_no_permission_write_happens_before_readiness(plan, ownership):
-    """Projects that list only callers keep today's create path and grant order."""
+def test_callers_see_a_new_endpoint_before_readiness(plan, ownership):
+    """A caller of a first deployment that fails must be able to see why."""
     client = Mock()
     client.serving_endpoints.get.side_effect = [
         NotFound("absent"),
         NotFound("absent"),
+        {"id": "endpoint-id"},
         remote(plan, ownership),
     ]
+    managed.ensure_owned_endpoint(
+        client, plan, ownership=ownership, permissions=[{"group_name": "callers"}]
+    )
+    acl = client.serving_endpoints.update_permissions.call_args.kwargs["access_control_list"]
+    assert [(entry.group_name, entry.permission_level.value) for entry in acl] == [
+        ("callers", "CAN_VIEW")
+    ]
+
+
+def test_existing_endpoint_callers_get_no_early_view(plan, ownership):
+    """An early CAN_VIEW on an existing endpoint would downgrade its callers' CAN_QUERY."""
+    client = Mock()
+    client.serving_endpoints.get.side_effect = [remote(plan, ownership), remote(plan, ownership)]
     managed.ensure_owned_endpoint(
         client, plan, ownership=ownership, permissions=[{"group_name": "callers"}]
     )

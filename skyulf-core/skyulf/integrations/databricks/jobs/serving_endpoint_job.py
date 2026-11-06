@@ -211,9 +211,29 @@ def read_serving_endpoint_settings(values: dict[str, str]) -> dict[str, Any]:
     if not _boolean(settings.get("enabled"), "serving_endpoint.enabled"):
         return settings
     settings = _bound_settings(settings, values)
+    explicit_function = "function_permissions" in settings
     _validate_settings(settings)
+    if not settings["permissions"]:
+        settings["permissions"] = access_group_permissions(values)
+        if not explicit_function:
+            settings["function_permissions"] = settings["permissions"]
     _refuse_shared_resources(settings, document)
     return settings
+
+
+def access_group_permissions(values: dict[str, str]) -> list[dict[str, str]]:
+    """Grant the target's access groups when serving.yml lists nobody for this target.
+
+    access_serving_callers get CAN_QUERY (and SQL EXECUTE); access_viewers get CAN_VIEW
+    right after create. A group in both only queries: its early view grant would
+    otherwise downgrade it until verification ends. Empty groups grant nothing.
+    """
+    callers = values.get("access_serving_callers", "").strip()
+    viewers = values.get("access_viewers", "").strip()
+    entries = [{"group_name": callers, "level": "CAN_QUERY"}] if callers else []
+    if viewers and viewers != callers:
+        entries.append({"group_name": viewers, "level": "CAN_VIEW"})
+    return validate_serving_principals(entries)
 
 
 def sample_serving_rows(

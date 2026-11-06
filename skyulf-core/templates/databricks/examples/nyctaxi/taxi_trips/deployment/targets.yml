@@ -2,7 +2,7 @@
 # Shared environments are independent of your CI/CD provider.
 # Personal development targets deliberately have no shared run_as or job ACL overrides.
 # Every target lets the deployer and pipeline_owner manage its resources;
-# shared targets can add a read-only group chosen in setup.
+# shared targets add their access groups (see access_* under each target's variables).
 # Personal targets use Databricks' development prefix, so their jobs are named
 # "[dev <your short name>] <project>_train" and keep the project in the name.
 #
@@ -49,6 +49,11 @@ targets:
         user_name: ${workspace.current_user.userName}
       - level: CAN_MANAGE
         user_name: ${var.pipeline_owner}
+      # Access groups: the group names are in this target's variables below.
+      # - level: CAN_VIEW # uncomment after setting access_viewers below
+      #   group_name: ${var.access_viewers}
+      # - level: CAN_RUN # uncomment after setting access_runners below
+      #   group_name: ${var.access_runners}
     workspace:
       host: https://replace-test.example.invalid
       root_path: ${var.test_root_path}
@@ -58,6 +63,20 @@ targets:
       output_schema: ${var.test_output_schema}
       metadata_schema: ${var.test_metadata_schema}
       resource_suffix: ""
+      # Access groups for this target: one company group each, different per
+      # environment. Blank = not applied.
+      #   access_viewers: CAN_VIEW on jobs, dashboard and the project folder (the
+      #     MLflow experiment inherits it) and on the serving endpoint.
+      #   access_runners: CAN_RUN on jobs (start and cancel runs).
+      #   access_serving_callers: endpoint CAN_QUERY and SQL function EXECUTE.
+      #   access_data_readers: SELECT on the prediction tables and views the score
+      #     job writes, granted after every score run.
+      # Bundle permissions cannot skip a blank group, so after setting
+      # access_viewers or access_runners here, uncomment its entry under permissions.
+      access_viewers: ""
+      access_runners: ""
+      access_serving_callers: ""
+      access_data_readers: ""
 
 
 
@@ -69,6 +88,11 @@ targets:
         user_name: ${workspace.current_user.userName}
       - level: CAN_MANAGE
         user_name: ${var.pipeline_owner}
+      # Access groups: the group names are in this target's variables below.
+      # - level: CAN_VIEW # uncomment after setting access_viewers below
+      #   group_name: ${var.access_viewers}
+      # - level: CAN_RUN # uncomment after setting access_runners below
+      #   group_name: ${var.access_runners}
     workspace:
       host: https://replace-syst.example.invalid
       root_path: ${var.syst_root_path}
@@ -78,6 +102,20 @@ targets:
       output_schema: ${var.syst_output_schema}
       metadata_schema: ${var.syst_metadata_schema}
       resource_suffix: ""
+      # Access groups for this target: one company group each, different per
+      # environment. Blank = not applied.
+      #   access_viewers: CAN_VIEW on jobs, dashboard and the project folder (the
+      #     MLflow experiment inherits it) and on the serving endpoint.
+      #   access_runners: CAN_RUN on jobs (start and cancel runs).
+      #   access_serving_callers: endpoint CAN_QUERY and SQL function EXECUTE.
+      #   access_data_readers: SELECT on the prediction tables and views the score
+      #     job writes, granted after every score run.
+      # Bundle permissions cannot skip a blank group, so after setting
+      # access_viewers or access_runners here, uncomment its entry under permissions.
+      access_viewers: ""
+      access_runners: ""
+      access_serving_callers: ""
+      access_data_readers: ""
 
 
 
@@ -89,6 +127,11 @@ targets:
         user_name: ${workspace.current_user.userName}
       - level: CAN_MANAGE
         user_name: ${var.pipeline_owner}
+      # Access groups: the group names are in this target's variables below.
+      # - level: CAN_VIEW # uncomment after setting access_viewers below
+      #   group_name: ${var.access_viewers}
+      # - level: CAN_RUN # uncomment after setting access_runners below
+      #   group_name: ${var.access_runners}
     workspace:
       host: https://replace-prod.example.invalid
       root_path: ${var.prod_root_path}
@@ -98,6 +141,20 @@ targets:
       output_schema: ${var.prod_output_schema}
       metadata_schema: ${var.prod_metadata_schema}
       resource_suffix: ""
+      # Access groups for this target: one company group each, different per
+      # environment. Blank = not applied.
+      #   access_viewers: CAN_VIEW on jobs, dashboard and the project folder (the
+      #     MLflow experiment inherits it) and on the serving endpoint.
+      #   access_runners: CAN_RUN on jobs (start and cancel runs).
+      #   access_serving_callers: endpoint CAN_QUERY and SQL function EXECUTE.
+      #   access_data_readers: SELECT on the prediction tables and views the score
+      #     job writes, granted after every score run.
+      # Bundle permissions cannot skip a blank group, so after setting
+      # access_viewers or access_runners here, uncomment its entry under permissions.
+      access_viewers: ""
+      access_runners: ""
+      access_serving_callers: ""
+      access_data_readers: ""
 
 
 

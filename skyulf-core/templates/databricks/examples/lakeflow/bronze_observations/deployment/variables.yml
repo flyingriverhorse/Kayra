@@ -4,6 +4,19 @@ variables:
   pipeline_owner:
     description: User with CAN_MANAGE on every target besides the deployer; CI may pass --var pipeline_owner
     default: "${workspace.current_user.userName}"
+  # Access groups: set per shared target in deployment/targets.yml; blank = not applied.
+  access_viewers:
+    description: Group with CAN_VIEW on jobs, dashboard, project folder, experiment and endpoint
+    default: ""
+  access_runners:
+    description: Group with CAN_RUN on the target's jobs
+    default: ""
+  access_serving_callers:
+    description: Group with endpoint CAN_QUERY and SQL function EXECUTE when serving.yml lists nobody
+    default: ""
+  access_data_readers:
+    description: Group granted SELECT on the prediction tables and views after every score run
+    default: ""
   job_tags:
     description: Optional job attribution tags for either compute mode
     type: complex

@@ -489,17 +489,40 @@ and [retraining](https://kayra.skyulf.com/manual/user_guide/databricks_retrainin
 
 ## Permissions and identities
 
-Access is set in several places; this table lists all of them. The Bundle never
-grants Unity Catalog privileges or takes over existing objects.
+**Set access in one place:** each shared target (`test`, `syst`, `prod`) in
+`deployment/targets.yml` has four access groups under its `variables`. Use one
+company (account) group per role, different per environment. Blank grants
+nothing; personal `*_development` targets leave them blank.
+
+| Variable | What the group gets |
+| --- | --- |
+| `access_viewers` | CAN_VIEW on the target's jobs, dashboard and project folder (the MLflow experiment inherits it, so this group can read the saved training rows), and endpoint CAN_VIEW |
+| `access_runners` | CAN_RUN on the target, which lets the group start and cancel job runs, train approve/reject/rollback included |
+| `access_serving_callers` | Endpoint CAN_QUERY and SQL function EXECUTE, when `config/serving.yml` lists no `permissions` for the target |
+| `access_data_readers` | SELECT on the prediction table and views, granted by the score job after every score or recovery run |
+
+Bundle permissions cannot skip a blank group, so `access_viewers` and
+`access_runners` also have an entry under the target's `permissions`. It is
+written when setup was given the group and commented out otherwise: after setting
+one of these two later, uncomment its entry too. Do not blank a group (or pass
+`--var access_viewers=`) while its entry is active; Databricks rejects an empty
+`group_name`. The other two groups take effect from the variable alone.
+
+The score job's GRANT runs as the job identity, which must own the prediction
+table and views or hold MANAGE on them; a refused grant fails the score task with
+the group and privilege in the message. Readers also need USE CATALOG and USE
+SCHEMA, which the job does not grant: the schema owner grants them once.
+
+Everything else is set in these places:
 
 | What | Where it is set | What it grants |
 | --- | --- | --- |
-| Jobs, dashboard and the project folder | `permissions` per target in `deployment/targets.yml` | The deploying user and `pipeline_owner` get CAN_MANAGE; an optional view group gets CAN_VIEW |
+| Jobs, dashboard and the project folder | `permissions` per target in `deployment/targets.yml` | The deploying user and `pipeline_owner` get CAN_MANAGE; the access groups above |
 | Who the jobs run as | `run_as` in `deployment/targets.yml` (setup answer `deployment_identity`: the deploying user, one shared service principal, or separate train/score principals) | Every job runs with this identity's access |
 | Who may start or see each job | `*_permissions` variables in `deployment/variables.yml`, when setup chose to manage job permissions | Job ACL entries, for example CAN_MANAGE_RUN or CAN_VIEW |
-| Tables, models and volumes | Unity Catalog grants, outside the Bundle | The job identity needs USE CATALOG / USE SCHEMA, SELECT on source and label tables (Streaming Tables and views included), CREATE TABLE and MODIFY in the output schema, CREATE MODEL in the metadata schema and ownership of the models whose aliases it changes, READ VOLUME on a wheel volume, and CREATE / MODIFY in the monitoring schema |
+| Tables, models and volumes | Unity Catalog grants, outside the Bundle | The job identity needs USE CATALOG / USE SCHEMA, SELECT on source and label tables (Streaming Tables and views included), CREATE TABLE and MODIFY in the output schema, CREATE MODEL in the metadata schema and ownership of the models whose aliases it changes, READ VOLUME on a wheel volume, and CREATE / MODIFY in the monitoring schema. The only grant a job makes is SELECT for `access_data_readers` |
 | MLflow experiment | Inherits the project folder's permissions | Read access to the experiment is read access to training data (see below) |
-| Serving endpoint callers | `permissions` in `config/serving.yml` | `level: CAN_QUERY` after the endpoint is verified; `level: CAN_VIEW` right after it is created, to see a failed deployment |
+| Serving endpoint callers | `permissions` in `config/serving.yml`; when it lists nobody for the target, the access groups | `level: CAN_QUERY` after the endpoint is verified; every listed principal gets `level: CAN_VIEW` right after the endpoint is first created, to see a failed deployment. Entries in `config/serving.yml` replace the access groups for that target, they do not add to them |
 | SQL function callers | `function_permissions` in `config/serving.yml` (defaults to the CAN_QUERY entries) | EXECUTE; use account groups, not the workspace `users` group. Callers also need USE CATALOG / USE SCHEMA and a SQL warehouse |
 
 **The experiment holds training rows.** Each training run saves the rows it read

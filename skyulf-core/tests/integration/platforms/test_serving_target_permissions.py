@@ -98,3 +98,68 @@ def test_view_level_is_kept_per_target(endpoint_project):  # noqa: F811
     assert _settings(endpoint_project, permissions, "dev")["permissions"] == [
         {"group_name": "dev-viewers", "level": "CAN_VIEW"}
     ]
+
+
+ACCESS = {"access_serving_callers": "fT-DBX-callers", "access_viewers": "fT-DBX-viewers"}
+
+
+def _with_access(endpoint_project, permissions, extra=None, target="prod"):  # noqa: F811
+    """Read the settings with this target's access groups passed as job parameters."""
+    document, path, values = endpoint_project
+    document["serving_endpoint"]["permissions"] = permissions
+    document["serving_endpoint"].update(extra or {})
+    path.write_text(yaml.safe_dump(document))
+    from skyulf.integrations.databricks.jobs.serving_endpoint_job import (
+        read_serving_endpoint_settings,
+    )
+
+    return read_serving_endpoint_settings({**values, **ACCESS, "bundle_target": target})
+
+
+def test_empty_serving_permissions_use_the_target_access_groups(endpoint_project):  # noqa: F811
+    """One place per target: callers query and execute, viewers only see the endpoint."""
+    settings = _with_access(endpoint_project, [])
+    expected = [
+        {"group_name": "fT-DBX-callers", "level": QUERY},
+        {"group_name": "fT-DBX-viewers", "level": "CAN_VIEW"},
+    ]
+    assert settings["permissions"] == expected
+    assert settings["function_permissions"] == expected
+
+
+def test_unlisted_target_also_uses_the_access_groups(endpoint_project):  # noqa: F811
+    """A target missing from a per-target mapping is empty, so its access groups apply."""
+    settings = _with_access(endpoint_project, {"dev": [{"group_name": "dev-callers"}]})
+    assert settings["permissions"][0] == {"group_name": "fT-DBX-callers", "level": QUERY}
+
+
+def test_explicit_serving_permissions_win_over_access_groups(endpoint_project):  # noqa: F811
+    """A nonempty serving.yml list for the target is an explicit override."""
+    settings = _with_access(endpoint_project, {"prod": [{"group_name": "prod-callers"}]})
+    assert settings["permissions"] == [{"group_name": "prod-callers", "level": QUERY}]
+
+
+def test_explicit_function_permissions_stay_separate(endpoint_project):  # noqa: F811
+    """UC EXECUTE grantees set in serving.yml are kept when the endpoint uses access groups."""
+    extra = {"function_permissions": [{"group_name": "uc-callers"}]}
+    settings = _with_access(endpoint_project, [], extra)
+    assert settings["function_permissions"] == [{"group_name": "uc-callers", "level": QUERY}]
+    assert settings["permissions"][0]["group_name"] == "fT-DBX-callers"
+
+
+def test_one_group_as_viewer_and_caller_only_queries(endpoint_project):  # noqa: F811
+    """An early CAN_VIEW grant must not downgrade the same group's CAN_QUERY."""
+    document, path, values = endpoint_project
+    path.write_text(yaml.safe_dump(document))
+    from skyulf.integrations.databricks.jobs.serving_endpoint_job import (
+        read_serving_endpoint_settings,
+    )
+
+    same = {"access_serving_callers": "fT-DBX-team", "access_viewers": "fT-DBX-team"}
+    settings = read_serving_endpoint_settings({**values, **same, "bundle_target": "prod"})
+    assert settings["permissions"] == [{"group_name": "fT-DBX-team", "level": QUERY}]
+
+
+def test_no_access_groups_and_no_permissions_grant_nothing(endpoint_project):  # noqa: F811
+    """Personal targets pass empty groups and keep their endpoint private."""
+    assert _settings(endpoint_project, [], "dev_alice")["permissions"] == []

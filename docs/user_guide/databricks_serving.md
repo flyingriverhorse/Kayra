@@ -179,6 +179,12 @@ serving_endpoint:
 The job adds endpoint `CAN_QUERY` and function `EXECUTE`. Callers also need
 `USE CATALOG` and `USE SCHEMA`, which the job does not grant.
 
+Leave `permissions` empty to use the target's access groups from
+`deployment/targets.yml` instead: `access_serving_callers` gets `CAN_QUERY` and
+`EXECUTE`, `access_viewers` gets `CAN_VIEW` (see
+[access groups](databricks_deployment.md#access-groups)). Entries in `serving.yml`
+replace those groups for that target; they do not add to them.
+
 `permissions` get both grants by default. Unity Catalog rejects workspace-local
 groups such as `users` in `GRANT`, while the endpoint accepts them. In that case,
 list the UC grantees separately in `function_permissions` (same format, a list or
@@ -268,7 +274,7 @@ All keys below belong to `config/serving.yml` → `serving_endpoint`.
 | `logging_mode` | `disabled` | No inference tables or captured-request monitoring; alternatives: `telemetry`, `ai_gateway` |
 | `logging_catalog` / `logging_schema` / `logging_table_prefix` | Empty when disabled | Separate payload sink, required for logged modes |
 | `sql_function.enabled` / `sql_function.name` | `true` / target's score function | Create and smoke-test SQL; `false` leaves REST/SDK only |
-| `permissions` | `[]` | Additive caller grants; one user, group or service principal per entry. A list applies to every target; a mapping keyed by target (`test:`, `prod:` ...) grants each target its own principals, and an unlisted target grants nothing |
+| `permissions` | `[]` | Additive caller grants; one user, group or service principal per entry. A list applies to every target; a mapping keyed by target (`test:`, `prod:` ...) grants each target its own principals. An empty list or unlisted target uses the target's access groups (blank on personal targets) |
 | `verification.sample_rows` | `20` | Collected sample size, from 1 to 1000 |
 
 Use `verification: {sample_rows: 20}` to set how many source rows the job checks.
@@ -321,7 +327,10 @@ file. The endpoint job's existing dispatch tasks remain in place in either mode.
   An entry with `level: CAN_VIEW` gets only endpoint `CAN_VIEW`, never `CAN_QUERY`
   or `EXECUTE`. It is granted right after the endpoint is created or updated, before
   the readiness wait, so the team can see a deployment that fails; `CAN_QUERY` and
-  `EXECUTE` still wait for verification. One principal cannot be listed at both levels.
+  `EXECUTE` still wait for verification. When the endpoint is first created, the
+  `CAN_QUERY` entries also get `CAN_VIEW` at that point; on an existing endpoint
+  they do not, since it would lower their `CAN_QUERY` until verification ends.
+  One principal cannot be listed at both levels.
 - **Compute and cost:** job compute follows serverless/`policy_cluster` settings.
   Set `cost_tag_value` before serving, including serverless targets; its placeholder
   is rejected. Do not use an ownership key as `cost_tag_key`. Set Bundle

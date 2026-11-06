@@ -37,25 +37,182 @@
     "description": "6. Deployment | User email given CAN_MANAGE on every target besides the deployer (your CI may pass --var pipeline_owner). Leave blank to use the deployer",
     "pattern": "^[^\\s\"'\\x5c]*$"
   },
-  "test_view_group": {
+  "access_groups": {
     "order": 752,
     "type": "string",
-    "default": "",
-    "description": "6. Deployment | Workspace group given CAN_VIEW on the shared test target. Leave blank for no group",
-    "pattern": "^[^\"\\x5c]*$"
+    "default": "false",
+    "enum": [
+      "false",
+      "true"
+    ],
+    "description": "6. Deployment | Set access groups for the shared test, syst and prod targets now? Each target has four groups (viewers, runners, serving callers, data readers) in deployment/targets.yml; blank grants nothing and you can fill them there later"
   },
-  "syst_view_group": {
-    "order": 753,
+  "test_access_viewers": {
+    "order": 752.1,
     "type": "string",
     "default": "",
-    "description": "6. Deployment | Workspace group given CAN_VIEW on the shared syst target. Leave blank for no group",
-    "pattern": "^[^\"\\x5c]*$"
+    "description": "6. Deployment | test group given CAN_VIEW on jobs, dashboard, project folder and experiment, and the endpoint. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
   },
-  "prod_view_group": {
-    "order": 754,
+  "test_access_runners": {
+    "order": 752.2,
     "type": "string",
     "default": "",
-    "description": "6. Deployment | Workspace group given CAN_VIEW on the shared prod target. Leave blank for no group",
-    "pattern": "^[^\"\\x5c]*$"
+    "description": "6. Deployment | test group given CAN_RUN (start and cancel) on the target's jobs. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "test_access_serving_callers": {
+    "order": 752.3,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | test group given endpoint CAN_QUERY and SQL function EXECUTE (use an account group). Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "test_access_data_readers": {
+    "order": 752.4,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | test group given SELECT on the prediction tables and views the score job writes. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "syst_access_viewers": {
+    "order": 752.5,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | syst group given CAN_VIEW on jobs, dashboard, project folder and experiment, and the endpoint. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "syst_access_runners": {
+    "order": 752.6,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | syst group given CAN_RUN (start and cancel) on the target's jobs. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "syst_access_serving_callers": {
+    "order": 752.7,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | syst group given endpoint CAN_QUERY and SQL function EXECUTE (use an account group). Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "syst_access_data_readers": {
+    "order": 752.8,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | syst group given SELECT on the prediction tables and views the score job writes. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "prod_access_viewers": {
+    "order": 753.0,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | prod group given CAN_VIEW on jobs, dashboard, project folder and experiment, and the endpoint. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "prod_access_runners": {
+    "order": 753.1,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | prod group given CAN_RUN (start and cancel) on the target's jobs. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "prod_access_serving_callers": {
+    "order": 753.2,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | prod group given endpoint CAN_QUERY and SQL function EXECUTE (use an account group). Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
+  },
+  "prod_access_data_readers": {
+    "order": 753.3,
+    "type": "string",
+    "default": "",
+    "description": "6. Deployment | prod group given SELECT on the prediction tables and views the score job writes. Leave blank for no group",
+    "pattern": "^[^\"\\x5c]*$",
+    "skip_prompt_if": {
+      "properties": {
+        "access_groups": {
+          "const": "false"
+        }
+      }
+    }
   }
 }
